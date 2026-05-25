@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.22 | DONE | 主卷本旬行止笺与草稿状态读法 polish | 承接 S89.21 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId` 主卷右侧案头索引：新增带 `data-polish-game="s89-22-main-ledger-reader"` 的“本旬行止笺”，把已载公开卷宗数量、草稿有无、草稿来处和卷宗读法整理为玩家可读状态；草稿来源只显示“手写稿 / 案头摘录 / 舆图摘录 / 史册摘录 / 科举草稿”等中文标签，不显示 `manual`、`role-surface`、`map-runtime`、`archive-view` 或 `draftContext`。范围限 React `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route 状态和本地草稿状态，不展示草稿全文，不裁决资源、关系、交易、NPC 行动、经济、官职、考试、地图行动、婚姻、弹劾、定罪、背叛或 hidden 信息。实现提交：待回填。 |
 | S89.21 | DONE | 舆图局势读法与行动线索 polish | 承接 S89.20 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId/map` 右侧舆图簿：新增“山河局势轴 / 本卷读法”，把公开图层显隐、最显著近事、人物视觉锚点、已裁决公开后果和可拟行动数整理为玩家可读的卷上读法；“据局势拟稿”只写本地 `map-runtime` 行动草稿，并继续携带当前安全 event/npc refs 作为待服务器重建复核的 hint，不读取或提交坐标、layout、renderer 画面层级、visual-only effect 或 raw/provider/prompt/path/key 字段。范围限 React `MapPage`、少量复用既有舆图摘要底座的 CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍不裁决地图行动、资源、身份、交易、NPC 行动、经济、考试、官职、关系或隐藏信息。实现提交：`36c88f2b`。 |
 | S89.20 | DONE | 前端 CSS 预算瘦身与材质变量清理 | 承接 S89.19 后 CSS 预算贴近硬门的状态，已专项瘦身 `client/src/styles/global.css`：把全局 601 处 `rgba(...)` 改为等价现代 `rgb(... / ...)` 写法，复用已定义材质变量补齐宣纸、折纸、破纸、朱痕、朱印、印匣纹理和墨线背景引用，删除唯一确认无 React 源码引用的 `.actionPanel`，并合并移动端重复的单列/双列 grid 与竖排 flex 规则。`test/reactClientScaffold.test.js` 新增 S89.20 source canary，守住 CSS 源码体积、禁止 `rgba(` / `.actionPanel` 回归，并确认材质背景走变量复用。范围限全局 CSS 与源码 canary、文档；不新增依赖或素材，不改 React 组件行为、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view 和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或隐藏信息。实现提交：`ef41549d`。 |
 | S89.19 | DONE | 设置与断卷状态读法 polish | 承接 S89.18 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId/settings`、右上角印匣中的推演设置矩阵、404/错误页和畸形主卷恢复页：设置目录新增四类工具状态簿，逐项说明眼下可做与候复边界；AI 设置面板新增“推演设置状态簿”，并清洗污染的预设、分工 label/purpose/model、错误信息和状态枚举；断卷、空卷与畸形主卷恢复页新增只给安全归路、不显示底层诊断的 S89.19 标记。范围限 React `SettingsPage` / `AiSettingsPanel` / `ErrorPage` / `NotFoundPage` / `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只打开本地印匣、写既有全局 AI settings API 或本地显示偏好，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或隐藏信息；畸形案卷不读取主卷接口、不打开专题层、不写行动草稿。实现提交：`bf23677e`。 |
@@ -161,7 +162,8 @@
 - 2026-05-25：S89.19 完成设置与断卷状态读法 polish。当前范围限 React `SettingsPage` / `AiSettingsPanel` / `ErrorPage` / `NotFoundPage` / `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.20 完成前端 CSS 预算瘦身与材质变量清理。当前范围限全局 CSS、source canary 和文档；不新增浏览器裁决权，不改 React 组件行为、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.21 完成舆图局势读法与行动线索 polish。当前范围限 React `MapPage`、少量复用既有舆图摘要底座的 CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.21 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.22 完成主卷本旬行止笺与草稿状态读法 polish。当前范围限 React `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.22 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -243,6 +245,15 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.22 主卷本旬行止笺与草稿状态读法 polish
+
+- 范围：`client/src/pages/GamePage.tsx` 在主卷右侧 `gameSideLedger` 新增带 `data-polish-game="s89-22-main-ledger-reader"` 的“本旬行止笺”，显示本卷已载公开卷宗数量、草稿状态、草稿来处和卷宗读法；`getActionDraftSourceLabel()` 只把本地草稿来源映射成中文玩家标签，不展示内部 source enum，也不展示草稿全文或 `draftContext`。
+- 安全边界：本步不新增后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；零新增 CSS，不新增依赖或素材。浏览器只读当前 route/session 的安全 payload 与本地草稿状态，不请求诊断接口，不读取 raw 存档，不把草稿状态写成已执行、已结算或已入账；资源、关系、交易、NPC 行动、经济、官职、考试、地图行动、婚姻、弹劾、定罪、背叛和 hidden 信息仍只由主卷回批与服务器裁决。
+- Smoke/canary：`App.test.tsx` 覆盖 S89.22 marker、初始“暂无草稿”、点击书生草稿按钮后的“已有本地草稿 / 案头摘录”和内部 source/工程词禁词；`scripts/clientSmoke.js` 在默认 Mock 开卷与书生草稿 smoke 中守住 S89.22 marker、主卷回批文案、无横向溢出和禁词；`test/reactClientScaffold.test.js` 新增 S89.22 source canary，并确认本步没有新增 S89.22 CSS。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（58 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "main game shell|scholar panel" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）、`npm run test:client`（6 files / 134 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、直接 `node scripts/clientSmoke.js`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。最终预算输出为 `JS 629.0 KiB / CSS 99.8 KiB / fonts 26288.4 KiB / client-assets 27017.3 KiB`。
+- 复审：开工只读子代理建议把 S89.22 收窄为主卷 `GamePage` 的“本旬行止笺 / 案头状态读法”，优先零 CSS、复用 `gameSideLedger` / `safeViewGrid` / `statusLine` / `surfaceSafetyList`，并避免人物页 mutation 边界；本轮按建议从人物页试验改为主卷切片。
+- 提交：实现提交待回填；哈希回填若仅修改本文与 [SHARED_CONTEXT.md](SHARED_CONTEXT.md)，按低风险纯文档改动处理并记录是否跳过子代理复审。
 
 ### 2026-05-25：S89.21 舆图局势读法与行动线索 polish
 

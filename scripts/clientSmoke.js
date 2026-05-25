@@ -1560,6 +1560,8 @@ async function startMockGameThroughHome(page, screenshotsDir) {
       path: new URL(link.href).pathname
     }));
     const byText = new Map(allLinks.map((link) => [link.text, link.path]));
+    const mainLedger = document.querySelector('[data-polish-game="s89-22-main-ledger-reader"]');
+    const mainLedgerText = mainLedger?.textContent || "";
     return {
       topMap: byText.get("舆图"),
       topPeople: byText.get("人物"),
@@ -1570,6 +1572,11 @@ async function startMockGameThroughHome(page, screenshotsDir) {
       inkboxButtonCount: document.querySelectorAll("button[aria-label='打开印匣']").length,
       settingsSessionLinks: allLinks.filter((link) => link.text === "印匣" || link.path.endsWith("/settings")),
       previewLinks: allLinks.filter((link) => link.path.includes("s74-preview")).map((link) => link.text),
+      mainLedgerMarker: mainLedger?.getAttribute("data-polish-game") || "",
+      mainLedgerBoundary: mainLedger?.querySelector('[data-polish-game-boundary="s89-22-main-ledger-boundary"]')?.getAttribute("data-polish-game-boundary") || "",
+      mainLedgerText,
+      mainLedgerUnsafeText: mainLedgerText.match(/manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|ledger|\/api\/game\/state|\/api\/dev\/session-diagnostics|OPENAI_API_KEY|本地路径|密钥|sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
+      horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 4,
       expected: {
         map: `/game/${id}/map`,
         people: `/game/${id}/people`,
@@ -1593,6 +1600,15 @@ async function startMockGameThroughHome(page, screenshotsDir) {
     failures.push(`settings still appeared as a session nav link: ${entrypoints.settingsSessionLinks.map((link) => `${link.text}:${link.path}`).join(", ")}`);
   }
   if (entrypoints.previewLinks.length) failures.push(`runnable game shell still linked preview routes: ${entrypoints.previewLinks.join(", ")}`);
+  if (entrypoints.mainLedgerMarker !== "s89-22-main-ledger-reader") failures.push(`missing S89.22 main ledger marker: ${entrypoints.mainLedgerMarker}`);
+  if (entrypoints.mainLedgerBoundary !== "s89-22-main-ledger-boundary") failures.push(`missing S89.22 main ledger boundary: ${entrypoints.mainLedgerBoundary}`);
+  for (const requiredCopy of ["本旬行止笺", "本卷取材", "暂无草稿", "未起稿", "主卷回批", "公开卷宗", "未载卷宗不补造"]) {
+    if (!entrypoints.mainLedgerText.includes(requiredCopy)) {
+      failures.push(`S89.22 main ledger lacked ${requiredCopy}: ${entrypoints.mainLedgerText.slice(0, 160)}`);
+    }
+  }
+  if (entrypoints.mainLedgerUnsafeText.length) failures.push(`S89.22 main ledger leaked internal copy: ${entrypoints.mainLedgerUnsafeText.join(", ")}`);
+  if (entrypoints.horizontalOverflow) failures.push("main game shell has horizontal overflow");
   if (failures.length) {
     throw new Error(`Default entry session links are not bound to the started Mock session: ${failures.join("; ")}`);
   }
@@ -1682,6 +1698,13 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
   const draft = await page.getByLabel("本回合行动").inputValue();
   if (!draft.includes("携旧作拜见老师")) {
     throw new Error(`S76.2 scholar draft did not enter the memorial composer: ${draft}`);
+  }
+  const mainLedgerDraftState = await page.evaluate(() => {
+    const ledger = document.querySelector('[data-polish-game="s89-22-main-ledger-reader"]');
+    return ledger?.textContent || "";
+  });
+  if (!mainLedgerDraftState.includes("已有本地草稿") || !mainLedgerDraftState.includes("来处：案头摘录") || /manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs/i.test(mainLedgerDraftState)) {
+    throw new Error(`S89.22 main ledger draft state was unsafe or unreadable: ${mainLedgerDraftState.slice(0, 200)}`);
   }
   await page.getByLabel("本回合行动").fill("");
 

@@ -134,6 +134,25 @@ function numberFromCount(value: unknown) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function getActionDraftSourceLabel(source: unknown) {
+  const labels: Record<string, string> = {
+    manual: "手写稿",
+    "map-runtime": "舆图摘录",
+    "role-surface": "案头摘录",
+    "archive-view": "史册摘录",
+    exam: "科举草稿"
+  };
+  return typeof source === "string" && labels[source] ? labels[source] : "本地草稿";
+}
+
+function getSafeViewReading(items: readonly { readonly label: string; readonly ready: boolean }[]) {
+  const readyLabels = items.filter((item) => item.ready).map((item) => item.label);
+  if (!readyLabels.length) return "暂无公开卷宗入案；候主卷回批后再展开线索。";
+  const visibleLabels = readyLabels.slice(0, 4).join("、");
+  const suffix = readyLabels.length > 4 ? "等" : "";
+  return `${visibleLabels}${suffix}已入卷，可作线索；未载卷宗不补造。`;
+}
+
 export function GamePage() {
   const { sessionId = "s74-preview" } = useParams();
   const location = useLocation();
@@ -205,6 +224,9 @@ export function GamePage() {
     { label: "复核", ready: Boolean(routeViews?.hasAuditSummaryView) }
   ];
   const activeSafeViewCount = safeViewItems.filter((item) => item.ready).length;
+  const actionDraftStateLabel = activeActionDraft ? "已有本地草稿" : "暂无草稿";
+  const actionDraftSourceLabel = activeActionDraft ? getActionDraftSourceLabel(activeActionDraft.source) : "未起稿";
+  const safeViewReading = getSafeViewReading(safeViewItems);
   const isIndependentMapRoute = location.pathname.endsWith("/map");
   const independentRouteId = getIndependentSessionRouteId(location.pathname);
   const isGameRootRoute = location.pathname.replace(/\/+$/, "") === `/game/${sessionId}`;
@@ -316,7 +338,7 @@ export function GamePage() {
           </div>
           <p>{narrativeText}</p>
         </article>
-        <aside className="gameSideLedger" aria-label="案头索引">
+        <aside className="gameSideLedger" aria-label="案头索引" data-polish-game="s89-22-main-ledger-reader">
           <h2>案头索引</h2>
           <div className="safeViewGrid">
             {safeViewItems.map((item) => (
@@ -325,6 +347,23 @@ export function GamePage() {
               </span>
             ))}
           </div>
+          <dl className="surfaceSafetyList" aria-label="本旬行止笺">
+            <div>
+              <dt>本旬行止笺</dt>
+              <dd>本卷取材：已载 {activeSafeViewCount} / {safeViewItems.length} 类公开卷宗。</dd>
+            </div>
+            <div>
+              <dt>草稿状态</dt>
+              <dd>{actionDraftStateLabel}；来处：{actionDraftSourceLabel}。</dd>
+            </div>
+            <div>
+              <dt>卷宗读法</dt>
+              <dd>{safeViewReading}</dd>
+            </div>
+          </dl>
+          <p className="statusLine" data-polish-game-boundary="s89-22-main-ledger-boundary">
+            提交后才由主卷回批；本页不直接结算资源、关系、经济、官职、考试、地图行动或未公开事实。
+          </p>
           <p>主卷只读玩家已见的公开卷宗；行动、移动、任免、审案与考试后果仍须呈上后候复。</p>
         </aside>
       </div>

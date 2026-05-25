@@ -940,6 +940,17 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("无名")).toBeTruthy();
     expect(screen.getAllByText("身份未题").length).toBeGreaterThan(0);
     expect(screen.getByText("2 / 13")).toBeTruthy();
+    const mainLedgerReader = document.querySelector("[data-polish-game='s89-22-main-ledger-reader']");
+    expect(mainLedgerReader).toBeTruthy();
+    const mainLedgerText = mainLedgerReader?.textContent || "";
+    expect(mainLedgerText).toContain("本旬行止笺");
+    expect(mainLedgerText).toContain("本卷取材：已载 2 / 13 类公开卷宗");
+    expect(mainLedgerText).toContain("暂无草稿");
+    expect(mainLedgerText).toContain("未起稿");
+    expect(mainLedgerText).toContain("舆图、史册已入卷");
+    expect(mainLedgerText).toContain("提交后才由主卷回批");
+    expect(mainLedgerReader?.querySelector("[data-polish-game-boundary='s89-22-main-ledger-boundary']")).toBeTruthy();
+    expect(mainLedgerText).not.toMatch(/manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|\/mnt\/|\/home\//i);
     expect(screen.getAllByRole("link", { name: /舆图/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /人物/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /朝议/ }).length).toBeGreaterThan(0);
@@ -1113,6 +1124,11 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: "今日先做“破题一则”，写成短札交老师圈点。"
     });
+    const mainLedgerReader = document.querySelector("[data-polish-game='s89-22-main-ledger-reader']");
+    const mainLedgerText = mainLedgerReader?.textContent || "";
+    expect(mainLedgerText).toContain("已有本地草稿");
+    expect(mainLedgerText).toContain("来处：案头摘录");
+    expect(mainLedgerText).not.toMatch(/manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs/i);
     fireEvent.click(screen.getByRole("button", { name: "请老师改文" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",

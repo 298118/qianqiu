@@ -46,6 +46,7 @@ function stripSafeGuardPatterns(source) {
     .replace(/const unsafeArchiveFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeMapTextFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeAiSettingsFragments[\s\S]*?\] as const;\r?\n/, "")
+    .replace(/const unsafeGameShellFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeMagistrateFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeOfficialMinisterFragments[\s\S]*?\] as const;\r?\n/, "")
     .replace(/const unsafeClientApiPathPatterns = Object\.freeze\(\[[\s\S]*?\]\);\r?\n/, "");
@@ -1612,6 +1613,42 @@ test("S89.21 map situation reader stays player-facing and draft-only", () => {
     mapPageWithoutGuard,
     /provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
   );
+});
+
+test("S89.22 main ledger reader stays player-facing and draft-status-only", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = gamePageSource.indexOf('data-polish-game="s89-22-main-ledger-reader"');
+  const readerEnd = gamePageSource.indexOf("<p>主卷只读玩家已见", readerStart);
+  const readerBlock = readerStart >= 0 && readerEnd > readerStart
+    ? gamePageSource.slice(readerStart, readerEnd)
+    : "";
+  const gamePageWithoutGuard = stripSafeGuardPatterns(gamePageSource);
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.match(gamePageSource, /data-polish-game="s89-22-main-ledger-reader"/);
+  assert.match(gamePageSource, /data-polish-game-boundary="s89-22-main-ledger-boundary"/);
+  assert.match(gamePageSource, /getActionDraftSourceLabel/);
+  assert.match(gamePageSource, /getSafeViewReading/);
+  assert.match(gamePageSource, /本旬行止笺/);
+  assert.match(gamePageSource, /本卷取材：已载/);
+  assert.match(gamePageSource, /暂无草稿/);
+  assert.match(gamePageSource, /已有本地草稿/);
+  assert.match(gamePageSource, /提交后才由主卷回批/);
+  assert.match(gamePageSource, /本页不直接结算资源、关系、经济、官职、考试、地图行动或未公开事实/);
+  assert.match(gamePageSource, /manual: "手写稿"/);
+  assert.match(gamePageSource, /"map-runtime": "舆图摘录"/);
+  assert.match(gamePageSource, /"role-surface": "案头摘录"/);
+  assert.match(gamePageSource, /"archive-view": "史册摘录"/);
+  assert.match(appTestSource, /s89-22-main-ledger-reader/);
+  assert.match(appTestSource, /来处：案头摘录/);
+  assert.match(clientSmokeSource, /S89\.22 main ledger/);
+  assert.doesNotMatch(styleSource, /s89-22|data-polish-game/);
+  assert.doesNotMatch(readerBlock, /activeActionDraft\?\.text|activeActionDraft\.text/);
+  assert.doesNotMatch(readerBlock, /manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload/);
+  assert.doesNotMatch(gamePageWithoutGuard, /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/);
 });
 
 test("S89.12 map filter surface is player-facing and display-only", () => {
