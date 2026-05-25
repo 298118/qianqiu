@@ -195,6 +195,7 @@ function DrawerHost({ activeDrawer }: { readonly activeDrawer: DrawerSurface }) 
         tabIndex={-1}
         data-overlay-kind="drawer"
         data-polish-overlay="s89-5-drawer-mica"
+        data-polish-depth="s89-25-liquid-glass"
       >
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭抽屉" onClick={closeDrawer}>
           <X size={18} aria-hidden="true" />
@@ -527,6 +528,7 @@ function ModalHost({ activeModal }: { readonly activeModal: ModalSurface }) {
         tabIndex={-1}
         data-overlay-kind="modal"
         data-polish-overlay="s89-5-modal-paper"
+        data-polish-depth="s89-25-liquid-glass"
       >
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭弹窗" onClick={closeModal}>
           <X size={18} aria-hidden="true" />
@@ -576,6 +578,7 @@ function PortraitViewerHost() {
         data-portrait-viewer="true"
         data-overlay-kind="portrait"
         data-polish-overlay="s89-5-portrait-gallery"
+        data-polish-depth="s89-25-liquid-glass"
         data-polish-portrait="s89-8-life-scroll"
       >
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭高清立绘" onClick={closePortraitViewer}>
@@ -1076,6 +1079,7 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
         tabIndex={-1}
         data-overlay-kind="surface"
         data-polish-overlay="s89-5-surface-paper"
+        data-polish-depth="s89-25-liquid-glass"
       >
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭专题" onClick={closeSurface}>
           <X size={18} aria-hidden="true" />

@@ -2261,6 +2261,25 @@ test("S89.24 CSS duplicate guard keeps polish budget buffer", () => {
   );
 });
 
+test("S89.25 overlay glass polish stays shared and safe", () => {
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const runtimeCombined = stripSafeGuardPatterns(`${surfaceHostSource}\n${styleSource}`);
+
+  assert.ok(styleSource.length < 129_300);
+  assert.match(surfaceHostSource, /data-polish-depth="s89-25-liquid-glass"/);
+  assert.match(styleSource, /\.drawerHost\[data-polish-depth="s89-25-liquid-glass"\]/);
+  assert.match(styleSource, /\.modalPanel\[data-polish-depth="s89-25-liquid-glass"\]/);
+  assert.match(styleSource, /backdrop-filter: blur\(12px\) saturate\(1\.08\)/);
+  assert.match(clientSmokeSource, /s89-25-liquid-glass/);
+  assert.match(clientSmokeSource, /drawer lacked S89\.25 glass blur/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|hiddenNotes|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S74.7 client smoke verifies default UI start and safe route recovery", () => {
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const appShellSource = readText("client/src/components/AppShell.tsx");

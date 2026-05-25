@@ -883,6 +883,7 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
         backdropFilter: style.backdropFilter || style.webkitBackdropFilter || "",
         backgroundImage: style.backgroundImage,
         boxShadow: style.boxShadow,
+        polishDepth: element.getAttribute("data-polish-depth") || "",
         opacity: style.opacity,
         transform: style.transform,
         transitionDuration: style.transitionDuration
@@ -949,6 +950,10 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
   if (!snapshot.inkboxButtonSheen?.backgroundImage.includes("linear-gradient")) failures.push("inkbox button lacked sheen pseudo material");
   if (!snapshot.inkboxButtonSeal?.backgroundImage || snapshot.inkboxButtonSeal.backgroundImage === "none") failures.push("inkbox button lacked red seal pseudo material");
   if (expected.drawer && !snapshot.drawer) failures.push("open drawer lacked S89.5 overlay marker");
+  if (expected.drawer && snapshot.drawer?.polishDepth !== "s89-25-liquid-glass") {
+    failures.push(`drawer liquid glass marker was ${snapshot.drawer?.polishDepth}`);
+  }
+  if (expected.drawer && !snapshot.drawer?.backdropFilter.includes("blur")) failures.push("drawer lacked S89.25 glass blur");
   if (expected.drawer && snapshot.shellMotion !== "reduced" && snapshot.drawer?.animationName !== "s895D") {
     failures.push(`drawer animation was ${snapshot.drawer?.animationName}`);
   }
@@ -959,6 +964,10 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
     failures.push(`reduced drawer animation was ${snapshot.drawer.animationName}`);
   }
   if (expected.modal && !snapshot.modal) failures.push("open modal/surface lacked S89.5 overlay marker");
+  if (expected.modal && snapshot.modal?.polishDepth !== "s89-25-liquid-glass") {
+    failures.push(`modal/surface liquid glass marker was ${snapshot.modal?.polishDepth}`);
+  }
+  if (expected.modal && !snapshot.modal?.backdropFilter.includes("blur")) failures.push("modal/surface lacked S89.25 glass blur");
   if (expected.map && (!snapshot.mapSurface || !snapshot.mapLedger || snapshot.mapLayerCount < 3)) {
     failures.push(`map polish hooks incomplete: ${JSON.stringify({ mapSurface: snapshot.mapSurface, mapLedger: Boolean(snapshot.mapLedger), mapLayerCount: snapshot.mapLayerCount })}`);
   }
@@ -973,6 +982,9 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
     failures.push(`portrait polish hooks incomplete: ${JSON.stringify({ portraitFrameCount: snapshot.portraitFrameCount, portraitZoomCount: snapshot.portraitZoomCount })}`);
   }
   if (expected.portraitViewer && !snapshot.portraitViewer) failures.push("portrait viewer lacked S89.5 overlay marker");
+  if (expected.portraitViewer && snapshot.portraitViewer?.polishDepth !== "s89-25-liquid-glass") {
+    failures.push(`portrait viewer liquid glass marker was ${snapshot.portraitViewer?.polishDepth}`);
+  }
   if (expected.settings && (!snapshot.settingsSurface || snapshot.settingsCardCount !== 4)) {
     failures.push(`settings polish hooks incomplete: ${JSON.stringify({ settingsSurface: snapshot.settingsSurface, settingsCardCount: snapshot.settingsCardCount })}`);
   }
