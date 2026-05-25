@@ -85,7 +85,7 @@ export function SettingsPage() {
             <div>
               <h2>{card.title}</h2>
               <p>{card.text}</p>
-              <div className="settingsDirectoryBadges" aria-label={`${card.title}章法`}>
+              <div className="settingsDirectoryBadges peopleMeta" aria-label={`${card.title}章法`}>
                 {card.badges.map((badge) => <span key={badge}>{badge}</span>)}
               </div>
             </div>

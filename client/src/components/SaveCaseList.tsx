@@ -2,20 +2,12 @@ import { Link } from "react-router";
 import type { ReactNode } from "react";
 import type { SaveMetadata } from "../api";
 import { isRunnableSessionId } from "../routes/sessionId";
+import { getPlayerIdentityLabel } from "../text/playerLabels";
 
 const tenDayLabels: Record<number, string> = {
   1: "上旬",
   2: "中旬",
   3: "下旬"
-};
-
-const roleLabels: Record<string, string> = {
-  scholar: "书生",
-  official: "入仕官员",
-  emperor: "皇帝",
-  minister: "大臣",
-  general: "将领",
-  magistrate: "县令"
 };
 
 const unsafeSaveTextPattern = /\/api\/game\/state|\/api\/dev\/session-diagnostics|data[\\/]+sessions|raw\s*(audit|state|prompt)?|provider\s*payload|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|sk-[a-z0-9_-]+|\bTODO\b|\bFIXME\b|\bsmoke\b|\bartifacts?\b|\bS7[0-9](?:\.\d+)?\b|\bdebug\b|\bstub\b|\bplaceholder\b|fallback token|完整提示词|本地路径|密钥|验收|测试截图|开发注释|实现说明/i;
@@ -48,10 +40,7 @@ export function getSaveShortCode(save: SaveMetadata) {
 }
 
 export function getSaveIdentityLabel(save: SaveMetadata) {
-  return safeTextOrFallback(
-    save.officeTitle || save.palaceRank || save.examRank || save.roleLabel || (save.role ? roleLabels[save.role] || save.role : ""),
-    "身份未题"
-  );
+  return safeTextOrFallback(getPlayerIdentityLabel(save), "身份未题");
 }
 
 export function getSaveDateLabel(save: SaveMetadata) {

@@ -2450,10 +2450,11 @@ async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
       hasMarker: Boolean(document.querySelector("[data-polish-settings='s89-13-safe-summary']")),
       hasSourceLabel: text.includes("主卷载入") || text.includes("新卷开局") || text.includes("本旬回音") || text.includes("科场回音"),
       hasLoadedMaterials: text.includes("已载材料"),
+      rawRoleTerms: text.match(/\b(?:scholar|official|general|minister|emperor|magistrate|local_official|junior_official|female_official)\b/gi) || [],
       hiddenTerms: text.match(/player-state|exam-submit|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|\/Users|\/private|tp-[a-z0-9_-]{6,}|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
     };
   });
-  if (!safeSummarySnapshot.hasMarker || !safeSummarySnapshot.hasSourceLabel || !safeSummarySnapshot.hasLoadedMaterials || safeSummarySnapshot.hiddenTerms.length) {
+  if (!safeSummarySnapshot.hasMarker || !safeSummarySnapshot.hasSourceLabel || !safeSummarySnapshot.hasLoadedMaterials || safeSummarySnapshot.rawRoleTerms.length || safeSummarySnapshot.hiddenTerms.length) {
     throw new Error(`S89.13 safe summary polish regressed: ${JSON.stringify(safeSummarySnapshot)}`);
   }
   await drawer.getByRole("button", { name: "关闭抽屉" }).click();
@@ -2534,10 +2535,11 @@ async function assertMobileInkbox(page, screenshotsDir) {
     return {
       hasMarker: Boolean(document.querySelector("[data-polish-settings='s89-13-safe-summary']")),
       hasLoadedMaterials: text.includes("已载材料"),
+      rawRoleTerms: text.match(/\b(?:scholar|official|general|minister|emperor|magistrate|local_official|junior_official|female_official)\b/gi) || [],
       unsafeText: text.match(/player-state|exam-submit|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|\/Users|\/private|tp-[a-z0-9_-]{6,}|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
     };
   });
-  if (!mobileSafeSummarySnapshot.hasMarker || !mobileSafeSummarySnapshot.hasLoadedMaterials || mobileSafeSummarySnapshot.unsafeText.length) {
+  if (!mobileSafeSummarySnapshot.hasMarker || !mobileSafeSummarySnapshot.hasLoadedMaterials || mobileSafeSummarySnapshot.rawRoleTerms.length || mobileSafeSummarySnapshot.unsafeText.length) {
     throw new Error(`S89.13 mobile safe summary incomplete: ${JSON.stringify(mobileSafeSummarySnapshot)}`);
   }
 

@@ -2306,7 +2306,7 @@ describe("S74.1 React client shell", () => {
       return new Response(JSON.stringify({
         source: "server_player_visible_state_projection",
         sessionId,
-        worldState: { player: { name: "顾衡", role: "scholar" } },
+        worldState: { player: { name: "顾衡", role: "official" } },
         aiSettingsView: { preset: "balanced" },
         aiControlAuditView: { summary: "bounded" }
       }), {
@@ -2337,6 +2337,9 @@ describe("S74.1 React client shell", () => {
     fireEvent.click(screen.getByRole("tab", { name: "摘要" }));
     expect(document.querySelector("[data-polish-settings='s89-13-safe-summary']")).toBeTruthy();
     expect(screen.getAllByText(/公开卷宗|案卷摘要/).length).toBeGreaterThan(0);
+    const safeSummaryPanel = document.querySelector("[data-polish-settings='s89-13-safe-summary']");
+    expect(safeSummaryPanel?.textContent || "").toContain("入仕官员");
+    expect(safeSummaryPanel?.textContent || "").not.toMatch(/\bofficial\b/);
     expect(screen.getByText("主卷载入")).toBeTruthy();
     expect(screen.getByText("已载材料")).toBeTruthy();
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|base URL|raw prompt|raw audit|provider payload|data\/sessions|player-state|exam-submit/i);

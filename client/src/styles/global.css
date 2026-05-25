@@ -3016,8 +3016,7 @@ li[data-draft-state="written"] {
 
 .mapEventList span,
 .mapEventList p,
-.mapEmptyLedger,
-.mapLayerSummary {
+.mapEmptyLedger {
   margin: 0;
   color: #604b38;
   line-height: 1.6;
@@ -3034,6 +3033,7 @@ li[data-draft-state="written"] {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px 10px;
+  margin: 0;
   min-width: 0;
 }
 
@@ -5212,12 +5212,6 @@ li[data-draft-state="written"] {
 .settingsDirectoryFooter p {
   color: #5e4a37;
   line-height: 1.65;
-}
-
-.settingsDirectoryBadges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
 }
 
 .settingsDirectoryCard .paperButton {

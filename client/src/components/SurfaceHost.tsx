@@ -9,6 +9,7 @@ import { surfaceRegistry } from "../surfaces/surfaceRegistry";
 import { useGameSessionStore } from "../state/gameSessionState";
 import type { DrawerSurface, InkboxTab, LocalSurface, ModalSurface, PortraitViewerProfile } from "../state/uiState";
 import { useUiStateStore } from "../state/uiState";
+import { getGameRoleLabel, getPlayerIdentityLabel } from "../text/playerLabels";
 import { rewritePlayerFacingWorldText } from "../text/worldText";
 import { Portrait } from "./Portrait";
 import { SaveCaseList } from "./SaveCaseList";
@@ -495,7 +496,7 @@ function safePayloadPlayerName(payload: ReturnType<typeof useUiStateStore.getSta
 }
 
 function safePayloadPlayerTitle(payload: ReturnType<typeof useUiStateStore.getState>["currentPlayerPayload"]) {
-  return payload?.player?.officeTitle || payload?.player?.examRank || payload?.player?.role || "身份未题";
+  return getPlayerIdentityLabel(payload?.player);
 }
 
 function safePayloadSourceLabel(source: string) {
@@ -547,7 +548,7 @@ function PortraitViewerHost() {
   const [imageFailed, setImageFailed] = useState(false);
   const portrait = viewer && registry ? registry.getPortrait(viewer.portraitRef) : null;
   const fallback = registry?.getFallback(portrait?.fallbackRef);
-  const label = viewer?.label || portrait?.roleLabel || portrait?.role || "人物立绘";
+  const label = viewer?.label || portraitRolePhrase(portrait) || "人物立绘";
   const imageSource = portrait?.path ?? null;
   const viewerProfile = normalizePortraitViewerProfile(viewer?.profile);
   const viewerCopy = buildPortraitViewerCopy(portrait, viewerProfile, label);
@@ -1220,10 +1221,10 @@ function buildNpcProfilePortraits(
     rows.push({
       id: "player",
       name: safeSurfaceText(player.name, "案主", 32),
-      identity: safeSurfaceText(player.officeTitle || player.examRank || player.role, "案主", 36),
+      identity: getPlayerIdentityLabel(player, "案主", 36),
       summary: "案主画像随当前案卷公开身份入谱，只作观画小传。",
       current: "案主当前身份见于公开案卷。",
-      tags: [safeSurfaceText(player.role, "案主", 24)].filter(Boolean),
+      tags: [getGameRoleLabel(player.role) || "案主"].filter(Boolean),
       portraitRef: playerPortraitRef
     });
   }

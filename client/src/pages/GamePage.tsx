@@ -12,6 +12,7 @@ import { routeCatalog } from "../routes/routeCatalog";
 import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore, type LocalSurface } from "../state/uiState";
+import { getPlayerIdentityLabel } from "../text/playerLabels";
 
 const unsafeGameShellFragments = [
   "/api/game/" + "state",
@@ -53,15 +54,6 @@ const unsafeGameShellFragments = [
   "私" + "档",
   "模型" + "原始"
 ] as const;
-
-const roleLabels: Record<string, string> = {
-  scholar: "书生",
-  official: "入仕官员",
-  emperor: "皇帝",
-  minister: "大臣",
-  general: "将领",
-  magistrate: "县令"
-};
 
 const sceneByRole: Record<string, { readonly title: string; readonly assetPath: string; readonly sceneKey: string; readonly note: string }> = {
   scholar: {
@@ -130,11 +122,7 @@ function safeGameShellText(value: unknown, fallback: string) {
 }
 
 function getIdentityLine(player: { readonly role?: string; readonly examRank?: string; readonly officeTitle?: string } | undefined | null) {
-  if (!player) return "身份未题";
-  return safeGameShellText(
-    player.officeTitle || player.examRank || (player.role ? roleLabels[player.role] || player.role : ""),
-    "身份未题"
-  );
+  return safeGameShellText(getPlayerIdentityLabel(player), "身份未题");
 }
 
 function getKnownRole(role: unknown) {

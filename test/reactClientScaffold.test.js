@@ -1396,7 +1396,7 @@ test("S89.13 inkbox settings polish stays player-facing and local", () => {
   assert.doesNotMatch(surfaceHostSource, /<dd>\{payload\.source\}<\/dd>/);
   assert.match(styleSource, /\.inkboxOverview/);
   assert.match(styleSource, /\.displayPreferenceLedger/);
-  assert.match(styleSource, /\.settingsDirectoryBadges/);
+  assert.match(settingsPageSource, /settingsDirectoryBadges peopleMeta/);
   assert.match(appTestSource, /s89-13-inkbox-overview/);
   assert.match(appTestSource, /主卷载入/);
   assert.match(clientSmokeSource, /S89\.13 display preference polish/);
@@ -1406,6 +1406,41 @@ test("S89.13 inkbox settings polish stays player-facing and local", () => {
     combined,
     /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|完整提示词|本地路径|密钥/
   );
+});
+
+test("S89.14 player identity labels stay Chinese and centralized", () => {
+  const playerLabelsSource = readText("client/src/text/playerLabels.ts");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const homePageSource = readText("client/src/pages/HomePage.tsx");
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
+  const saveCaseSource = readText("client/src/components/SaveCaseList.tsx");
+  const settingsPageSource = readText("client/src/pages/SettingsPage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const combined = `${surfaceHostSource}\n${homePageSource}\n${gamePageSource}\n${peoplePageSource}\n${saveCaseSource}`;
+
+  assert.match(playerLabelsSource, /export function getGameRoleLabel/);
+  assert.match(playerLabelsSource, /export function getPlayerIdentityLabel/);
+  assert.match(playerLabelsSource, /scholar:\s*"书生"/);
+  assert.match(playerLabelsSource, /junior_official:\s*"初入仕官员"/);
+  assert.match(playerLabelsSource, /const roleLabel = getGameRoleLabel\(clean\)/);
+  assert.match(playerLabelsSource, /if \(roleLabel\) return roleLabel/);
+  assert.match(playerLabelsSource, /return getGameRoleLabel\(player\.role\) \|\| fallback/);
+  assert.match(surfaceHostSource, /getPlayerIdentityLabel\(payload\?\.player\)/);
+  assert.match(surfaceHostSource, /getPlayerIdentityLabel\(player, "案主", 36\)/);
+  assert.match(surfaceHostSource, /getGameRoleLabel\(player\.role\) \|\| "案主"/);
+  assert.match(homePageSource, /getPlayerIdentityLabel\(payload\.player\)/);
+  assert.match(gamePageSource, /getPlayerIdentityLabel\(player\)/);
+  assert.match(peoplePageSource, /getPlayerIdentityLabel\(player, "身份未题", 40\)/);
+  assert.match(saveCaseSource, /getPlayerIdentityLabel\(save\)/);
+  assert.match(settingsPageSource, /settingsDirectoryBadges peopleMeta/);
+  assert.doesNotMatch(styleSource, /\.settingsDirectoryBadges\s*\{/);
+  assert.match(appTestSource, /入仕官员/);
+  assert.match(clientSmokeSource, /rawRoleTerms/);
+  assert.doesNotMatch(combined, /roleLabels\s*:/);
+  assert.doesNotMatch(combined, /\|\|\s*(?:player|payload\?\.player|portrait)\.role\b/);
 });
 
 test("S89.5 material polish stays frontend-only and reduced-motion aware", () => {

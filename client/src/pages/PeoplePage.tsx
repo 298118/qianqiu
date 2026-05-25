@@ -10,6 +10,7 @@ import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore, type PortraitViewerProfile } from "../state/uiState";
+import { getGameRoleLabel, getPlayerIdentityLabel } from "../text/playerLabels";
 import { rewritePlayerFacingWorldText } from "../text/worldText";
 
 const portraitPageSize = 8;
@@ -42,15 +43,6 @@ const unsafePeopleTextFragments = [
   "模型" + "原始"
 ] as const;
 const unsafePortraitRefTokenPattern = /(?:^|[-_])(raw|provider|prompt|hidden|private|key|path|secret|token|api|file|data|http)(?:$|[-_])/i;
-
-const roleLabels: Record<string, string> = {
-  scholar: "书生",
-  official: "入仕官员",
-  emperor: "皇帝",
-  minister: "大臣",
-  general: "将领",
-  magistrate: "县令"
-};
 
 const playerPortraitRoleByGameRole: Record<string, string> = {
   scholar: "scholar",
@@ -193,12 +185,7 @@ function getExistingPortraitRef(registry: AssetRegistry | null, portraitRef: unk
 }
 
 function getPlayerIdentity(player: PlayerSummary | undefined | null) {
-  if (!player) return "身份未题";
-  return safePeopleText(
-    player.officeTitle || player.examRank || (player.role ? roleLabels[player.role] || player.role : ""),
-    "身份未题",
-    40
-  );
+  return safePeopleText(getPlayerIdentityLabel(player, "身份未题", 40), "身份未题", 40);
 }
 
 function getPlayerPortraitRole(player: PlayerSummary | undefined | null) {
@@ -231,7 +218,7 @@ function buildPortraitProfile(options: {
 }
 
 function buildPlayerPortraitSummary(player: PlayerSummary | undefined | null, identity: string) {
-  const roleLabel = roleLabels[player?.role ?? ""] || identity || "本局人物";
+  const roleLabel = getGameRoleLabel(player?.role) || identity || "本局人物";
   return `案主本局画像据已审阅画卷与公开身份整理：以${roleLabel}入卷，读书、应考、入仕或任事经历随主卷回批逐步成篇。`;
 }
 
@@ -613,7 +600,7 @@ function buildPersonRows(
       summary: buildPlayerPortraitSummary(player, playerIdentity),
       current: `案主当前以${playerIdentity}见于公开案卷；下一步读书、应考、任事或交游仍随主卷回批推进。`,
       portraitRef: playerPortraitRef,
-      meta: ["案主", roleLabels[player.role ?? ""] || "本局人物"],
+      meta: ["案主", getGameRoleLabel(player.role) || "本局人物"],
       remastered: Boolean(registry?.getPortrait(playerPortraitRef)?.hasHighResOverride)
     });
   }

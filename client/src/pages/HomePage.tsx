@@ -10,6 +10,7 @@ import { Portrait } from "../components/Portrait";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 import { SaveCaseList } from "../components/SaveCaseList";
 import { isRunnableSessionId } from "../routes/sessionId";
+import { getGameRoleLabel, getPlayerIdentityLabel } from "../text/playerLabels";
 
 type ScholarFamilyBackground = "poor" | "modest" | "gentry";
 
@@ -35,15 +36,6 @@ const scholarFamilyOptions: readonly { value: ScholarFamilyBackground; label: st
   { value: "modest", label: "普通", text: "家境普通，尚能供其入学应试。" },
   { value: "gentry", label: "世家", text: "出身地方世家，族中旧望既是助力亦是牵累。" }
 ] as const;
-
-const roleLabels: Record<string, string> = {
-  scholar: "书生",
-  official: "入仕官员",
-  emperor: "皇帝",
-  minister: "大臣",
-  general: "将领",
-  magistrate: "县令"
-};
 
 const sourceLabels: Record<string, string> = {
   start: "新卷",
@@ -104,8 +96,7 @@ function getPlayerPortraitChoices(registry: AssetRegistry | null, role: GameRole
 type CurrentPlayerPayload = NonNullable<ReturnType<typeof useUiStateStore.getState>["currentPlayerPayload"]>;
 
 function getContinueIdentity(payload: CurrentPlayerPayload) {
-  const player = payload.player;
-  return safeHomeSummaryText(player?.officeTitle || player?.examRank || (player?.role ? roleLabels[player.role] || player.role : ""), "身份未题");
+  return getPlayerIdentityLabel(payload.player);
 }
 
 export function HomePage() {
@@ -340,7 +331,7 @@ export function HomePage() {
                       <Portrait
                         registry={assetRegistry}
                         portraitRef={portrait.portraitRef}
-                        label={portrait.roleLabel ?? portrait.role ?? "案主立绘"}
+                        label={portrait.roleLabel ?? (getGameRoleLabel(portrait.role) || "案主立绘")}
                       />
                       <span>{portrait.hasHighResOverride ? "高清重制" : "原图入谱"}</span>
                     </label>
