@@ -593,6 +593,7 @@ chore: update env example
 - S71：数据库玩法化、维护、安全检索和 redacted API 已完成并归档到 [DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md](DATABASE_GAMEPLAY_RESOLVER_ARCHIVE.md)；后续新步骤继续复用安全 projection、本地维护工具、snippet 搜索、玩家/诊断分层、proposal-only 工具边界和服务器 resolver 裁决。
 - S72：PixiJS 水墨地图已完成并归档到 [PIXIJS_INK_MAP_ARCHIVE.md](PIXIJS_INK_MAP_ARCHIVE.md)；后续前端只能复用 `mapRuntimeView` 安全投影和 S72 素材/manifest 边界，不得把显示坐标变成 prompt 或服务器裁决事实。
 - S73-S77：前端水墨重构已完成并归档，归档见 [FRONTEND_INK_REDESIGN_ARCHIVE.md](FRONTEND_INK_REDESIGN_ARCHIVE.md)，任务书源头见 [FRONTEND_INK_REDESIGN_ROADMAP.md](FRONTEND_INK_REDESIGN_ROADMAP.md)。S73 完成视觉资产、manifest、素材 QA 和全量立绘池，S74 完成 React/Vite/React Router 默认入口迁移，S75 完成首页与全局 shell，S76 完成身份/考试/放榜/独立舆图页/人物谱牒和专题 surface，S77 完成默认入口、浏览器、视觉、安全、性能、可访问性、归档和总验证。后续前端玩法应从新的小步骤继续，继续沿用 `portraitRef`、runtime manifest、资源预算、安全 projection 和服务器裁决边界。
+- S89.12：舆图筛选专题层体验 polish 已完成。`map-filter` 保持本地 `SurfaceHost` 专题层，不加入后端 `TopicSurfaceId`，不请求 topic surface 或 AI draft API；专题层只读展示卷上图层、筛看方法和候复边界，并用“回舆图勾选”返回舆图页。它不写草稿、不提交回合、不写浏览器存储或服务器状态，不把图层、画面坐标、人物锚点或 visual-only 后果变成行动事实。
 - S89.11：舆图全关图层空态与筛选交互 polish 已完成。React 舆图页在地点、驿路、近事三层全隐时显示“素绢空图”空态、侧栏可见线索摘要和“展开三层”恢复入口；运行时桥与 smoke/source canary 守住全隐标记、移动端无横向溢出、恢复后三层回归和玩家可见污染词。该步只改浏览器卷面显示与本地恢复交互，不新增后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；舆图坐标、layout、visual-only effect 和 NPC anchor 仍不能成为 prompt 或服务器裁决事实，舆图行动仍只写本地草稿并由服务器从当前安全 view 重建复核。
 
 - S74.0：依赖治理与迁移契约已完成，见 [FRONTEND_REACT_MIGRATION_CONTRACT.md](FRONTEND_REACT_MIGRATION_CONTRACT.md)。本步只安装 React/Vite 工具链并更新 package/lock 与文档，不创建 `client/`、不改 Express fallback、不替换当时的 `public/` 前端。

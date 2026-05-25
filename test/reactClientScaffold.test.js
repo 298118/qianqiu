@@ -1460,6 +1460,34 @@ test("S89.7 map interaction polish stays draft-only and safe", () => {
   );
 });
 
+test("S89.12 map filter surface is player-facing and display-only", () => {
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const surfaceRegistrySource = readText("client/src/surfaces/surfaceRegistry.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const combined = stripSafeGuardPatterns(`${surfaceHostSource}\n${surfaceRegistrySource}`);
+
+  assert.match(surfaceRegistrySource, /整理地点、驿路、近事、人物动向和后果追踪/);
+  assert.doesNotMatch(surfaceRegistrySource, /"map-filter"[\s\S]*draftText/);
+  assert.match(surfaceHostSource, /MapFilterSurfaceGuide/);
+  assert.match(surfaceHostSource, /data-polish-map-filter="s89-12-surface-guide"/);
+  assert.match(surfaceHostSource, /data-polish-map-surface="s89-12-filter-ledger"/);
+  assert.match(surfaceHostSource, /buildMapFilterSummary/);
+  assert.match(surfaceHostSource, /回舆图勾选/);
+  assert.match(surfaceHostSource, /只改浏览器卷面显示|只改舆图显示|不改变案卷事实/);
+  assert.match(appTestSource, /s89-12-surface-guide/);
+  assert.match(appTestSource, /回舆图勾选/);
+  assert.match(clientSmokeSource, /S89\.12 map filter surface/);
+  assert.match(clientSmokeSource, /s89-12-surface-guide/);
+  assert.match(clientSmokeSource, /s89-12-filter-ledger/);
+  assert.doesNotMatch(surfaceHostSource, /activeSurface === "map-filter"[\s\S]{0,240}requestTopicDraft/);
+  assert.doesNotMatch(surfaceHostSource, /activeSurface === "map-filter"[\s\S]{0,240}loadTopicSurface/);
+  assert.doesNotMatch(
+    combined,
+    /dangerouslySetInnerHTML|\/api\/game\/state|\/api\/dev\/session-diagnostics|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/
+  );
+});
+
 test("S76.8 ranking page renders server-owned ranking views without widening authority", () => {
   const rankingPageSource = readText("client/src/pages/RankingPage.tsx");
   const styleSource = readText("client/src/styles/global.css");

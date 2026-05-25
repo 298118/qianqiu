@@ -856,6 +856,9 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
   const npcProfilePortraits = activeSurface === "npc-profile"
     ? buildNpcProfilePortraits(registry, currentSession, currentSessionId)
     : [];
+  const mapFilterSummary = activeSurface === "map-filter"
+    ? buildMapFilterSummary(currentSession, currentSessionId)
+    : null;
 
   useEffect(() => {
     focusFirstControl(surfaceRef.current);
@@ -939,6 +942,7 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
   }
 
   function handleWriteDraft() {
+    if (activeSurface === "map-filter") return;
     const text = activeDraftText.trim() || entry.draftText || "";
     if (!text) return;
     const draftContext = buildTopicTurnDraftContext({
@@ -949,8 +953,8 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
       draftKind: activeDraftKind
     });
     setActionDraft({
-      source: activeSurface === "map-filter" ? "map-runtime" : "role-surface",
-      targetPage: activeSurface === "map-filter" ? "map" : "game",
+      source: "role-surface",
+      targetPage: "game",
       ...(draftContext ? { draftContext } : {}),
       text
     });
@@ -991,6 +995,7 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
         {activeSurface === "npc-profile" && registry && npcProfilePortraits.length ? (
           <NpcProfilePortraitStrip registry={registry} portraits={npcProfilePortraits} />
         ) : null}
+        {mapFilterSummary ? <MapFilterSurfaceGuide summary={mapFilterSummary} onClose={closeSurface} /> : null}
         {isTopicSurface(activeSurface) ? (
           <TopicSurfaceWorkbench
             activeSurface={activeSurface}
@@ -1033,6 +1038,20 @@ type NpcProfilePortraitRow = {
   readonly portraitRef: string;
 };
 
+type MapFilterLayerSummary = {
+  readonly id: string;
+  readonly label: string;
+  readonly countLabel: string;
+  readonly summary: string;
+};
+
+type MapFilterSummary = {
+  readonly layerCount: number;
+  readonly totalCues: number;
+  readonly layers: readonly MapFilterLayerSummary[];
+  readonly boundary: string;
+};
+
 const unsafeSurfaceTextFragments = [
   "/api/game/" + "state",
   "/api/dev/" + "session-diagnostics",
@@ -1054,7 +1073,15 @@ const unsafeSurfaceTextFragments = [
   "隐" + "藏",
   "私" + "档",
   "完整" + "清单",
-  "完整" + "提示词"
+  "完整" + "提示词",
+  "draft" + "Context",
+  "schema",
+  "manifest",
+  "server" + " adjudication",
+  "AI" + " read scope",
+  "proposal" + " boundary",
+  "resolver",
+  "safe" + " view"
 ] as const;
 const safeSurfacePortraitRefPattern = /^portrait-[a-z0-9][a-z0-9_-]{0,140}$/i;
 const unsafeSurfacePortraitRefTokenPattern = /(?:^|[-_])(raw|provider|prompt|hidden|private|key|path|secret|token|api|file|data|http)(?:$|[-_])/i;
@@ -1117,6 +1144,113 @@ function buildNpcProfilePortraits(
     });
   }
   return rows;
+}
+
+function buildMapFilterSummary(
+  session: ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+  currentSessionId: string | null
+): MapFilterSummary {
+  if (!session || !currentSessionId || session.sessionId !== currentSessionId) {
+    return {
+      layerCount: 0,
+      totalCues: 0,
+      layers: [],
+      boundary: "当前案卷尚未载入舆图材料；开卷后再按地点、驿路和近事筛看。"
+    };
+  }
+  const mapRuntimeView = session.mapRuntimeView;
+  const refCount = mapRuntimeView?.refs?.length ?? 0;
+  const routeCount = mapRuntimeView?.routes?.length ?? 0;
+  const eventCount = mapRuntimeView?.eventEffects?.length ?? 0;
+  const npcAnchorCount = mapRuntimeView?.npcActivityAnchors?.length ?? 0;
+  const consequenceCount = session.domainConsequenceView?.recentConsequences?.length ?? 0;
+  const layers: MapFilterLayerSummary[] = [
+    {
+      id: "places",
+      label: "地点",
+      countLabel: `${refCount} 处`,
+      summary: "府县、官署、贡院与任所等公开点位，用来辨识卷上方位。"
+    },
+    {
+      id: "routes",
+      label: "驿路",
+      countLabel: `${routeCount} 条`,
+      summary: "驿路、赴任、赶考与巡查线索，只提示可查方向。"
+    },
+    {
+      id: "events",
+      label: "近事",
+      countLabel: `${eventCount} 项`,
+      summary: "公开近事与领域余波，用来观察何处已有风声。"
+    },
+    {
+      id: "people",
+      label: "人物动向",
+      countLabel: `${npcAnchorCount} 条`,
+      summary: "人物活动只作视觉锚点，不代表真实行踪已定。"
+    },
+    {
+      id: "consequences",
+      label: "后果追踪",
+      countLabel: `${consequenceCount} 条`,
+      summary: "地方、军务、刑名或月账余波仍须回主卷候复。"
+    }
+  ];
+  return {
+    layerCount: layers.length,
+    totalCues: refCount + routeCount + eventCount + npcAnchorCount + consequenceCount,
+    layers,
+    boundary: "专题层只说明卷面筛法；勾选、隐藏与画面位置都不改变案卷事实。"
+  };
+}
+
+function MapFilterSurfaceGuide({ summary, onClose }: { readonly summary: MapFilterSummary; readonly onClose: () => void }) {
+  return (
+    <section
+      className="topicSurfaceLayout"
+      data-surface-id="map-filter"
+      data-polish-map-filter="s89-12-surface-guide"
+      data-polish-map-surface="s89-12-filter-ledger"
+      aria-label="舆图筛选说明"
+    >
+      <section className="topicSurfaceColumn" aria-label="舆图图层">
+        <div className="topicSurfaceColumnHeader">
+          <h3>卷上图层</h3>
+          <span>{summary.totalCues} 线</span>
+        </div>
+        <div className="topicSurfaceItems">
+          {summary.layers.map((layer) => (
+            <article className="topicSurfaceItem" key={layer.id}>
+              <div>
+                <strong>{layer.label}</strong>
+                <span>{layer.countLabel}</span>
+              </div>
+              <p>{layer.summary}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+      <section className="topicSurfaceColumn" aria-label="筛看方法">
+        <div className="topicSurfaceColumnHeader">
+          <h3>筛看方法</h3>
+          <span>{summary.layerCount} 层</span>
+        </div>
+        <p className="topicSurfaceMeta">在舆图页勾选地点、驿路和近事，可把卷面收成单层、双层或素绢空图。</p>
+        <p className="topicSurfaceMeta">三层全隐时，地图与局势簿只保留恢复入口；展开三层后，点位、路线和近事即回到卷上。</p>
+      </section>
+      <section className="topicSurfaceColumn" aria-label="候复边界">
+        <div className="topicSurfaceColumnHeader">
+          <h3>候复边界</h3>
+          <span>只读</span>
+        </div>
+        <p className="topicSurfaceMeta">{summary.boundary}</p>
+        <p className="topicSurfaceMeta">若要据图行动，可回主卷另行呈上；真正后果仍候案卷回音。</p>
+        <button className="paperButton" type="button" onClick={onClose}>
+          回舆图勾选
+        </button>
+      </section>
+    </section>
+  );
 }
 
 function NpcProfilePortraitStrip({

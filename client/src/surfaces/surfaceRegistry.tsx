@@ -83,10 +83,9 @@ export const surfaceRegistry: Record<LocalSurface, SurfaceRegistryEntry> = {
     label: "舆图筛选",
     eyebrow: "舆图",
     title: "舆图筛选",
-    description: "此处预留地点、路线和事件图层筛选；当前只管理卷上显示，不影响案卷复核。",
-    dataSource: "取材：舆图地点、路线、公开近事和当前图层选择。",
-    emptyState: "若没有舆图材料，只显示舆图筛选占位，不推断坐标、路线真值、隐藏敌情或未公开地点。",
-    safetyNote: "舆图专题层只使用公开显示材料，不把画面坐标当作行军、查案或任免凭据。",
-    draftText: "沿舆图筛选出的驿路，查问近期案牍与民情。"
+    description: "整理地点、驿路、近事、人物动向和后果追踪的卷面筛法；只改舆图显示，不影响案卷事实。",
+    dataSource: "取材：舆图地点、驿路、公开近事、人物动向和后果追踪。",
+    emptyState: "若没有舆图材料，只显示舆图筛选说明，不推断路线真值、案卷未载敌情或未公开地点。",
+    safetyNote: "舆图专题层只使用公开显示材料，不把画面坐标当作行军、查案或任免凭据。"
   }
 };

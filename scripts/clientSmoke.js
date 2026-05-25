@@ -2983,6 +2983,29 @@ async function runClientSmoke(options = {}) {
     if (mapRuntime.forbiddenText.length) {
       throw new Error(`React map runtime leaked forbidden text: ${mapRuntime.forbiddenText.join(", ")}`);
     }
+    await page.getByRole("button", { name: "筛舆图" }).click();
+    await page.getByRole("dialog", { name: "舆图筛选" }).waitFor({ timeout: 10000 });
+    const mapFilterSurface = await page.evaluate(() => {
+      const dialog = document.querySelector(".localSurfacePanel");
+      const html = document.documentElement;
+      const text = dialog?.textContent || "";
+      return {
+        marker: dialog?.querySelector("[data-polish-map-filter]")?.getAttribute("data-polish-map-filter") || "",
+        ledgerMarker: dialog?.querySelector("[data-polish-map-surface]")?.getAttribute("data-polish-map-surface") || "",
+        hasLayerGuide: text.includes("卷上图层") && text.includes("人物动向") && text.includes("候复边界"),
+        hasReturnButton: text.includes("回舆图勾选"),
+        hasDraftWord: text.includes("草稿"),
+        hasMapDraftButton: text.includes("写入舆图草稿"),
+        hasWrongDraftButton: text.includes("写入奏折草稿"),
+        horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
+        forbiddenText: text.match(/数据来源|裁决边界|服务器裁决|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|resolver|safe view|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+      };
+    });
+    if (mapFilterSurface.marker !== "s89-12-surface-guide" || mapFilterSurface.ledgerMarker !== "s89-12-filter-ledger" || !mapFilterSurface.hasLayerGuide || !mapFilterSurface.hasReturnButton || mapFilterSurface.hasDraftWord || mapFilterSurface.hasMapDraftButton || mapFilterSurface.hasWrongDraftButton || mapFilterSurface.horizontalOverflow || mapFilterSurface.forbiddenText.length) {
+      throw new Error(`S89.12 map filter surface unsafe or incomplete: ${JSON.stringify(mapFilterSurface)}`);
+    }
+    await page.getByRole("button", { name: "关闭专题" }).click();
+    await page.getByRole("dialog", { name: "舆图筛选" }).waitFor({ state: "detached", timeout: 10000 });
     await assertS895MaterialFeedbackPolish(page, "S89.5 desktop map", { map: true });
     await assertCanvasHasInkPixels(page, ".inkMapRuntimeBridge canvas", "S77.3 desktop map runtime");
     const mapDraftButton = page.locator(".mapActionList button, .mapEventList button").first();
@@ -3465,6 +3488,26 @@ async function runClientSmoke(options = {}) {
       throw new Error(`S76.9 mobile map leaked forbidden text: ${mobileMap.forbiddenText.join(", ")}`);
     }
     await assertCanvasHasInkPixels(page, ".inkMapRuntimeBridge canvas", "S77.3 mobile map runtime");
+    await page.getByRole("button", { name: "筛舆图" }).click();
+    await page.getByRole("dialog", { name: "舆图筛选" }).waitFor({ timeout: 10000 });
+    const mobileMapFilterSurface = await page.evaluate(() => {
+      const dialog = document.querySelector(".localSurfacePanel");
+      const html = document.documentElement;
+      const text = dialog?.textContent || "";
+      return {
+        marker: dialog?.querySelector("[data-polish-map-filter]")?.getAttribute("data-polish-map-filter") || "",
+        ledgerMarker: dialog?.querySelector("[data-polish-map-surface]")?.getAttribute("data-polish-map-surface") || "",
+        hasLayerGuide: text.includes("卷上图层") && text.includes("筛看方法") && text.includes("回舆图勾选"),
+        hasDraftWord: text.includes("草稿"),
+        horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
+        forbiddenText: text.match(/数据来源|裁决边界|服务器裁决|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|resolver|safe view|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+      };
+    });
+    if (mobileMapFilterSurface.marker !== "s89-12-surface-guide" || mobileMapFilterSurface.ledgerMarker !== "s89-12-filter-ledger" || !mobileMapFilterSurface.hasLayerGuide || mobileMapFilterSurface.hasDraftWord || mobileMapFilterSurface.horizontalOverflow || mobileMapFilterSurface.forbiddenText.length) {
+      throw new Error(`S89.12 mobile map filter surface unsafe or overflowing: ${JSON.stringify(mobileMapFilterSurface)}`);
+    }
+    await page.getByRole("button", { name: "关闭专题" }).click();
+    await page.getByRole("dialog", { name: "舆图筛选" }).waitFor({ state: "detached", timeout: 10000 });
     await page.getByRole("checkbox", { name: "地点" }).uncheck();
     await page.getByRole("checkbox", { name: "驿路" }).uncheck();
     await page.getByRole("checkbox", { name: "近事" }).uncheck();

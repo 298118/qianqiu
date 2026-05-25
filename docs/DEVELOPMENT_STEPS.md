@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.12 | DONE | 舆图筛选专题层体验 polish | 承接 S89.11，点击“筛舆图”打开的专题层已改为只读舆图筛选说明，地点/驿路/近事/人物动向/后果追踪以世界内口径呈现为卷上图层、筛看方法和候复边界；`map-filter` 继续是本地 surface，不进入后端 topic surface，不请求专题 API 或 AI 拟稿，不写草稿，只提供“回舆图勾选”。范围限 React SurfaceHost/registry、客户端 smoke/source canary、前端测试和文档。不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；专题层不提交回合、不写服务器状态，图层与坐标仍只作浏览器显示。实现提交：待提交后回填。 |
 | S89.11 | DONE | 舆图全关图层空态与筛选交互 polish | 承接 S89.10，舆图地点/驿路/近事三层全隐时新增世界内“素绢空图”空态、一键恢复三层、图层状态标记、侧栏可见线索摘要、移动端长文本守门和 smoke/source canary；范围限 React 舆图页结构、CSS、客户端 smoke/source canary、前端测试和文档。不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；坐标与图层仍只作浏览器显示，行动只写本地草稿并等待服务器回合裁决。实现提交：`0285f36e`。 |
 | S89.10 | DONE | 史册信息密度与移动端长文本二轮 polish | 承接 S89.9，史册公开追踪区已从三列重排为近次归档主列 + 证据侧栏，侧栏叠放后果追踪和来函证据；补 `s89-10-chronicle-density` 标记、`ledger-rail` 布局守门、移动端长文本 smoke、玩家可见工程词清洗和 source canary。范围限 React 前端结构、CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖、素材、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；按钮仍只写本地草稿并等待服务器回合裁决。实现提交：`283b2c0a`。 |
 | S89.9 | DONE | 人物页与立绘查看器材质题签 polish | 承接 S89.8 和提交前复审建议，人物页谱牒、人物卡、人物工作台和高清立绘查看器题签格已补宣纸、朱线、绢帛、轻浮起与低动效降级材质；复用已审核 `paper-aged-silk-v1.webp` 和既有材质 token，不新增依赖、不新增素材、不改 runtime manifest 字段。范围限 React 前端标记、CSS、客户端 smoke/source canary、前端测试、预算校准和文档；不新增后端 API/schema，不写浏览器存储、URL、草稿、prompt、canonical state 或服务器状态，不扩大人物、交易、委派、关系、资源或隐藏信息裁决权。实现提交：`8a7654ee9c5b7daa1c6790859ee885795f95928c`。 |
@@ -142,7 +143,8 @@
 - 2026-05-25：S89.9 完成人物页与立绘查看器材质题签 polish。当前范围限 React 前端标记、CSS、客户端 smoke/source canary、前端测试、CSS 预算校准和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.10 完成史册信息密度与移动端长文本二轮 polish。当前范围限 React 前端结构、CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.11 完成舆图全关图层空态与筛选交互 polish。当前范围限 React 舆图页结构、CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.11 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.12 完成舆图筛选专题层体验 polish。当前范围限 React SurfaceHost/registry、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.12 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -224,6 +226,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.12 舆图筛选专题层体验 polish
+
+- 范围：`map-filter` 继续作为本地 `SurfaceHost` 专题层，不加入 `TopicSurfaceId`，不请求 `/api/game/topic-surface` 或 `/api/ai/topic-draft`；点击“筛舆图”后显示 `data-polish-map-filter="s89-12-surface-guide"` 与 `data-polish-map-surface="s89-12-filter-ledger"` 的只读舆图筛选说明。
+- 体验：专题层复用既有三栏 `.topicSurfaceLayout` 样式，不新增 CSS；“卷上图层”列展示地点、驿路、近事、人物动向和后果追踪数量与读法，“筛看方法”说明单层、双层和素绢空图，“候复边界”说明筛选只改卷面显示、后果仍候主卷回音。原通用“写入奏折草稿”从舆图筛选层移除，改为“回舆图勾选”关闭专题层。
+- 文案与安全：`surfaceRegistry` 的 `map-filter` 文案去掉“预留/占位”模板感，`safeSurfaceText` 补 `draftContext/schema/manifest/server adjudication/AI read scope/proposal boundary/resolver/safe view` 等工程词守门。专题层仍只说明公开显示材料，不把画面坐标、图层、人物锚点或 visual-only 后果变成行动事实。
+- Smoke/canary：`scripts/clientSmoke.js` 现检查桌面和移动舆图筛选专题层标记、卷上图层/候复边界、无错误草稿按钮、无横向溢出和禁词；`test/reactClientScaffold.test.js` 与 `App.test.tsx` 同步覆盖 `MapFilterSurfaceGuide`、`buildMapFilterSummary`、只读回舆图按钮、registry 无 `map-filter` draftText 和无 unsafe API/storage。
+- 边界：本步不新增依赖或素材，不改 runtime manifest、素材 manifest、后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式或服务器裁决；专题层不提交回合、不写浏览器存储、URL、prompt、canonical state 或服务器状态，也不生成地图行动草稿。
+- 验证：已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "opens court, archive, and map surfaces against the current route session" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "wraps the S72 map renderer with safe React action drafts" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client` 和 `npm run smoke:browser`。`npm run test:client` 本机再次命中 Vitest fork worker 启动超时，5 files / 124 tests 已通过，`client/src/api/qianqiuClient.test.ts` worker 未启动；已用串行池完整复核同一客户端套件。预算输出 `JS 610.7 KiB / CSS 99.4 KiB`；Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
+- 复审：开工只读子代理建议保留 `map-filter` 本地 surface、移除“写入奏折草稿”、复用现有专题样式、补工程词清洗和 smoke/source canary；本轮按建议实现。提交前只读复审已通过，未发现阻断问题；已按复审残余风险建议阻断 `map-filter` 写草稿分支，避免后续误加 draftText 后绕过只读边界。
+- 提交：实现提交待回填。
 
 ### 2026-05-25：S89.11 舆图全关图层空态与筛选交互 polish
 

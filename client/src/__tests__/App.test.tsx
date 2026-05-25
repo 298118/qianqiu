@@ -3399,6 +3399,14 @@ describe("S74.1 React client shell", () => {
     fireEvent.click(mapTrigger);
     const mapDialog = await screen.findByRole("dialog", { name: "舆图筛选" });
     expect(mapDialog.textContent || "").toContain("舆图地点");
+    expect(mapDialog.querySelector("[data-polish-map-filter='s89-12-surface-guide']")).toBeTruthy();
+    expect(mapDialog.textContent || "").toContain("卷上图层");
+    expect(mapDialog.textContent || "").toContain("人物动向");
+    expect(mapDialog.textContent || "").toContain("只改舆图显示，不影响案卷事实");
+    expect(mapDialog.textContent || "").toContain("回舆图勾选");
+    expect(mapDialog.textContent || "").not.toContain("草稿");
+    expect(mapDialog.textContent || "").not.toContain("写入舆图草稿");
+    expect(mapDialog.textContent || "").not.toContain("写入奏折草稿");
     expect(useUiStateStore.getState().currentSessionId).toBe(routeSessionId);
     expect(screen.getByRole("button", { name: "关闭专题" })).toBe(document.activeElement);
     fireEvent.keyDown(document, { key: "Escape" });
