@@ -2307,6 +2307,20 @@ test("S89.26 people docket reader stays player-facing and CSS-neutral", () => {
   );
 });
 
+test("S89.28 Vite vendor chunking protects the client JS budget", () => {
+  const viteConfigSource = readText("vite.config.mjs");
+  const budgetSource = readText("scripts/clientBuildBudget.js");
+
+  assert.match(viteConfigSource, /manualChunks\(id\)/);
+  assert.match(viteConfigSource, /vendor-react/);
+  assert.match(viteConfigSource, /vendor-state/);
+  assert.match(viteConfigSource, /vendor-icons/);
+  assert.match(viteConfigSource, /\[\\\\\/\]node_modules\[\\\\\/\]/);
+  assert.match(budgetSource, /maxSingleJsBytes:\s*650_000/);
+  assert.doesNotMatch(viteConfigSource, /React\.lazy|lazy:\s*\(/);
+  assert.doesNotMatch(viteConfigSource, /maxSingleJsBytes|650_000|850_000/);
+});
+
 test("S74.7 client smoke verifies default UI start and safe route recovery", () => {
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const appShellSource = readText("client/src/components/AppShell.tsx");
