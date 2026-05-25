@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.24 | DONE | 前端 CSS 重复规则折叠与预算缓冲 polish | 承接 S89.23 后单 CSS 产物只剩约 182 bytes 硬门余量的状态，已专项折叠 `client/src/styles/global.css` 中静态确认重复的舆图右侧簿、四列统计网格和书生 compact 卡片基础规则；不删除任何仍有 React/runtime 源码命中的 class，不触碰 `.portraitViewerCueGrid` 顺序覆盖依赖。`test/reactClientScaffold.test.js` 新增 S89.24 source canary，守住合并 selector 和 `global.css` 源码体积阈值。范围限全局 CSS、source canary 和文档；不新增依赖或素材，不改 React 组件行为、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或 hidden 信息。实现提交：待本轮提交。 |
 | S89.23 | DONE | 囊箧流转候批笺与移置候批读法 polish | 承接 S89.22 后 CSS 预算只剩极小余量的状态，已打磨 `/game/:sessionId/inventory` 囊箧页：新增带 `data-polish-inventory="s89-23-inventory-ledger-reader"` 的“流转候批笺”，把资源、资产、物件、凭证数量、可流转物件数、当前移置选择和候批边界整理为玩家可读状态；未获案卷回批前，不写成已入账、已移置、已成交或已影响关系。范围限 React `InventoryPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全囊箧、资源、资产、经济 trace 和 route-local 选择状态，不裁决资源扣减、物品转移、交易、赠予、借用、NPC 行动、经济、关系、考试、官职或 hidden 信息。实现提交：`73903bff`。 |
 | S89.22 | DONE | 主卷本旬行止笺与草稿状态读法 polish | 承接 S89.21 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId` 主卷右侧案头索引：新增带 `data-polish-game="s89-22-main-ledger-reader"` 的“本旬行止笺”，把已载公开卷宗数量、草稿有无、草稿来处和卷宗读法整理为玩家可读状态；草稿来源只显示“手写稿 / 案头摘录 / 舆图摘录 / 史册摘录 / 科举草稿”等中文标签，不显示 `manual`、`role-surface`、`map-runtime`、`archive-view` 或 `draftContext`。范围限 React `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route 状态和本地草稿状态，不展示草稿全文，不裁决资源、关系、交易、NPC 行动、经济、官职、考试、地图行动、婚姻、弹劾、定罪、背叛或 hidden 信息。实现提交：`1b085829`。 |
 | S89.21 | DONE | 舆图局势读法与行动线索 polish | 承接 S89.20 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId/map` 右侧舆图簿：新增“山河局势轴 / 本卷读法”，把公开图层显隐、最显著近事、人物视觉锚点、已裁决公开后果和可拟行动数整理为玩家可读的卷上读法；“据局势拟稿”只写本地 `map-runtime` 行动草稿，并继续携带当前安全 event/npc refs 作为待服务器重建复核的 hint，不读取或提交坐标、layout、renderer 画面层级、visual-only effect 或 raw/provider/prompt/path/key 字段。范围限 React `MapPage`、少量复用既有舆图摘要底座的 CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍不裁决地图行动、资源、身份、交易、NPC 行动、经济、考试、官职、关系或隐藏信息。实现提交：`36c88f2b`。 |
@@ -163,9 +164,10 @@
 - 2026-05-25：S89.19 完成设置与断卷状态读法 polish。当前范围限 React `SettingsPage` / `AiSettingsPanel` / `ErrorPage` / `NotFoundPage` / `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.20 完成前端 CSS 预算瘦身与材质变量清理。当前范围限全局 CSS、source canary 和文档；不新增浏览器裁决权，不改 React 组件行为、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.21 完成舆图局势读法与行动线索 polish。当前范围限 React `MapPage`、少量复用既有舆图摘要底座的 CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 2026-05-25：S89.24 完成前端 CSS 重复规则折叠与预算缓冲 polish。当前范围限全局 CSS、source canary 和文档；不删除仍有源码命中的 class，不新增浏览器裁决权，不改 React 组件行为、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.23 完成囊箧流转候批笺与移置候批读法 polish。当前范围限 React `InventoryPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.22 完成主卷本旬行止笺与草稿状态读法 polish。当前范围限 React `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.23 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.24 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -247,6 +249,15 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.24 前端 CSS 重复规则折叠与预算缓冲 polish
+
+- 范围：`client/src/styles/global.css` 合并静态确认重复的 `.mapActionDeck` / `.mapNpcActivityDeck`、`.mapActionList` / `.mapNpcActivityList`、四列统计网格和书生 compact 卡片底座声明；不删除任何仍有 React/runtime 源码命中的 class，不触碰 `.portraitViewerCueGrid` 的顺序覆盖依赖。
+- 安全边界：本步不新增后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；不新增依赖或素材，不改 React 组件行为。浏览器仍只消费安全 view、route/surface 状态和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、关系、考试、官职或 hidden 信息。
+- Smoke/canary：`test/reactClientScaffold.test.js` 新增 S89.24 source canary，要求 `global.css` 源码低于 129300 bytes，并守住舆图簿、四列统计网格和书生 compact 卡片的合并 selector，避免重复规则回涨。
+- 验证：当前已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（60 tests）、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、直接 `node scripts/clientSmoke.js`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。当前预算输出为 `JS 631.0 KiB / CSS 99.4 KiB / fonts 26288.4 KiB / client-assets 27018.8 KiB`；直接 browser smoke 首次 240s 外层限时被截断，420s 重跑通过。
+- 复审：开工只读子代理 Ramanujan 确认 394 个 CSS class token 均有 React/runtime 源码命中，不建议按未引用 class 删除；建议把 S89.24 收窄为 CSS 合并/去重复专项，并明确避开 `.portraitViewerCueGrid`。提交前只读复审通过，无阻断问题；非阻断建议指出 source canary 依赖 exact formatting 且 CSS 预算仍需谨慎，本轮接受该残余风险。
+- 提交：待本轮提交。
 
 ### 2026-05-25：S89.23 囊箧流转候批笺与移置候批读法 polish
 

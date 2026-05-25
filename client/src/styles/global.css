@@ -2167,7 +2167,11 @@ button:disabled:hover {
   font-weight: 900;
 }
 
-.roleCycleMetrics {
+.roleCycleMetrics,
+.mapHeroStats,
+.archiveStats,
+.npcFactGrid,
+.inventoryItemStats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
@@ -2386,7 +2390,8 @@ button:disabled:hover {
 }
 
 .scholarPlanSummary div,
-.scholarPlanTimeline li {
+.scholarPlanTimeline li,
+.scholarPanelCompactDl div {
   min-width: 0;
   border: 1px solid rgb(84 60 43 / .18);
   background: rgb(255 252 238 / .52);
@@ -2445,13 +2450,6 @@ button:disabled:hover {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin: 0;
-}
-
-.scholarPanelCompactDl div {
-  min-width: 0;
-  border: 1px solid rgb(84 60 43 / .18);
-  background: rgb(255 252 238 / .52);
-  padding: 7px 8px;
 }
 
 .scholarPanelPeopleList {
@@ -2806,13 +2804,6 @@ button:disabled:hover {
   overflow-wrap: anywhere;
 }
 
-.mapHeroStats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-}
-
 .mapHeroStats div {
   min-width: 0;
   border: 1px solid rgb(84 60 43 / .24);
@@ -2912,7 +2903,8 @@ button:disabled:hover {
   margin: 0;
 }
 
-.mapActionDeck {
+.mapActionDeck,
+.mapNpcActivityDeck {
   display: grid;
   gap: 10px;
   min-width: 0;
@@ -2920,12 +2912,14 @@ button:disabled:hover {
   padding-block: 12px;
 }
 
-.mapActionDeck h3 {
+.mapActionDeck h3,
+.mapNpcActivityDeck h3 {
   margin: 0;
   font-size: 1rem;
 }
 
-.mapActionList {
+.mapActionList,
+.mapNpcActivityList {
   display: grid;
   gap: 10px;
   margin: 0;
@@ -3131,27 +3125,6 @@ li[data-draft-state="written"] {
   min-height: 36px;
 }
 
-.mapNpcActivityDeck {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-  border-block: 1px solid rgb(84 60 43 / .16);
-  padding-block: 12px;
-}
-
-.mapNpcActivityDeck h3 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.mapNpcActivityList {
-  display: grid;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
 .mapNpcActivityList li {
   display: grid;
   gap: 7px;
@@ -3219,13 +3192,6 @@ li[data-draft-state="written"] {
 
 .archiveRouteHeader p {
   overflow-wrap: anywhere;
-}
-
-.archiveStats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
 }
 
 .archiveStats div {
@@ -3933,14 +3899,6 @@ li[data-draft-state="written"] {
 .inventoryTransferPanel select,
 .inventoryTransferPanel input {
   width: 100%;
-}
-
-.npcFactGrid,
-.inventoryItemStats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
 }
 
 .npcFactGrid div,

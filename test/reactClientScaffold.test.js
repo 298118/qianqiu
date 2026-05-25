@@ -2246,6 +2246,21 @@ test("S89.20 CSS budget guard keeps polish styles compact and material-backed", 
   assert.match(styleSource, /var\(--qq-material-seal-box\) center \/ cover no-repeat/);
 });
 
+test("S89.24 CSS duplicate guard keeps polish budget buffer", () => {
+  const styleSource = readText("client/src/styles/global.css");
+
+  assert.ok(styleSource.length < 129_300);
+  assert.match(styleSource, /\.mapActionDeck,\n\.mapNpcActivityDeck \{/);
+  assert.match(styleSource, /\.mapActionDeck h3,\n\.mapNpcActivityDeck h3 \{/);
+  assert.match(styleSource, /\.mapActionList,\n\.mapNpcActivityList \{/);
+  assert.match(styleSource, /\.roleCycleMetrics,\n\.mapHeroStats,\n\.archiveStats,\n\.npcFactGrid,\n\.inventoryItemStats \{/);
+  assert.match(styleSource, /\.scholarPlanSummary div,\n\.scholarPlanTimeline li,\n\.scholarPanelCompactDl div \{/);
+  assert.equal(
+    (styleSource.match(/grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);\n  gap: 8px;\n  margin: 0/g) || []).length,
+    1
+  );
+});
+
 test("S74.7 client smoke verifies default UI start and safe route recovery", () => {
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const appShellSource = readText("client/src/components/AppShell.tsx");
