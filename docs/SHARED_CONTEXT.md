@@ -77,7 +77,7 @@
 - `npm run test:client` 本机仍命中 Vitest fork worker 启动超时：4 files / 114 tests 已通过，`client/src/assets/assetRegistry.test.ts` 与 `client/src/api/qianqiuClient.test.ts` worker 未启动；已用 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1` 通过同一客户端套件（6 files / 129 tests）。
 - 已通过 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`；本轮未新增样式，最终预算输出为 `CSS 97.5 KiB`。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
 - 已通过 `npm run smoke:browser`；另以 `node scripts/clientSmoke.js --screenshots artifacts/browser-visual-matrix` 做直接浏览器验收，覆盖 S89.8 立绘查看器标记、画卷题签、三段式人物说明、runtime 画像路径、浏览器存储禁写和安全污染守门，并写出 `artifacts/browser-visual-matrix`。
-- 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。实现提交哈希待生成后回填到 `docs/DEVELOPMENT_STEPS.md`。
+- 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。实现提交 `2476a12c4d77e598b65ba74931361edb362e2b6c`；哈希回填为低风险纯文档改动，跳过子代理复审。
 
 ## Next Recommended Step
 

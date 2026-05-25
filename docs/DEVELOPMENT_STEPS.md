@@ -113,7 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
-| S89.8 | DONE | 高清立绘查看器画中所见 polish | 承接 S89.7，高清立绘查看器新增 `data-polish-portrait="s89-8-life-scroll"`，把已审阅 runtime 立绘元数据与人物页安全摘要整理成“画中所见 / 身世线索 / 眼下处境”三段式说明、画卷题签、衣饰、仪态和神采线索；人物页画像 profile 补案主经历线索与 NPC 公开近事。范围限 React 前端、客户端 smoke/source canary、前端测试和文档；不新增样式，不新增后端 API/schema，不调用模型生成小传，不写浏览器存储、URL、草稿、prompt、canonical state 或服务器状态；不读取完整 source manifest、本地路径、raw/provider/hidden 或未审核素材。实现提交：待本次提交生成后回填。 |
+| S89.8 | DONE | 高清立绘查看器画中所见 polish | 承接 S89.7，高清立绘查看器新增 `data-polish-portrait="s89-8-life-scroll"`，把已审阅 runtime 立绘元数据与人物页安全摘要整理成“画中所见 / 身世线索 / 眼下处境”三段式说明、画卷题签、衣饰、仪态和神采线索；人物页画像 profile 补案主经历线索与 NPC 公开近事。范围限 React 前端、客户端 smoke/source canary、前端测试和文档；不新增样式，不新增后端 API/schema，不调用模型生成小传，不写浏览器存储、URL、草稿、prompt、canonical state 或服务器状态；不读取完整 source manifest、本地路径、raw/provider/hidden 或未审核素材。实现提交：`2476a12c4d77e598b65ba74931361edb362e2b6c`。 |
 | S89.7 | DONE | 舆图交互与筛选提示 polish | 承接 S89.6，舆图页新增 `data-polish-map="s89-7-layer-tooltip"`、当前图层显隐摘要、tooltip 单点札记、tooltip 草稿已写入状态和移动端长文本守门；舆图清洗补 `/Users`、`/private`、常见 Unix 本地目录和 `tp-...` token 形态。范围限 React 前端、样式、客户端 smoke/source canary、前端测试和文档。地图 layout/坐标/tooltip/visual-only effect/NPC anchor 仍只作浏览器显示，行动草稿仍为 `map-runtime` 本地 hint，普通回合由服务器从当前安全 view 重建复核；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`b7bbeb04327f4d379dfd10729547e740958467d3`。 |
 | S89.6 | DONE | 高清立绘查看器人物小传与当前情况 polish | 承接 S89.5，点击高清立绘后查看器显示“观画印象”人物头、公开标签、外貌介绍、人物小传和当前情况；人物页画像 profile 补案主/名册/详情/谱牒当前情况，均只来自已审阅 runtime 画像元数据和人物页安全摘要。`scripts/clientSmoke.js` 与源码 canary 已覆盖 `s89-6-portrait-life` 标记、人物小传/公开近况文案、存储禁写和污染词守门；CSS 仅保留轻量结构样式并通过预算。未改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`d476d41d747afc6e650ed8a6fa5041b23d01c87c`。 |
 | S89.5 | DONE | React 全局材质、覆盖层过渡与交互反馈 polish | 主壳、右上角印匣、专题层 drawer/modal/surface、地图行动面板、高清立绘查看器与设置目录已补 S89.5 材质/覆盖层/交互反馈标记和低动效守门；舆图行动只增加本地“已写入草稿”反馈，不提交、不裁决、不扩大 `draftContext` 权限。`scripts/clientSmoke.js` 与源码 canary 已覆盖材质样式、覆盖层标记、地图草稿反馈、立绘查看器和设置目录安全污染守门。范围限 React 前端、样式、客户端 smoke/canary、前端测试和文档；未改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`b3237606ffa3abc7fbeb396d89c5c9eb8605f8f9`。 |
@@ -227,7 +227,7 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 边界：本步不新增样式，不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决；查看器仍只读已审核 `portraitRef` 的 runtime 主图路径、画像元数据和人物页安全 `PortraitViewerProfile`，不调用模型生成小传，不写浏览器存储、URL、草稿、prompt、canonical state 或服务器状态。
 - 验证：按第 6 节 S89.8 口径通过；`artifacts/browser-visual-matrix` 产物目录仅作本地 artifact，不提交。
 - 复审：提交前只读子代理复审通过，未发现阻断问题；非阻断建议为后续可给题签格补纸签/朱线/微边框样式。
-- 提交：实现提交待本次提交生成后回填。
+- 提交：实现提交 `2476a12c4d77e598b65ba74931361edb362e2b6c`；本次哈希回填仅修改本文件与 [SHARED_CONTEXT.md](SHARED_CONTEXT.md)，属于低风险纯文档改动，跳过子代理复审。
 
 ### 2026-05-24：S89.7 舆图交互与筛选提示 polish
 
