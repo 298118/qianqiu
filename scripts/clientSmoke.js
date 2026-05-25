@@ -3035,6 +3035,9 @@ async function runClientSmoke(options = {}) {
         polishMarker: document.querySelector(".mapFullScreen")?.getAttribute("data-polish-map") || "",
         layerSummary: document.querySelector(".mapLayerSummary")?.textContent || "",
         hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
+        situationMarker: document.querySelector("[data-polish-map-situation]")?.getAttribute("data-polish-map-situation") || "",
+        readingMarker: document.querySelector("[data-polish-map-reading]")?.getAttribute("data-polish-map-reading") || "",
+        situationText: document.querySelector("[data-polish-map-situation]")?.textContent || "",
         hasActionDeck: Boolean(document.querySelector(".mapActionDeck")),
         hasArchiveJump: [...document.querySelectorAll(".mapFullScreen a")].some((link) => (link.textContent || "").includes("入局势簿")),
         hasBoundary: (document.body.innerText || "").includes("地图显示坐标只用于画面排布"),
@@ -3048,6 +3051,9 @@ async function runClientSmoke(options = {}) {
     });
     if (!mapRuntime.hasFullScreen || !mapRuntime.hasLayerControls || !mapRuntime.hasSituationLedger || !mapRuntime.hasActionDeck || !mapRuntime.hasArchiveJump || !mapRuntime.hasBoundary || mapRuntime.polishMarker !== "s89-7-layer-tooltip") {
       throw new Error(`React map runtime missing S76.9 independent map shell: ${JSON.stringify(mapRuntime)}`);
+    }
+    if (mapRuntime.situationMarker !== "s89-21-situation-index" || mapRuntime.readingMarker !== "s89-21-situation-reader" || !/山河局势轴|本卷读法|据局势拟稿|不进入主卷裁决/.test(mapRuntime.situationText)) {
+      throw new Error(`S89.21 map situation index missing safe player-facing copy: ${JSON.stringify(mapRuntime)}`);
     }
     if (!/三层全开|筛选只改卷上显示/.test(mapRuntime.layerSummary)) {
       throw new Error(`S89.7 map layer summary missing safe player-facing copy: ${JSON.stringify(mapRuntime)}`);

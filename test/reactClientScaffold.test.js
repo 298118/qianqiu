@@ -1587,6 +1587,33 @@ test("S89.7 map interaction polish stays draft-only and safe", () => {
   );
 });
 
+test("S89.21 map situation reader stays player-facing and draft-only", () => {
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const mapPageWithoutGuard = stripSafeGuardPatterns(mapPageSource);
+
+  assert.match(mapPageSource, /data-polish-map-situation="s89-21-situation-index"/);
+  assert.match(mapPageSource, /data-polish-map-reading="s89-21-situation-reader"/);
+  assert.match(mapPageSource, /getMapSituationEntries/);
+  assert.match(mapPageSource, /draftFromMapSituation/);
+  assert.match(mapPageSource, /山河局势轴/);
+  assert.match(mapPageSource, /本卷读法/);
+  assert.match(mapPageSource, /局势轴只合读公开图层、人物锚点和后果追踪/);
+  assert.match(mapPageSource, /坐标、画面层级与视觉特效不进入主卷裁决/);
+  assert.match(styleSource, /\.mapSituationIndex/);
+  assert.match(styleSource, /\.mapSituationIndexList/);
+  assert.match(appTestSource, /s89-21-situation-reader/);
+  assert.match(appTestSource, /据舆图局势，先核/);
+  assert.match(clientSmokeSource, /S89\.21 map situation index/);
+  assert.doesNotMatch(mapPageWithoutGuard, /submitTurn|\/api\/game\/turn|qianqiuApi|localStorage|sessionStorage|dangerouslySetInnerHTML/);
+  assert.doesNotMatch(
+    mapPageWithoutGuard,
+    /provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.12 map filter surface is player-facing and display-only", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const surfaceRegistrySource = readText("client/src/surfaces/surfaceRegistry.tsx");

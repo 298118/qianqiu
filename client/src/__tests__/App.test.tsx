@@ -6373,9 +6373,33 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("草拟循贡院驿路")).toBeTruthy();
     expect(screen.getByText("公开近事")).toBeTruthy();
     expect(screen.getByText("科场近讯")).toBeTruthy();
+    expect(screen.getByText("山河局势轴")).toBeTruthy();
+    expect(screen.getByText("本卷读法")).toBeTruthy();
+    expect(screen.getByText("科场近讯 · 警势 78")).toBeTruthy();
+    expect(screen.getByText("边镇调粮余波 · 已记入后果追踪")).toBeTruthy();
+    expect(screen.getByText("2 条行动")).toBeTruthy();
     expect(screen.getByText("地点、驿路、近事三层全开；筛选只改卷上显示，不改变案卷事实。")).toBeTruthy();
     expect(screen.getByText(/已接入 2 处地点、1 条路线、1 项近事/)).toBeTruthy();
     expect(document.querySelector(".mapFullScreen")?.getAttribute("data-polish-map")).toBe("s89-7-layer-tooltip");
+    expect(document.querySelector("[data-polish-map-situation='s89-21-situation-index']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-map-reading='s89-21-situation-reader']")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "据局势拟稿" }));
+    expect(useUiStateStore.getState().actionDraft).toMatchObject({
+      source: "map-runtime",
+      targetPage: "game",
+      text: "据舆图局势，先核「科场近讯」相关地点、人物与公开后果，整理可查线索后回主卷呈上候复。",
+      draftContext: {
+        surfaceId: "map-runtime",
+        draftKind: "map_event_action",
+        sourceView: "mapRuntimeView",
+        evidenceRefs: ["eventArchiveView:exam-brief", "geo:exam-hall"],
+        sourceRefs: ["eventArchiveView:exam-brief"],
+        targetRefs: ["geo:exam-hall"],
+        requiresServerTurn: true,
+        status: "client_hint"
+      }
+    });
+    expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(/layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|C:\\|path|provider|raw/i);
     fireEvent.click(screen.getByRole("button", { name: "贡院" }));
     expect(screen.getAllByText("号舍灯火未歇。").length).toBeGreaterThan(0);
     expect(document.querySelector(".inkMapTooltip")?.getAttribute("data-polish-tooltip")).toBe("s89-7-map-note");

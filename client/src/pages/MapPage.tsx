@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router";
 import { useEffect, useMemo, useState } from "react";
 import type {
+  DomainConsequenceView,
   MapRuntimeActionDraft,
   MapRuntimeEventEffect,
   MapRuntimeNpcActivityAnchor,
@@ -31,6 +32,13 @@ type MapActionEntry = {
   readonly targetRef: string;
   readonly sourceRefs: readonly string[];
   readonly requiresServerTurn: boolean;
+};
+
+type MapSituationEntry = {
+  readonly id: string;
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
 };
 
 const mapLayerLabels: Record<MapLayerKey, string> = {
@@ -337,6 +345,71 @@ function getNpcActivityAnchors(view: MapRuntimeView | null | undefined) {
     .slice(0, 4);
 }
 
+function getVisibleDomainConsequences(view: DomainConsequenceView | null | undefined) {
+  return (view?.recentConsequences ?? [])
+    .filter((item) => mapDomainConsequenceSourceTypes.includes(item.sourceType as typeof mapDomainConsequenceSourceTypes[number]))
+    .map((item, index) => ({
+      id: safeMapPageText(item.id || item.sourceId || `map-domain-${index}`, `map-domain-${index}`, 80),
+      title: safeMapPageText(item.title || item.kindLabel || item.sourceLabel, "公开后果", 36),
+      kindLabel: safeMapPageText(item.kindLabel || item.sourceLabel, "后果追踪", 28),
+      statusLabel: safeMapPageText(item.statusLabel || item.status, "待续看", 28),
+      severity: Math.max(0, Math.min(100, Math.round(Number(item.severity) || 0)))
+    }))
+    .sort((a, b) => b.severity - a.severity);
+}
+
+function getMapSituationEntries({
+  activeLayerText,
+  allLayersHidden,
+  visibleMapEvents,
+  visibleNpcActivityAnchors,
+  visibleMapActionEntries,
+  visibleDomainConsequences
+}: {
+  readonly activeLayerText: string;
+  readonly allLayersHidden: boolean;
+  readonly visibleMapEvents: ReturnType<typeof getMapEvents>;
+  readonly visibleNpcActivityAnchors: ReturnType<typeof getNpcActivityAnchors>;
+  readonly visibleMapActionEntries: readonly MapActionEntry[];
+  readonly visibleDomainConsequences: ReturnType<typeof getVisibleDomainConsequences>;
+}): MapSituationEntry[] {
+  const topEvent = visibleMapEvents[0];
+  const topNpcActivity = visibleNpcActivityAnchors[0];
+  const topConsequence = visibleDomainConsequences[0];
+  return [
+    {
+      id: "layers",
+      label: "卷面",
+      value: allLayersHidden ? "素绢空图" : activeLayerText,
+      detail: allLayersHidden ? "三层暂收，只保留恢复入口。" : "图层只改眼前读法，不改案卷事实。"
+    },
+    {
+      id: "events",
+      label: "近事",
+      value: topEvent ? `${topEvent.label} · 警势 ${topEvent.severity}` : "暂无警势",
+      detail: topEvent ? `${topEvent.targetLabel}：${topEvent.summary}` : "可保留地点与驿路，待下一旬回音。"
+    },
+    {
+      id: "people",
+      label: "人物",
+      value: topNpcActivity ? `${topNpcActivity.label} · 可见度 ${topNpcActivity.severity}` : "暂无锚点",
+      detail: topNpcActivity ? `${topNpcActivity.targetLabel}：${topNpcActivity.summary}` : "人物动向只取公开来函、交游和地点线索。"
+    },
+    {
+      id: "consequence",
+      label: "后果",
+      value: topConsequence ? `${topConsequence.title} · ${topConsequence.statusLabel}` : "暂无后果",
+      detail: topConsequence ? `${topConsequence.kindLabel}；只作追踪线索。` : "案卷未载者不补造，后果仍候主卷回音。"
+    },
+    {
+      id: "drafts",
+      label: "可拟",
+      value: `${visibleMapActionEntries.length} 条行动`,
+      detail: visibleMapActionEntries.length ? "可写入主卷草稿，仍须呈上候复。" : "暂无可见舆图行动，可从单点札记或主卷落笔。"
+    }
+  ];
+}
+
 function joinMapLayerLabels(layers: readonly MapLayerKey[]) {
   return layers.length ? layers.map((layer) => mapLayerLabels[layer]).join("、") : "无";
 }
@@ -363,6 +436,7 @@ export function MapPage() {
   const mapEvents = useMemo(() => getMapEvents(mapRuntimeView), [mapRuntimeView]);
   const npcActivityAnchors = useMemo(() => getNpcActivityAnchors(mapRuntimeView), [mapRuntimeView]);
   const mapActionEntries = useMemo(() => getMapActionEntries(mapRuntimeView), [mapRuntimeView]);
+  const visibleDomainConsequences = useMemo(() => getVisibleDomainConsequences(domainConsequenceView), [domainConsequenceView]);
   const activeLayers = (Object.keys(visibleLayers) as MapLayerKey[]).filter((key) => visibleLayers[key]);
   const hiddenLayers = (Object.keys(visibleLayers) as MapLayerKey[]).filter((key) => !visibleLayers[key]);
   const activeLayerCount = activeLayers.length;
@@ -389,6 +463,14 @@ export function MapPage() {
   const visibleLayerDigest = allLayersHidden
     ? "暂无可见舆图线索"
     : `${visibleRefCount} 处地点 · ${visibleRouteCount} 条驿路 · ${visibleEventCount} 项近事`;
+  const mapSituationEntries = getMapSituationEntries({
+    activeLayerText,
+    allLayersHidden,
+    visibleMapEvents,
+    visibleNpcActivityAnchors,
+    visibleMapActionEntries,
+    visibleDomainConsequences
+  });
   const archiveHref = routeSessionSupported ? `/game/${sessionId}/archive` : "/";
   const gameHref = routeSessionSupported ? `/game/${sessionId}` : "/";
 
@@ -435,6 +517,22 @@ export function MapPage() {
     writeMapActionDraft(
       `据舆图公开近事，先查问「${eventItem.targetLabel}」附近的「${eventItem.label}」，整理人证、驿路与官府文书后再定本旬行动。`,
       buildMapDraftContext("map_event_action", [eventItem.targetRef], eventItem.sourceRefs, true)
+    );
+  }
+
+  function draftFromMapSituation() {
+    const topEvent = visibleMapEvents[0];
+    const topNpcActivity = visibleNpcActivityAnchors[0];
+    const title = topEvent?.label || topNpcActivity?.label || visibleDomainConsequences[0]?.title || "山河局势";
+    const targetRefs = [topEvent?.targetRef, topNpcActivity?.targetRef].filter(Boolean);
+    const sourceRefs = [
+      ...(topEvent?.sourceRefs ?? []),
+      ...(topNpcActivity?.sourceRefs ?? [])
+    ];
+    setLastWrittenMapDraftId("s89-21-map-situation");
+    writeMapActionDraft(
+      `据舆图局势，先核「${title}」相关地点、人物与公开后果，整理可查线索后回主卷呈上候复。`,
+      buildMapDraftContext("map_event_action", targetRefs, sourceRefs, true)
     );
   }
 
@@ -543,6 +641,40 @@ export function MapPage() {
                 展开三层
               </button>
             ) : null}
+          </section>
+          <section
+            className="mapVisibleLayerDigest mapSituationIndex"
+            aria-label="山河局势轴"
+            data-polish-map-situation="s89-21-situation-index"
+            data-polish-map-reading="s89-21-situation-reader"
+          >
+            <div className="mapSituationIndexHeader">
+              <div>
+                <p className="eyebrow">山河局势轴</p>
+                <h3>本卷读法</h3>
+              </div>
+              <button
+                className="paperButton"
+                type="button"
+                disabled={!routeSessionSupported || allLayersHidden}
+                data-draft-state={lastWrittenMapDraftId === "s89-21-map-situation" ? "written" : "idle"}
+                onClick={draftFromMapSituation}
+              >
+                据局势拟稿
+              </button>
+            </div>
+            <dl className="mapSituationIndexList">
+              {mapSituationEntries.map((entry) => (
+                <div key={entry.id}>
+                  <dt>{entry.label}</dt>
+                  <dd>
+                    <strong>{entry.value}</strong>
+                    <span>{entry.detail}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p className="mapSituationBoundary">局势轴只合读公开图层、人物锚点和后果追踪；坐标、画面层级与视觉特效不进入主卷裁决。</p>
           </section>
           <section className="mapActionDeck" aria-labelledby="map-action-title">
             <div>

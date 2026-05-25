@@ -3061,6 +3061,71 @@ li[data-draft-state="written"] {
   overflow-wrap: anywhere;
 }
 
+.mapSituationIndex {
+  border: 1px solid rgb(84 60 43 / .2);
+  gap: 10px;
+}
+
+.mapSituationIndexHeader {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mapSituationIndexHeader h3,
+.mapSituationIndexHeader p,
+.mapSituationBoundary {
+  margin: 0;
+}
+
+.mapSituationIndexList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.mapSituationIndexList div {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 8px;
+  border-left: 3px solid rgb(47 111 94 / .34);
+  background: rgb(255 252 238 / .5);
+  padding: 7px 8px;
+}
+
+.mapSituationIndexList dt {
+  color: #2f6f5e;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.mapSituationIndexList dd {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  min-width: 0;
+}
+
+.mapSituationIndexList strong,
+.mapSituationBoundary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mapSituationIndexList strong {
+  color: #4d2c1f;
+}
+
+.mapSituationIndexList span,
+.mapSituationBoundary {
+  color: #604b38;
+  font-size: 0.82rem;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
 .mapEventList .paperButton {
   justify-self: start;
   min-height: 36px;
