@@ -42,6 +42,17 @@ const unsafeRankingFragments = [
   "hid" + "den",
   "key",
   "path",
+  "draft" + "Context",
+  "schema",
+  "manifest",
+  "server adjudication",
+  "AI read scope",
+  "proposal boundary",
+  "safe view",
+  "resolver",
+  "source" + "Ref",
+  "related" + "Refs",
+  "scope" + "Refs",
   "state" + "Patch",
   "hidden" + "Notes",
   "hidden" + "Intent",
@@ -255,6 +266,32 @@ export function RankingPage() {
     `${playerName}已公开定榜。`,
     96
   );
+  const rankingCeremonyLedger = [
+    {
+      label: "张榜取材",
+      text: rows.length
+        ? `${examName}已张挂 ${rows.length} 条公开榜名。`
+        : routeSessionSupported
+          ? "榜文尚未张挂；本页不以荣誉摘要补成正榜。"
+          : unsupportedRouteMessage
+    },
+    {
+      label: "我名",
+      text: playerRankingEntry
+        ? `${playerRankingEntry.name}列${playerRankingEntry.honorTitle || playerRankingEntry.rankLabel || "公开榜名"}。`
+        : "未见案主榜行；同名榜名也不补作本人。"
+    },
+    {
+      label: "同年座师",
+      text: sameYearContacts.length || examinerContacts.length
+        ? `已公开同年 ${sameYearContacts.length} 人、座师考官 ${examinerContacts.length} 人。`
+        : "同年座师待榜后公开整理；本页不凭姓名或评语推断关系。"
+    },
+    {
+      label: "授官过渡",
+      text: appointmentHint
+    }
+  ] as const;
   const sceneAsset = useMemo(
     () => registry?.getAssets({ category: "scene", usage: "ranking_page", scene: "ranking_wall" }).at(0),
     [registry]
@@ -288,6 +325,7 @@ export function RankingPage() {
     <article
       className="rankingFullScreen routePanel"
       aria-labelledby="ranking-title"
+      data-polish-ranking="s89-18-ranking-ceremony-ledger"
       style={{
         "--ranking-hero-image": `url(${heroImagePath})`,
         "--ranking-notice-image": `url(${noticeImagePath})`,
@@ -356,6 +394,19 @@ export function RankingPage() {
           <aside ref={detailPanelRef} className="rankingDetailPanel" id="ranking-player-detail" aria-label="榜名详情" tabIndex={-1}>
             <p className="eyebrow">{selectedEntry?.isPlayer ? "我名在此" : "榜名细读"}</p>
             <h2>{selectedEntry?.name ?? playerName}</h2>
+            <section aria-label="放榜仪程索引" data-polish-ranking-ledger="s89-18-ranking-ceremony">
+              <p className="eyebrow">案头仪程</p>
+              <h3>放榜仪程</h3>
+              <dl className="surfaceSafetyList">
+                {rankingCeremonyLedger.map((item) => (
+                  <div key={item.label}>
+                    <dt>{item.label}</dt>
+                    <dd>{item.text}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="statusLine">榜文、评语、同年座师与授官提示都按公开案卷呈现；案卷未载者不补造。</p>
+            </section>
             <dl className="rankingDetailRail">
               <div>
                 <dt>名次</dt>
@@ -391,7 +442,7 @@ export function RankingPage() {
               )}
             </section>
             <section>
-              <h3>防弊检测</h3>
+              <h3>弥封复核</h3>
               {antiCheatFlags.length ? (
                 <ul className="rankingAuditList">
                   {antiCheatFlags.map((flag, index) => (
@@ -402,7 +453,7 @@ export function RankingPage() {
                   ))}
                 </ul>
               ) : (
-                <p>暂无公开防弊复核结果；待放榜后显示。</p>
+                <p>暂无公开弥封复核结果；待放榜后显示。</p>
               )}
             </section>
             <section>

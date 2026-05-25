@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.18 | DONE | 科举与皇榜仪式读法 polish | 承接 S89.17 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId/exam` 与 `/game/:sessionId/ranking`：科举页新增“科举仪程”案头索引，按取题启封、场内推进、交卷候批、候榜回音说明当前可做与候复边界；皇榜页新增“放榜仪程”案头索引，按张榜取材、我名、同年座师、授官过渡说明公开榜文读法，并把“防弊检测”玩家化为“弥封复核”。范围限 React `ExamPage` / `RankingPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不裁决取题、评分、舞弊、放榜、晋级、授官、同年座师关系、官职任免或隐藏信息；“拟行动”仍只写本地草稿，回主卷候批。实现提交：待回填。 |
 | S89.17 | DONE | 朝议专题目录与官署案头索引 polish | 承接 S89.16 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId/court` 朝议页，把六个专题入口整理为“官署案头索引”：每个专题展示卷宗取材、可拟草稿、候复边界和案卷未载不补造提示，入口仍保持唯一按钮并继续打开既有 `SurfaceHost` 专题层。范围限 React `CourtPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不递交回合、不裁决资源、身份、交易、NPC 行动、经济、考试、官职、任免、赏罚、定罪、战和、关系、婚姻、弹劾、背叛或隐藏信息。实现提交：`b9e23f11`。 |
 | S89.16 | DONE | 全局壳与基础控件交互反馈 polish | 承接 S89.15 后 CSS 预算仍紧的状态，已打磨顶部主导航、右上角印匣按钮、纸按钮/纸链接的材质、hover/focus/active/disabled/selected 反馈和低动效降级；同时移除 AppShell 内联临时视觉样式，改为 CSS 统一承载并保留可检测标记。范围限 React `AppShell`、全局 CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或隐藏信息。实现提交：`ad2cbab4`。 |
 | S89.15 | DONE | 来函与账解证据读法 polish | 承接 S89.14 CSS 预算风险和 S89.10/S88.7/S88.8 证据组件后续建议，集中打磨 `NpcFollowUpEvidenceSection` 与 `EconomyTraceSection` 的玩家可见读法、内部术语清洗和只读/草稿边界提示；人物页与史册页继续消费安全 follow-up evidence，人物/囊箧/主卷继续消费安全 economy trace。范围限 React 前端证据组件、相关 App 测试、客户端 smoke/source canary 和文档；未新增 CSS，复用既有 `.statusLine` / `.inventoryMiniCard` / `.peopleMeta` 等样式。不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或隐藏信息。实现提交：`99072f6e`。 |
@@ -153,8 +154,8 @@
 - 2026-05-25：S89.12 完成舆图筛选专题层体验 polish。当前范围限 React SurfaceHost/registry、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.15 启动来函与账解证据读法 polish。当前范围限 React 前端证据组件、人物/史册/囊箧/主卷既有消费路径、客户端 smoke/source canary、前端测试和文档；原则上不新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.16 完成全局壳与基础控件交互反馈 polish。当前范围限 React `AppShell`、全局 CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 2026-05-25：S89.17 完成朝议专题目录与官署案头索引 polish。当前范围限 React `CourtPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.17 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.18 完成科举与皇榜仪式读法 polish。当前范围限 React `ExamPage` / `RankingPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.18 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -236,6 +237,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.18 科举与皇榜仪式读法 polish
+
+- 范围：`ExamPage` 新增 `data-polish-exam="s89-18-exam-ritual-ledger"` 与 `data-polish-exam-ledger="s89-18-exam-ritual"`，在考场右栏整理“科举仪程”，按取题启封、场内推进、交卷候批和候榜回音说明当前案卷状态、草稿/交卷边界和候榜回音；`RankingPage` 新增 `data-polish-ranking="s89-18-ranking-ceremony-ledger"` 与 `data-polish-ranking-ledger="s89-18-ranking-ceremony"`，在榜名详情整理“放榜仪程”，按张榜取材、我名、同年座师和授官过渡说明公开榜文读法。
+- 体验：科举页的公开考试文本现在复用玩家化改写，过滤 `draftContext/schema/manifest/server adjudication/AI read scope/proposal boundary/safe view/resolver` 等工程词；“局部时间”改为“场内时辰”，“科举接口暂不可用”改为“科场回音暂不可用”。皇榜页把“防弊检测”改为“弥封复核”，并在榜文未张挂、未见案主榜行、同年座师未公开和授官提示待回批时用案卷内口径说明，不凭荣誉摘要、姓名、评语或同名榜行补造正榜。
+- CSS 预算：本步零新增 CSS，复用 `.examPreviewPanel`、`.surfaceSafetyList`、`.statusLine` 和既有皇榜/科举布局；最终预算输出为 `JS 621.2 KiB / CSS 99.8 KiB`。CSS 仍贴近硬门，后续新增视觉样式前应继续优先复用或瘦身。
+- Smoke/canary：`App.test.tsx` 的科举/皇榜用例新增 S89.18 marker、仪程索引文案、工程词禁词和重复仪式文案断言；`scripts/clientSmoke.js` 的 `assertExamFullScreen` / `assertRankingFullScreen` 守住 S89.18 marker、仪程文案和更严工程词；`test/reactClientScaffold.test.js` 新增 S89.18 source canary，并确认本步没有新增 S89.18 CSS 或回合提交入口。
+- 边界：本步只改 React `ExamPage` / `RankingPage`、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改 runtime manifest、素材 manifest、后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式或服务器裁决。浏览器仍只调用既有科举 API 或读取安全榜文 view，不裁决取题、评分、舞弊、放榜、晋级、授官、同年座师关系、官职任免或 hidden 事实；“拟行动”只写本地草稿，不调用 `/api/game/turn`。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（54 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "immersive exam page|ranking page" --pool=vmThreads --fileParallelism=false --maxWorkers=1`（2 tests）、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。`npm run test:client` 当前无断言失败，但复现既有 Vitest fork worker 启动超时：5 files / 126 tests 已通过，`Portrait.test.tsx` worker 未启动；已用串行池完整复核同一客户端套件。
+- 复审：开工只读子代理建议把 S89.18 收窄为科举与皇榜仪式读法，重点补 `safeExamText()` 玩家化改写、科举/皇榜 marker、工程词守门和“防弊检测”世界内文案；本轮按建议实现。提交前只读复审已通过，未发现阻断问题；非阻断建议指出 0 分评定边缘读法，本轮已改为按 `score !== null/undefined` 判断已有评定。
+- 提交：实现提交待回填。
 
 ### 2026-05-25：S89.17 朝议专题目录与官署案头索引 polish
 

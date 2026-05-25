@@ -1641,7 +1641,7 @@ test("S76.8 ranking page renders server-owned ranking views without widening aut
   assert.doesNotMatch(rankingPageSource, /buildHonorFallbackRows|index \+ 1/);
   assert.match(rankingPageSource, /rankingTopThree/);
   assert.match(rankingPageSource, /金榜名单/);
-  assert.match(rankingPageSource, /暂无公开防弊复核结果/);
+  assert.match(rankingPageSource, /暂无公开弥封复核结果/);
   assert.match(rankingPageSource, /本榜只录已经张挂的定榜结果/);
   assert.match(rankingPageSource, /不改名次、不补评分、不推断授官/);
   assert.match(styleSource, /rankingFullScreen/);
@@ -2056,6 +2056,42 @@ test("S89.17 court directory keeps topic entries player-facing and draft-only", 
   assert.doesNotMatch(styleSource, /s89-17|data-polish-court/);
   assert.doesNotMatch(
     courtPageSource,
+    /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver/
+  );
+});
+
+test("S89.18 exam and ranking ceremony ledgers stay player-facing and server-owned", () => {
+  const examPageSource = readText("client/src/pages/ExamPage.tsx");
+  const rankingPageSource = readText("client/src/pages/RankingPage.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+  const examWithoutGuard = examPageSource.replace(/const unsafeExamFragments[\s\S]*?\] as const;\r?\n/, "");
+  const rankingWithoutGuard = rankingPageSource.replace(/const unsafeRankingFragments[\s\S]*?\] as const;\r?\n/, "");
+
+  assert.match(examPageSource, /data-polish-exam="s89-18-exam-ritual-ledger"/);
+  assert.match(examPageSource, /data-polish-exam-ledger="s89-18-exam-ritual"/);
+  assert.match(examPageSource, /科举仪程/);
+  assert.match(examPageSource, /取题启封/);
+  assert.match(examPageSource, /场内推进/);
+  assert.match(examPageSource, /交卷候批/);
+  assert.match(examPageSource, /候榜回音/);
+  assert.match(examPageSource, /rewritePlayerFacingWorldText/);
+  assert.match(rankingPageSource, /data-polish-ranking="s89-18-ranking-ceremony-ledger"/);
+  assert.match(rankingPageSource, /data-polish-ranking-ledger="s89-18-ranking-ceremony"/);
+  assert.match(rankingPageSource, /放榜仪程/);
+  assert.match(rankingPageSource, /弥封复核/);
+  assert.match(rankingPageSource, /张榜取材/);
+  assert.match(rankingPageSource, /同年座师/);
+  assert.match(rankingPageSource, /授官过渡/);
+  assert.match(rankingPageSource, /案卷未载者不补造/);
+  assert.match(appTestSource, /s89-18-exam-ritual-ledger/);
+  assert.match(appTestSource, /s89-18-ranking-ceremony-ledger/);
+  assert.match(clientSmokeSource, /s89-18-exam-ritual/);
+  assert.match(clientSmokeSource, /s89-18-ranking-ceremony/);
+  assert.doesNotMatch(styleSource, /s89-18|data-polish-exam|data-polish-ranking/);
+  assert.doesNotMatch(
+    `${examWithoutGuard}\n${rankingWithoutGuard}`,
     /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver/
   );
 });

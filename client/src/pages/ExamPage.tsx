@@ -6,6 +6,7 @@ import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useUiStateStore } from "../state/uiState";
+import { rewritePlayerFacingWorldText } from "../text/worldText";
 
 const examLevels: { value: ExamLevel; label: string }[] = [
   { value: "child_exam", label: "童试" },
@@ -36,6 +37,17 @@ const unsafeExamFragments = [
   "hid" + "den",
   "key",
   "path",
+  "draft" + "Context",
+  "schema",
+  "manifest",
+  "server adjudication",
+  "AI read scope",
+  "proposal boundary",
+  "safe view",
+  "resolver",
+  "source" + "Ref",
+  "related" + "Refs",
+  "scope" + "Refs",
   "hidden" + "Notes",
   "hidden" + "Intent",
   "OPENAI" + "_API" + "_KEY",
@@ -62,7 +74,8 @@ function safeExamText(value: unknown, fallback: string, maxLength = 180) {
   const normalized = text.toLowerCase();
   if (/[a-z]:[\\/]/i.test(text) || /sk-[a-z0-9_-]{6,}/i.test(text)) return fallback;
   if (unsafeExamFragments.some((fragment) => normalized.includes(fragment.toLowerCase()))) return fallback;
-  return text.length > maxLength ? `${text.slice(0, maxLength)}……` : text;
+  const rewritten = rewritePlayerFacingWorldText(text);
+  return rewritten.length > maxLength ? `${rewritten.slice(0, maxLength)}……` : rewritten;
 }
 
 function countCjkAwareWords(text: string) {
@@ -233,14 +246,45 @@ export function ExamPage() {
   const wordCount = formatWordCountLabel(activeExamForSession?.wordCount);
   const draftState = essay.trim() ? "草稿已入卷，尚未交卷候批。" : "草稿未成篇。";
   const latestSubmitForSession = routeSessionSupported && lastExamResult?.sessionId === sessionId ? lastExamResult : null;
+  const hasLatestExamEvaluation = latestSubmitForSession?.score !== undefined && latestSubmitForSession?.score !== null;
   const safeRecentExamName = safeExamText(latestSubmitForSession?.examName, getExamLabel(latestSubmitForSession?.level), 64);
   const safeExamName = safeExamText(activeExamForSession?.examName, getExamLabel(visibleLevel), 64);
   const safeExamQuestion = safeExamText(activeExamForSession?.examQuestion, "试题已入卷。", 260);
   const safeDifficulty = safeExamText(activeExamForSession?.difficulty, "难度未署", 32);
   const safeSceneActionPreview = safeExamText(sceneAction, "尚无场内行动。", 80);
-  const safeError = safeExamText(routeError, "科举接口暂不可用。", 160);
+  const safeError = safeExamText(routeError, "科场回音暂不可用。", 160);
   const preparationPressure = getPreparationPressure(activeExamForSession);
   const procedure = getExamProcedure(activeExamForSession);
+  const examRitualLedger = [
+    {
+      label: "取题启封",
+      text: activeExamForSession
+        ? `${safeExamName}已启封，题目、要求与字数只按本案卷公开记录显示。`
+        : canCallSessionApi
+          ? `可按所选试别取题；当前候启${getExamLabel(level)}。`
+          : routeSessionSupported
+            ? "预览案卷只看考场章法，不启封题纸。"
+            : unsupportedRouteMessage
+    },
+    {
+      label: "场内推进",
+      text: activeExamForSession
+        ? `${procedure.phaseLabel}：${procedure.phaseFeedback?.publicSummary ?? "场内记录已入卷整理。"}`
+        : "未取题前不生成场内反馈。"
+    },
+    {
+      label: "交卷候批",
+      text: activeExamForSession
+        ? `${draftState} 交卷后仍候主卷评阅、复核与放榜。`
+        : "文章草稿留在本页，未启封题纸前不交卷。"
+    },
+    {
+      label: "候榜回音",
+      text: hasLatestExamEvaluation
+        ? `${safeRecentExamName}已有评定，可转皇榜查看公开榜文。`
+        : "尚无本案卷交卷评定；名次、同年与授官不在本页补造。"
+    }
+  ] as const;
 
   useEffect(() => {
     setLevel(defaultExamLevel);
@@ -280,7 +324,7 @@ export function ExamPage() {
   }
 
   return (
-    <article className="examFullScreen routePanel" aria-labelledby="exam-title">
+    <article className="examFullScreen routePanel" aria-labelledby="exam-title" data-polish-exam="s89-18-exam-ritual-ledger">
       <section className="examHero" style={{ "--exam-hero-image": `url(${heroImagePath})` } as CSSProperties}>
         <div className="examHeroBackdrop" aria-hidden="true" />
         <div className="examHeroCopy">
@@ -289,13 +333,13 @@ export function ExamPage() {
           <h2>{stage.place}</h2>
           <p>卷帘垂下，灯影照卷。取题、推进考场与交卷都须按当前案卷流程呈递。</p>
         </div>
-        <dl className="examStageRail" aria-label="考试阶段与局部时间">
+        <dl className="examStageRail" aria-label="考试阶段与场内时辰">
           <div>
             <dt>考试阶段</dt>
             <dd>{stage.phase}</dd>
           </div>
           <div>
-            <dt>局部时间</dt>
+            <dt>场内时辰</dt>
             <dd>{stage.clock}</dd>
           </div>
           <div>
@@ -376,6 +420,20 @@ export function ExamPage() {
         </main>
 
         <aside className="examSideColumn" aria-label="考场记录">
+          <section className="examPreviewPanel" aria-label="科举仪程索引" data-polish-exam-ledger="s89-18-exam-ritual">
+            <p className="eyebrow">案头仪程</p>
+            <h2>科举仪程</h2>
+            <dl className="surfaceSafetyList">
+              {examRitualLedger.map((item) => (
+                <div key={item.label}>
+                  <dt>{item.label}</dt>
+                  <dd>{item.text}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="statusLine">场内反馈只作案卷公开记录；科名、舞弊、晋级与授官仍候主卷回批。</p>
+          </section>
+
           <section className="examRecordPanel">
             <p className="eyebrow">场内记录</p>
             <ul className="examRecordList">
@@ -431,7 +489,7 @@ export function ExamPage() {
 
           <section className="examRecentSubmitPanel" aria-label="最近交卷提示">
             <p className="eyebrow">最近交卷</p>
-            <p>{latestSubmitForSession?.score ? `${safeRecentExamName} 已有评定，可入皇榜细看。` : "尚无本案卷交卷评定。"}</p>
+            <p>{hasLatestExamEvaluation ? `${safeRecentExamName} 已有评定，可入皇榜细看。` : "尚无本案卷交卷评定。"}</p>
           </section>
 
           {procedure.phaseFeedback || procedure.incidents.length ? (
@@ -483,7 +541,7 @@ export function ExamPage() {
         </aside>
       </div>
 
-      <section className="examSafetyBoundary" aria-label="科举安全边界">
+      <section className="examSafetyBoundary" aria-label="科举候复边界">
         <p>
           交卷、评分、舞弊、放榜、晋级和授官都回主卷定夺；本页只呈现已公开的考试快照与考场记录。
         </p>

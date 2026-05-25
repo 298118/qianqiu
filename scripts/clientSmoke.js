@@ -1702,6 +1702,9 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
       expectedPath: `/game/${id}/exam`,
       hasHero: Boolean(hero),
       hasRail: Boolean(rail),
+      polishMarker: shell?.getAttribute("data-polish-exam") || "",
+      hasRitualLedger: Boolean(document.querySelector('[data-polish-exam-ledger="s89-18-exam-ritual"]')),
+      hasRitualCopy: text.includes("科举仪程") && text.includes("取题启封") && text.includes("场内推进") && text.includes("交卷候批") && text.includes("候榜回音"),
       hasQuestionPanel: Boolean(document.querySelector(".examQuestionPanel")),
       hasSafetyBoundary: text.includes("交卷、评分、舞弊、放榜、晋级和授官都回主卷定夺"),
       hasMainGameShell: Boolean(document.querySelector(".gameCommandBar") || document.querySelector(".gameMainDeck") || document.querySelector(".memorialComposer")),
@@ -1715,6 +1718,8 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   if (initialSnapshot.path !== initialSnapshot.expectedPath) failures.push(`path was ${initialSnapshot.path}`);
   if (!initialSnapshot.hasHero) failures.push("missing exam hero");
   if (!initialSnapshot.hasRail) failures.push("missing exam stage rail");
+  if (initialSnapshot.polishMarker !== "s89-18-exam-ritual-ledger") failures.push(`missing S89.18 exam polish marker: ${initialSnapshot.polishMarker}`);
+  if (!initialSnapshot.hasRitualLedger || !initialSnapshot.hasRitualCopy) failures.push("missing S89.18 exam ritual ledger copy");
   if (!initialSnapshot.hasQuestionPanel) failures.push("missing question panel");
   if (!initialSnapshot.hasSafetyBoundary) failures.push("missing server-owned exam boundary");
   if (initialSnapshot.hasMainGameShell) failures.push("exam route was still nested inside the main game shell");
@@ -1762,11 +1767,13 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
       hasQuestion: Boolean(document.querySelector(".examQuestionText")),
       hasEssay: Boolean(textarea),
       hasDraftBar: Boolean(document.querySelector(".examDraftBar")),
+      hasRitualLedger: Boolean(document.querySelector('[data-polish-exam-ledger="s89-18-exam-ritual"]')),
+      hasRitualCopy: text.includes("科举仪程") && text.includes("场内反馈只作案卷公开记录") && text.includes("候榜回音"),
       hasPeerPanel: text.includes("同场考生、阅卷官与榜单只显示公开占位"),
       hasPhaseFeedback: text.includes("入场后反馈"),
       hasFeedbackDraftButton: [...document.querySelectorAll("button")].some((button) => (button.textContent || "").trim() === "拟行动"),
       hasSubmit: [...document.querySelectorAll("button")].some((button) => (button.textContent || "").trim() === "交卷" && !button.disabled),
-      forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
+      forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
       hiddenLeaks: tokens.filter((token) => (document.body.innerText || "").includes(token))
     };
   }, hiddenTextTokens);
@@ -1779,6 +1786,7 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   if (!examSnapshot.hasQuestion) afterFailures.push("missing rendered question");
   if (!examSnapshot.hasEssay) afterFailures.push("missing essay textarea");
   if (!examSnapshot.hasDraftBar) afterFailures.push("missing draft status bar");
+  if (!examSnapshot.hasRitualLedger || !examSnapshot.hasRitualCopy) afterFailures.push("missing S89.18 active exam ritual ledger");
   if (!examSnapshot.hasPeerPanel) afterFailures.push("missing safe virtual candidate panel");
   if (!examSnapshot.hasPhaseFeedback) afterFailures.push("missing server-owned phase feedback");
   if (!examSnapshot.hasFeedbackDraftButton) afterFailures.push("missing phase feedback draft button");
@@ -1820,8 +1828,11 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
       path: window.location.pathname,
       expectedPath: `/game/${id}/ranking`,
       hasHero: Boolean(hero),
+      polishMarker: shell?.getAttribute("data-polish-ranking") || "",
       hasTopThree: Boolean(document.querySelector(".rankingTopThree")),
       hasBoard: Boolean(board),
+      hasCeremonyLedger: Boolean(document.querySelector('[data-polish-ranking-ledger="s89-18-ranking-ceremony"]')),
+      hasCeremonyCopy: text.includes("放榜仪程") && text.includes("张榜取材") && text.includes("我名") && text.includes("同年座师") && text.includes("授官过渡"),
       hasBoundary: text.includes("本榜只录已经张挂的定榜结果"),
       hasServerList: text.includes("金榜名单"),
       hasListOrEmpty: Boolean(document.querySelector(".rankingList")) || text.includes("榜文尚未张挂"),
@@ -1831,7 +1842,7 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
       hasMainGameShell: Boolean(document.querySelector(".gameCommandBar") || document.querySelector(".gameMainDeck") || document.querySelector(".memorialComposer")),
       background,
       horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
-      forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
+      forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
       hiddenLeaks: tokens.filter((token) => bodyText.includes(token))
     };
   }, { id: sessionId, tokens: hiddenTextTokens });
@@ -1839,8 +1850,10 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
   const failures = [];
   if (snapshot.path !== snapshot.expectedPath) failures.push(`path was ${snapshot.path}`);
   if (!snapshot.hasHero) failures.push("missing ranking hero");
+  if (snapshot.polishMarker !== "s89-18-ranking-ceremony-ledger") failures.push(`missing S89.18 ranking polish marker: ${snapshot.polishMarker}`);
   if (!snapshot.hasTopThree) failures.push("missing top-three ranking seals");
   if (!snapshot.hasBoard) failures.push("missing ranking notice board");
+  if (!snapshot.hasCeremonyLedger || !snapshot.hasCeremonyCopy) failures.push("missing S89.18 ranking ceremony ledger");
   if (!snapshot.hasBoundary) failures.push("missing server-owned ranking boundary");
   if (!snapshot.hasServerList) failures.push("missing server-owned ranking list heading");
   if (!snapshot.hasListOrEmpty) failures.push("missing ranking list or empty state");

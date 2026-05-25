@@ -3733,12 +3733,19 @@ describe("S74.1 React client shell", () => {
     await screen.findByRole("heading", { name: "科举" });
     expect(screen.getAllByText("县学试棚").length).toBeGreaterThan(0);
     expect(document.querySelector(".examFullScreen")).toBeTruthy();
+    expect(document.querySelector('[data-polish-exam="s89-18-exam-ritual-ledger"]')).toBeTruthy();
+    expect(document.querySelector('[data-polish-exam-ledger="s89-18-exam-ritual"]')).toBeTruthy();
     expect(document.querySelector(".examStageRail")).toBeTruthy();
     expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
     expect(document.querySelector(".gameCommandBar")).toBeFalsy();
     expect(document.querySelector(".gameMainDeck")).toBeFalsy();
     expect(document.querySelector(".memorialComposer")).toBeFalsy();
     expect(screen.getByLabelText("试别")).toBeTruthy();
+    expect(screen.getByText("科举仪程")).toBeTruthy();
+    expect(screen.getByText("取题启封")).toBeTruthy();
+    expect(screen.getByText("场内推进")).toBeTruthy();
+    expect(screen.getByText("交卷候批")).toBeTruthy();
+    expect(screen.getByText("候榜回音")).toBeTruthy();
     expect(screen.getByText(/交卷、评分、舞弊、放榜、晋级和授官都回主卷定夺/)).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("试别"), { target: { value: "provincial_exam" } });
@@ -3751,7 +3758,8 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText(/备考压力：吃紧 66\/100/)).toBeTruthy();
     expect(screen.getByText("备考吃紧：盘费与旅途压力偏高。")).toBeTruthy();
     expect(screen.getByText(/入场后反馈：题纸既发/)).toBeTruthy();
-    expect(screen.getByText(/发题审题：题纸既发/)).toBeTruthy();
+    expect(screen.getAllByText(/发题审题：题纸既发/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/场内反馈只作案卷公开记录/)).toBeTruthy();
     expect(screen.getByText(/同场考生、阅卷官与榜单只显示公开占位/)).toBeTruthy();
 
     const fetchCountBeforeFeedbackDraft = fetchMock.mock.calls.length;
@@ -3766,7 +3774,7 @@ describe("S74.1 React client shell", () => {
     fireEvent.change(screen.getByLabelText("场内行动"), { target: { value: "誊清卷面，仍不伪称评卷。" } });
     fireEvent.click(screen.getByRole("button", { name: "推进考场" }));
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/exam/progress")).toHaveLength(1));
-    await screen.findByText(/草稿成文：提纲已入草稿/);
+    await waitFor(() => expect(screen.getAllByText(/草稿成文：提纲已入草稿/).length).toBeGreaterThan(0));
     expect(screen.getByText(/本步行动：誊清卷面/)).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("文章"), { target: { value: "夫荒政者，先安民食，继明教化。" } });
@@ -3777,7 +3785,7 @@ describe("S74.1 React client shell", () => {
     const requestedUrls = fetchMock.mock.calls.map(([url]) => String(url));
     expect(requestedUrls).not.toContain("/api/game/turn");
     expect(requestedUrls.some((url) => /\/api\/game\/state|\/api\/dev/.test(url))).toBe(false);
-    expect(document.body.textContent || "").not.toMatch(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/i);
+    expect(document.body.textContent || "").not.toMatch(/服务器|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/i);
   });
 
   it("renders the S76.8 ranking page from server-owned exam views", async () => {
@@ -3805,7 +3813,7 @@ describe("S74.1 React client shell", () => {
               detailed_feedback: "服务器公开评语。"
             },
             authenticityCheck: {
-              flags: [{ label: "防弊检测通过", severity: "clear", detail: "未见公开扣罚事项。" }]
+              flags: [{ label: "弥封复核通过", severity: "clear", detail: "未见公开扣罚事项。" }]
             },
             examAftermath: {
               publicSummary: "殿试放榜后，同年座师只显示公开往来。",
@@ -3927,6 +3935,8 @@ describe("S74.1 React client shell", () => {
 
     await screen.findByRole("heading", { name: "皇榜" });
     expect(document.querySelector(".rankingFullScreen")).toBeTruthy();
+    expect(document.querySelector('[data-polish-ranking="s89-18-ranking-ceremony-ledger"]')).toBeTruthy();
+    expect(document.querySelector('[data-polish-ranking-ledger="s89-18-ranking-ceremony"]')).toBeTruthy();
     expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
     expect(document.querySelector(".gameCommandBar")).toBeFalsy();
     expect(document.querySelector(".gameMainDeck")).toBeFalsy();
@@ -3934,6 +3944,10 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".rankingTopThree")).toBeTruthy();
     expect(screen.getByText("金榜名单")).toBeTruthy();
     expect(screen.getByText("金榜题名")).toBeTruthy();
+    expect(screen.getByText("放榜仪程")).toBeTruthy();
+    expect(screen.getByText("张榜取材")).toBeTruthy();
+    expect(screen.getByText("我名")).toBeTruthy();
+    expect(screen.getByText("授官过渡")).toBeTruthy();
     expect(screen.getAllByText("顾衡").length).toBeGreaterThan(0);
     expect(document.querySelector(".rankingGoldenNotice")).toBeTruthy();
     expect(document.querySelector(".rankingList li.isPlayer")).toBeTruthy();
@@ -3941,9 +3955,9 @@ describe("S74.1 React client shell", () => {
     expect(rankingDetail.getAttribute("tabindex")).toBe("-1");
     fireEvent.click(screen.getByRole("button", { name: "跳至我名" }));
     expect(document.activeElement).toBe(rankingDetail);
-    expect(screen.getByText("翰林院修撰")).toBeTruthy();
+    expect(screen.getAllByText("翰林院修撰").length).toBeGreaterThan(0);
     expect(screen.getByText("切中时务。")).toBeTruthy();
-    expect(screen.getByText("同年座师")).toBeTruthy();
+    expect(screen.getAllByText("同年座师").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/沈同年/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/许读卷官/).length).toBeGreaterThan(0);
     expect(screen.getByText(/具帖拜谢许读卷官/)).toBeTruthy();
@@ -3952,7 +3966,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText(/本榜只录已经张挂的定榜结果/)).toBeTruthy();
     expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain("/api/game/turn");
     expect(fetchMock.mock.calls.map(([url]) => String(url)).some((url) => /\/api\/game\/state|\/api\/dev/.test(url))).toBe(false);
-    expect(document.body.textContent || "").not.toMatch(/provider payload|raw audit|hiddenNotes|sk-test-secret|path=|C:\\|OPENAI_API_KEY|data\/sessions/i);
+    expect(document.body.textContent || "").not.toMatch(/服务器|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|sk-test-secret|path=|C:\\|OPENAI_API_KEY|data\/sessions/i);
   });
 
   it("keeps S76.8 ranking empty when the server has not returned a ranking", async () => {
@@ -4018,12 +4032,12 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}/ranking`);
 
     await screen.findByRole("heading", { name: "皇榜" });
-    expect(screen.getByText(/榜文尚未张挂/)).toBeTruthy();
-    expect(screen.getByText(/暂无公开防弊复核结果/)).toBeTruthy();
+    expect(screen.getAllByText(/榜文尚未张挂/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/暂无公开弥封复核结果/)).toBeTruthy();
     expect(document.querySelector(".rankingGoldenNotice")).toBeFalsy();
     expect(document.querySelector(".rankingList")).toBeFalsy();
     expect(document.querySelectorAll(".rankingList li").length).toBe(0);
-    expect(document.body.textContent || "").not.toMatch(/会元|第一名|防弊检测通过|未见公开扣罚事项/);
+    expect(document.body.textContent || "").not.toMatch(/会元|第一名|弥封复核通过|未见公开扣罚事项/);
   });
 
   it("does not mark same-name ranking rows as the player without server flag", async () => {
