@@ -69,12 +69,12 @@
 
 本步仍只改 React 前端标记、CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改 runtime manifest 字段，不触碰后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式或服务器裁决。人物页和查看器仍只读取当前案卷安全 view、已审核 `portraitRef` runtime 资产和人物页安全 `PortraitViewerProfile`；S89.9 不新增行动草稿写入，人物页既有按钮仍只写本地草稿并等待服务器回合裁决，不写浏览器存储、URL、prompt、canonical state 或服务器状态。
 
-验证已通过：`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --check scripts/clientBuildBudget.js`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "loads the S76.10 current people ledger without exposing the full portrait pool" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。CSS 单文件预算已从 100,000 bytes 校准为 100 KiB（102,400 bytes），最终预算输出 `CSS 98.5 KiB`；提交前只读复审无阻断问题，已按建议收紧人物页既有本地草稿边界表述。
+验证已通过：`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --check scripts/clientBuildBudget.js`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "loads the S76.10 current people ledger without exposing the full portrait pool" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。CSS 单文件预算已从 100,000 bytes 校准为 100 KiB（102,400 bytes），最终预算输出 `CSS 98.5 KiB`；提交前只读复审无阻断问题，已按建议收紧人物页既有本地草稿边界表述。实现提交 `8a7654ee9c5b7daa1c6790859ee885795f95928c`。
 
 上一轮 S89.8 完成高清立绘查看器画中所见 polish，实现提交 `2476a12c4d77e598b65ba74931361edb362e2b6c`，哈希回填提交 `d55cd94e`。立绘查看器带 `data-polish-portrait="s89-8-life-scroll"`，在原有 `data-polish-profile="s89-6-portrait-life"` 公开说明区上，显示“画卷题签 / 仪态 / 衣饰 / 神采”和“画中所见 / 身世线索 / 眼下处境”三段；人物页传入查看器的安全 profile 也补案主经历线索与 NPC 公开近事。
 
 ## Next Recommended Step
 
-先完成 S89.9 提交和哈希回填。若继续前端产品化打磨，下一候选为移动端长文本二轮审查、史册右侧空白区域跨列信息密度压缩、S89 polish 阶段归档，或更深入的地图全关图层空态/筛选专题层体验。
+若继续前端产品化打磨，下一候选为移动端长文本二轮审查、史册右侧空白区域跨列信息密度压缩、S89 polish 阶段归档，或更深入的地图全关图层空态/筛选专题层体验。
 
 无论下一步是什么，都必须继续从安全 view 重建 evidence，保持 proposal-only、browser-draft-only 和服务器裁决，不让浏览器 task、地图 layout、visual-only effect、NPC anchor、runtime manifest 元数据、world entity impact/recent impact、交游 evidence、world thread 或 draftContext 变成真实任务队列、资源结算器、关系/婚姻/弹劾/定罪/背叛裁决器。
