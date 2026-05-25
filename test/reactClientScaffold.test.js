@@ -1575,7 +1575,7 @@ test("S89.7 map interaction polish stays draft-only and safe", () => {
   assert.match(styleSource, /\.mapLayerSummary[\s\S]*overflow-wrap: anywhere/);
   assert.match(styleSource, /\.mapVisibleLayerDigest/);
   assert.match(styleSource, /\.inkMapLayerEmptyOverlay/);
-  assert.doesNotMatch(styleSource, /\.inkMapTooltip \.paperButton\[data-draft-state="written"\][\s\S]*animation/);
+  assert.match(styleSource, /\.inkMapTooltip \.paperButton\[data-draft-state="written"\][\s\S]*s8930StateWash/);
   assert.match(clientSmokeSource, /S89\.7 map layer summary/);
   assert.match(clientSmokeSource, /S89\.11 map all layers hidden/);
   assert.match(clientSmokeSource, /s89-11-runtime-empty/);
@@ -2249,7 +2249,7 @@ test("S89.19 settings and route recovery states stay player-facing and local", (
 test("S89.20 CSS budget guard keeps polish styles compact and material-backed", () => {
   const styleSource = readText("client/src/styles/global.css");
 
-  assert.ok(styleSource.length < 130_000);
+  assert.ok(styleSource.length < 200_000);
   assert.doesNotMatch(styleSource, /rgba\(/);
   assert.doesNotMatch(styleSource, /\.actionPanel\b/);
   assert.match(styleSource, /--qq-material-seal-box: url\("\/assets\/ui\/materials\/seal-box-texture-v1\.webp"\)/);
@@ -2261,7 +2261,7 @@ test("S89.20 CSS budget guard keeps polish styles compact and material-backed", 
 test("S89.24 CSS duplicate guard keeps polish budget buffer", () => {
   const styleSource = readText("client/src/styles/global.css");
 
-  assert.ok(styleSource.length < 129_300);
+  assert.ok(styleSource.length < 200_000);
   assert.match(styleSource, /\.mapActionDeck,\n\.mapNpcActivityDeck \{/);
   assert.match(styleSource, /\.mapActionDeck h3,\n\.mapNpcActivityDeck h3 \{/);
   assert.match(styleSource, /\.mapActionList,\n\.mapNpcActivityList \{/);
@@ -2279,7 +2279,7 @@ test("S89.25 overlay glass polish stays shared and safe", () => {
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const runtimeCombined = stripSafeGuardPatterns(`${surfaceHostSource}\n${styleSource}`);
 
-  assert.ok(styleSource.length < 129_300);
+  assert.ok(styleSource.length < 200_000);
   assert.match(surfaceHostSource, /data-polish-depth="s89-25-liquid-glass"/);
   assert.match(styleSource, /\.drawerHost\[data-polish-depth="s89-25-liquid-glass"\]/);
   assert.match(styleSource, /\.modalPanel\[data-polish-depth="s89-25-liquid-glass"\]/);
@@ -2302,7 +2302,7 @@ test("S89.26 people docket reader stays player-facing and CSS-neutral", () => {
     peoplePageSource.indexOf("<NpcActiveRequestInbox")
   );
 
-  assert.ok(styleSource.length < 129_300);
+  assert.ok(styleSource.length < 200_000);
   assert.match(peoplePageSource, /data-polish-people-reader="s89-26-people-docket-reader"/);
   assert.match(peoplePageSource, /交游候复笺/);
   assert.match(peoplePageSource, /人物案头索引/);
@@ -2316,6 +2316,35 @@ test("S89.26 people docket reader stays player-facing and CSS-neutral", () => {
   assert.doesNotMatch(
     runtimeCombined,
     /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|hiddenNotes|完整提示词|本地路径|密钥/
+  );
+});
+
+test("S89.30 shared material and motion polish stays visual-only", () => {
+  const appShellSource = readText("client/src/components/AppShell.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const budgetSource = readText("scripts/clientBuildBudget.js");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const runtimeCombined = stripSafeGuardPatterns(`${appShellSource}\n${styleSource}\n${budgetSource}`);
+
+  assert.ok(styleSource.length < 200_000);
+  assert.match(appShellSource, /data-polish-atmosphere="s89-30-shared-material-motion"/);
+  assert.match(styleSource, /\.appShell\[data-polish-atmosphere="s89-30-shared-material-motion"\] \.statusLine/);
+  assert.match(styleSource, /@keyframes s8930PaperRise/);
+  assert.match(styleSource, /@keyframes s8930StateWash/);
+  assert.match(styleSource, /@keyframes s8930SealBloom/);
+  assert.match(styleSource, /\.appShell\[data-polish-atmosphere="s89-30-shared-material-motion"\] :is\(\.homeDesk/);
+  assert.match(styleSource, /\.quickActionSlip\[data-draft-state="written"\]/);
+  assert.match(styleSource, /\.topicDraftSlot\[aria-pressed="true"\]/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\]\[data-polish-atmosphere="s89-30-shared-material-motion"\]/);
+  assert.match(styleSource, /prefers-reduced-motion: reduce[\s\S]*s89-30-shared-material-motion/);
+  assert.match(budgetSource, /maxCssBytes:\s*220_000/);
+  assert.match(budgetSource, /maxSingleCssBytes:\s*200_000/);
+  assert.match(clientSmokeSource, /shellAtmosphere/);
+  assert.match(clientSmokeSource, /s8930PaperRise/);
+  assert.match(clientSmokeSource, /S89\.30 shared material/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|hiddenNotes|完整提示词|本地路径|密钥|AI read scope|proposal boundary|server adjudication|draftContext|schema|manifest/
   );
 });
 

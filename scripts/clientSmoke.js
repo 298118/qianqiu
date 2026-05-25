@@ -924,6 +924,7 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
     const writtenRows = [...document.querySelectorAll(".mapActionList li[data-draft-state='written'], .mapEventList li[data-draft-state='written']")];
     return {
       shellPolish: shell?.getAttribute("data-polish-surface") || "",
+      shellAtmosphere: shell?.getAttribute("data-polish-atmosphere") || "",
       shellMotion: shell?.getAttribute("data-motion") || "",
       shellControlMarker: document.querySelector(".topBar")?.getAttribute("data-polish-controls") || "",
       topBar: styleOf(".topBar"),
@@ -936,7 +937,19 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
       drawer: styleOf("[data-polish-overlay='s89-5-drawer-mica']"),
       keyframes: {
         drawer: keyframesOf("s895D"),
-        draft: keyframesOf("s895S")
+        draft: keyframesOf("s895S"),
+        paperRise: keyframesOf("s8930PaperRise"),
+        stateWash: keyframesOf("s8930StateWash"),
+        sealBloom: keyframesOf("s8930SealBloom")
+      },
+      s8930: {
+        saveShelf: styleOf(".saveShelf"),
+        sharedCard: styleOf(".saveCaseItem, .scholarPanelCard, .mapActionList li, .archiveItemList li, .peopleCard, .inventoryItemCard, .rankingTopSeal, .settingsDirectoryCard, .topicSurfaceItem"),
+        statusLine: styleOf(".statusLine"),
+        statusAccent: styleOf(".statusLine", "::before"),
+        selectedControl: styleOf(".npcListButton[aria-pressed='true'], .inventoryContainerButton[aria-pressed='true'], .topicDraftSlot[aria-pressed='true'], .inkboxTab[aria-selected='true'], .mapLayerToggle:has(input:checked)"),
+        draftWritten: styleOf("li[data-draft-state='written'], .quickActionSlip[data-draft-state='written'], .inkMapTooltip .paperButton[data-draft-state='written']"),
+        emptyState: styleOf(".saveCaseEmpty, .scholarPanelEmpty, .quickActionEmpty, .archiveEmpty, .rankingEmpty, .inkMapRuntimeFallback, .inkMapLayerEmptyOverlay, .aiSettingsMatrixStatus[data-state='error']")
       },
       modal: styleOf("[data-polish-overlay='s89-5-modal-paper'], [data-polish-overlay='s89-5-surface-paper'], [data-polish-overlay='s89-5-portrait-gallery']"),
       mapSurface: Boolean(document.querySelector("[data-polish-surface='s89-5-map-command']")),
@@ -956,6 +969,7 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
 
   const failures = [];
   if (snapshot.shellPolish !== "s89-5-material-feedback") failures.push(`shell polish marker was ${snapshot.shellPolish}`);
+  if (snapshot.shellAtmosphere !== "s89-30-shared-material-motion") failures.push(`shell S89.30 atmosphere marker was ${snapshot.shellAtmosphere}`);
   if (snapshot.shellControlMarker !== "s89-16-shell-controls") failures.push(`S89.16 shell control marker was ${snapshot.shellControlMarker}`);
   if (!snapshot.topBar?.backgroundImage.includes("linear-gradient")) failures.push("top bar did not use layered material background");
   if (!snapshot.topBarSheen || snapshot.topBarSheen.opacity === "0") failures.push("top bar sheen was absent");
@@ -977,8 +991,37 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
   if (expected.drawer && snapshot.shellMotion !== "reduced" && !/transform|opacity/i.test(snapshot.keyframes.drawer)) {
     failures.push("drawer keyframes lacked a visible transform/opacity delta");
   }
+  if (snapshot.shellMotion !== "reduced") {
+    if (!/transform|opacity|filter/i.test(snapshot.keyframes.paperRise)) failures.push("S89.30 paper rise keyframes lacked visible motion");
+    if (!/box-shadow/i.test(snapshot.keyframes.stateWash)) failures.push("S89.30 state wash keyframes lacked material feedback");
+    if (!/background-position|filter/i.test(snapshot.keyframes.sealBloom)) failures.push("S89.30 seal bloom keyframes lacked selected-state feedback");
+  }
+  const liftedS8930Surface = [snapshot.s8930.saveShelf, snapshot.s8930.sharedCard].some(
+    (style) => style?.boxShadow && style.boxShadow !== "none"
+  );
+  if (!liftedS8930Surface && !snapshot.s8930.statusLine) {
+    failures.push("S89.30 shared material did not reach any page surface");
+  }
+  if (snapshot.s8930.saveShelf && (!snapshot.s8930.saveShelf.boxShadow || snapshot.s8930.saveShelf.boxShadow === "none")) {
+    failures.push("S89.30 shared material did not lift the home save shelf");
+  }
+  if (snapshot.s8930.sharedCard && snapshot.shellMotion !== "reduced" && !snapshot.s8930.sharedCard.animationName.includes("s8930PaperRise")) {
+    failures.push(`S89.30 shared card animation was ${snapshot.s8930.sharedCard.animationName}`);
+  }
+  if (snapshot.s8930.statusLine && (!snapshot.s8930.statusLine.backgroundImage.includes("linear-gradient") || snapshot.s8930.statusAccent?.backgroundImage === "none")) {
+    failures.push("S89.30 status line lacked paper/accent material");
+  }
+  if (snapshot.s8930.selectedControl && !snapshot.s8930.selectedControl.backgroundImage.includes("red-ink-smudge")) {
+    failures.push("S89.30 selected control lacked cinnabar material");
+  }
+  if (snapshot.s8930.emptyState && (!snapshot.s8930.emptyState.backgroundImage.includes("linear-gradient") || snapshot.s8930.emptyState.boxShadow === "none")) {
+    failures.push("S89.30 empty/error state lacked paper material");
+  }
   if (expected.reducedOverlay && snapshot.drawer && snapshot.drawer.animationName !== "none") {
     failures.push(`reduced drawer animation was ${snapshot.drawer.animationName}`);
+  }
+  if (expected.reducedOverlay && snapshot.s8930.sharedCard && snapshot.s8930.sharedCard.animationName !== "none") {
+    failures.push(`reduced S89.30 shared card animation was ${snapshot.s8930.sharedCard.animationName}`);
   }
   if (expected.modal && !snapshot.modal) failures.push("open modal/surface lacked S89.5 overlay marker");
   if (expected.modal && snapshot.modal?.polishDepth !== "s89-25-liquid-glass") {
@@ -991,6 +1034,9 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
   if (expected.mapWritten && snapshot.mapWrittenCount < 1) failures.push("map draft feedback row was not marked written");
   if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !snapshot.mapWrittenAnimation.includes("s895S")) {
     failures.push(`map written animation missing: ${snapshot.mapWrittenAnimation.join(", ")}`);
+  }
+  if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !snapshot.s8930.draftWritten?.animationName.includes("s8930StateWash")) {
+    failures.push(`S89.30 written draft material animation missing: ${snapshot.s8930.draftWritten?.animationName}`);
   }
   if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !/outline|box-shadow|transform|opacity|background/i.test(snapshot.keyframes.draft)) {
     failures.push("map draft keyframes lacked a visible feedback delta");

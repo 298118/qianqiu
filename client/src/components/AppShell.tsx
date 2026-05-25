@@ -24,6 +24,7 @@ export function AppShell() {
       data-router-mode="data"
       data-shell-version="s75-9"
       data-polish-surface="s89-5-material-feedback"
+      data-polish-atmosphere="s89-30-shared-material-motion"
       data-motion={displayPreferences.motion}
       data-text-size={displayPreferences.textSize}
       data-contrast={displayPreferences.contrast}

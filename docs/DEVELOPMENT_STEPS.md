@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.30 | DONE | 共享案卷材质与错落动效 polish | 承接 S89.29 后继续做跨页产品级视觉打磨，已在 React 壳层新增 `data-polish-atmosphere="s89-30-shared-material-motion"`，并用共享 CSS 增强首页案桌/旧案架、主卷案头、舆图簿、人物卡、囊箧、史册、科举、皇榜、朝议、设置目录、专题层与状态提示的宣纸层次、轻浮起、错落进入、朱印选中、草稿已写入和空态纸底反馈；低动效偏好与系统 `prefers-reduced-motion` 均关闭强动画但保留清晰状态。范围限 `AppShell` 标记、全局 CSS、客户端 smoke/source canary、CSS 构建预算脚本和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或 hidden 信息。实现提交：待回填。 |
 | S89.29 | DONE | 史册证据读法与旁注空态 polish | 承接 S89.28 后继续做零 CSS 前端产品化打磨，已在 `/game/:sessionId/archive` 新增“史册追索笺 / 史册证据读法”，把近次入册、公开后果、实体余波、来函线索和拟稿候复边界整理为玩家可读旁注。范围限 React `ArchivePage`、客户端 smoke/source canary、前端测试和文档；不新增 CSS、依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费 `eventArchiveView`、`domainConsequenceView`、`npcActiveRequestView.followUpEvidence`、route/local 状态和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或 hidden 信息。实现提交：`4bf06317`。 |
 | S89.28 | DONE | 前端 JS 分包预算稳定 | 承接 S89.27 后 JS 总量仍贴近总预算、且主应用 chunk 已多次靠近 `maxSingleJsBytes: 650_000` 的状态，已通过 Vite `manualChunks` 把 React/React Router、Zustand、Lucide 和其余 npm vendor 拆成稳定 vendor chunks，保护单 chunk 预算和浏览器缓存命中。范围限 `vite.config.mjs`、source canary 和开发文档；不引入 `React.lazy` / route lazy loading，不新增依赖或素材，不改 React 运行时数据来源、玩家可见 UI、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态和本地草稿，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系或 hidden 信息。实现提交：`81d0ac0b`。 |
 | S89.27 | DONE | 前端 CSS 构建预算校准 | 承接 S89.26 后 CSS 构建产物 `99.5 KiB` 仅剩约 `513` bytes 余量的状态，已将 `scripts/clientBuildBudget.js` 的 CSS 总预算从 `140000` bytes 调整为 `180000` bytes，单个 CSS asset 上限从 `102400` bytes 调整为 `128000` bytes。该调整只是恢复可维护余量，不取消预算治理；后续若单个 CSS asset 超过约 `150 KiB`，应优先做 route/component CSS 拆分、删除无用选择器、合并重复规则或抽出共享样式，再评估是否提高硬门。范围限构建预算脚本和开发文档；不改 React 运行时行为、不新增 CSS、不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。实现提交：`31a1c97d`。 |
@@ -177,7 +178,8 @@
 - 2026-05-25：S89.22 完成主卷本旬行止笺与草稿状态读法 polish。当前范围限 React `GamePage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.28 完成前端 JS 分包预算稳定。当前范围限 `vite.config.mjs`、source canary 和开发文档；Vite 生产构建仅按 `node_modules` 拆出 `vendor-react`、`vendor-state`、`vendor-icons` 与通用 `vendor`，不引入 route lazy loading 或运行时页面行为变更，不新增依赖、素材、CSS 或浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.29 完成史册证据读法与旁注空态 polish。当前范围限 React `ArchivePage`、客户端 smoke/source canary、前端测试、brief 和开发文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.29 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.30 完成共享案卷材质与错落动效 polish。当前范围限 React `AppShell` 壳层标记、全局 CSS、客户端 smoke/source canary、CSS 构建预算脚本、brief 和开发文档；新增共享宣纸层次、卡片轻浮起、错落进入、朱印选中、草稿已写入和空态纸底反馈，并把低动效偏好与系统 `prefers-reduced-motion` 纳入同一关闭动画边界。不新增依赖或素材，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.30 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -259,6 +261,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.30 共享案卷材质与错落动效 polish
+
+- 范围：`AppShell` 新增 `data-polish-atmosphere="s89-30-shared-material-motion"`；`global.css` 用共享 selector 增强首页案桌/旧案架、主卷案头、舆图簿、人物卡、囊箧、史册、科举、皇榜、朝议、设置目录、专题层、状态行、选中控件、草稿已写入和空态的宣纸层次、轻浮起、错落进入与朱印反馈。`scripts/clientSmoke.js`、`test/reactClientScaffold.test.js` 和 `scripts/clientBuildBudget.js` 同步守门。
+- 内容：新增 `s8930PaperRise`、`s8930StateWash` 和 `s8930SealBloom` 动效；`.statusLine` 统一宣纸/朱痕读法；选中按钮、舆图图层、印匣页签和草稿写入态使用已审核朱痕材质；空态/错误态统一纸底边框。低动效偏好和系统 `prefers-reduced-motion` 会关闭 S89.30 强动画并保留静态状态。
+- 预算口径：CSS 预算脚本从 S89.27 的 `maxCssBytes: 180000` / `maxSingleCssBytes: 128000` 调整为 `220000` / `200000`，用于容纳本轮产品级共享材质层和后续可审查余量；这仍是硬门治理，后续若继续增长，应优先做 route/component CSS 拆分、删除无用选择器、合并重复规则或抽出共享样式，再评估预算。
+- 安全边界：本步不新增依赖或素材，不改 React 数据来源，不新增后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/surface 状态和本地草稿，不请求诊断接口，不读取 raw 存档，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、地图行动、关系、婚姻、弹劾、定罪、背叛或 hidden 信息。
+- Smoke/canary：`scripts/clientSmoke.js` 在既有 S89.5 跨页材质 smoke 中检查 S89.30 shell marker、三组 keyframes、共享材质 surface、状态行材质、朱印选中态、空态纸底、低动效关闭和舆图草稿写入的 S89.30 状态洗；`test/reactClientScaffold.test.js` 新增 S89.30 source canary，并把旧 CSS source guard 调整到当前预算口径，继续禁止 `/api/game/turn`、诊断、raw/provider/path/key/hidden、`draftContext`、`schema` 和 `manifest` 污染。
+- 验证：当前已通过 `node --check scripts/clientSmoke.js`、`node --check scripts/clientBuildBudget.js`、`node --test test/reactClientScaffold.test.js`（64 tests）、`npm run typecheck:client`、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check` 和完整 `npm test`（1178 tests）。`npm run test:client` 复现既有 Vitest fork worker 启动超时：5 files / 129 tests 已通过，但 `client/src/api/qianqiuClient.test.ts` worker 未启动；已用上述串行池完整复核同一客户端套件。预算输出为 `JS 636.8 KiB / CSS 106.5 KiB / fonts 26288.4 KiB / client-assets 27031.8 KiB`；Vite 仍输出既有 `/assets/ui/...` runtime asset resolution warning 和 plugin timing warning。
+- 复审：开工只读子代理 Poincare 建议选择共享材质、动效与候复状态反馈切片，并提醒更新 CSS canary、同时覆盖本地低动效与系统 media query、不得加入 turn submission/diagnostics/raw/provider/prompt/path/key/hidden 文案；本轮按建议实施。提交前只读复审 Hilbert 已通过，未发现阻断问题；非阻断建议为后续若需支持更旧浏览器，可给 `.mapLayerToggle:has(input:checked)` 增加 class/data 状态替代路径，并在继续加 CSS 时优先抽共享 class 或拆 route/component 样式。
+- 提交：待回填。
 
 ### 2026-05-25：S89.29 史册证据读法与旁注空态 polish
 

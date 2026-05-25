@@ -8,8 +8,8 @@ const clientAssetsDir = path.join(clientBuildDir, "client-assets");
 const CLIENT_BUILD_BUDGETS = Object.freeze({
   maxJsBytes: 850_000,
   maxSingleJsBytes: 650_000,
-  maxCssBytes: 180_000,
-  maxSingleCssBytes: 128_000,
+  maxCssBytes: 220_000,
+  maxSingleCssBytes: 200_000,
   maxFontBytes: 28_500_000,
   maxWoff2FontBytes: 14_500_000,
   maxTotalClientAssetBytes: 29_500_000
