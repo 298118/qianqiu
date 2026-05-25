@@ -27,17 +27,26 @@ const courtSurfaceGroups: readonly {
   }
 ];
 
+const courtSurfaceDraftUses: Partial<Record<LocalSurface, string>> = {
+  "memorial-review": "检阅公开章奏，择要写成可回主卷续呈的奏稿。",
+  "edict-draft": "拟成谕旨初稿，仍须留在案头候主卷回批。",
+  "court-debate": "整理廷议题目与诸端利害，先作筹议草稿。",
+  trial: "据公开案牍拟审问次序，不补造口供、罪名或判词。",
+  "war-council": "按舆图、粮饷与边患摘要拟军议请示，不写成战和结果。",
+  "npc-profile": "查阅已见人物与来函线索，只拟拜会、问询或复核草稿。"
+};
+
 export function CourtPage() {
   const { sessionId = "s74-preview" } = useParams();
   const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
   const routeSessionSupported = isRouteLocalSessionId(sessionId);
 
   return (
-    <article className="surfacePanel routePanel courtSurfacePage" aria-labelledby="court-title">
+    <article className="surfacePanel routePanel courtSurfacePage" aria-labelledby="court-title" data-polish-court="s89-17-court-directory">
       <div className="surfaceHeader">
         <p className="eyebrow">官署专题</p>
         <h1 id="court-title">朝议与官署</h1>
-        <p>百官班列，章奏如潮。奏折、圣旨、朝议、堂审、军议与人物档案现在会从公开专题材料里整理案情、筹议线索并生成可编辑草稿。</p>
+        <p>百官班列，章奏如潮。此页只作官署案头索引：奏折、圣旨、朝议、堂审、军议与人物档案各按公开卷宗取材，整理可拟草稿，最后仍候案卷回批。</p>
       </div>
       <div className="courtSurfaceGrid" aria-label="官署专题入口">
         {courtSurfaceGroups.map((group) => (
@@ -50,19 +59,44 @@ export function CourtPage() {
               {group.surfaces.map((surface) => {
                 const entry = surfaceRegistry[surface];
                 return (
-                  <button
-                    key={surface}
-                    className="paperButton"
-                    type="button"
-                    disabled={!routeSessionSupported}
-                    onClick={(event) => {
-                      if (!routeSessionSupported) return;
-                      markOverlayTrigger(event.currentTarget);
-                      openSurfaceForSession(surface, sessionId);
-                    }}
-                  >
-                    {entry.label}
-                  </button>
+                  <article key={surface} data-court-surface={surface} aria-label={`${entry.label}案头索引`}>
+                    <div className="peopleMeta" aria-label={`${entry.label}章法`}>
+                      <span>{entry.eyebrow}</span>
+                      <span>可拟草稿</span>
+                      <span>候案卷回批</span>
+                    </div>
+                    <p>{entry.description}</p>
+                    <dl className="surfaceSafetyList">
+                      <div>
+                        <dt>卷宗取材</dt>
+                        <dd>{formatCourtRegistryLine(entry.dataSource)}</dd>
+                      </div>
+                      <div>
+                        <dt>可拟草稿</dt>
+                        <dd>{courtSurfaceDraftUses[surface] ?? "只把公开材料整理为案头草稿，回主卷后再呈递。"}</dd>
+                      </div>
+                      <div>
+                        <dt>案卷未载</dt>
+                        <dd>{formatCourtRegistryLine(entry.emptyState)}</dd>
+                      </div>
+                      <div>
+                        <dt>候复边界</dt>
+                        <dd>{formatCourtRegistryLine(entry.safetyNote)}</dd>
+                      </div>
+                    </dl>
+                    <button
+                      className="paperButton"
+                      type="button"
+                      disabled={!routeSessionSupported}
+                      onClick={(event) => {
+                        if (!routeSessionSupported) return;
+                        markOverlayTrigger(event.currentTarget);
+                        openSurfaceForSession(surface, sessionId);
+                      }}
+                    >
+                      {entry.label}
+                    </button>
+                  </article>
                 );
               })}
             </div>
@@ -76,4 +110,8 @@ export function CourtPage() {
       </p>
     </article>
   );
+}
+
+function formatCourtRegistryLine(value: string) {
+  return value.replace(/^取材：/, "").trim();
 }

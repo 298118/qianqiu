@@ -2969,9 +2969,17 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".gameCommandBar")).toBeFalsy();
     expect(document.querySelector(".gameMainDeck")).toBeFalsy();
     expect(document.querySelector(".memorialComposer")).toBeFalsy();
+    expect(document.querySelector("[data-polish-court='s89-17-court-directory']")).toBeTruthy();
+    expect(document.querySelectorAll("[data-court-surface]")).toHaveLength(6);
+    expect(document.body.textContent || "").toContain("官署案头索引");
+    expect(screen.getAllByText("卷宗取材")).toHaveLength(6);
+    expect(screen.getAllByText("可拟草稿")).toHaveLength(12);
+    expect(screen.getAllByText("案卷未载")).toHaveLength(6);
+    expect(screen.getAllByText("候复边界")).toHaveLength(6);
     for (const label of ["奏折队列", "拟圣旨", "朝议", "堂审", "军议", "人物档案"]) {
-      expect(screen.getByRole("button", { name: label })).toBeTruthy();
+      expect(screen.getAllByRole("button", { name: label })).toHaveLength(1);
     }
+    expect(document.body.textContent || "").not.toMatch(/数据来源|裁决边界|服务器裁决|draftContext|schema|manifest|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥/i);
 
     const trigger = screen.getByRole("button", { name: "拟圣旨" });
     trigger.focus();

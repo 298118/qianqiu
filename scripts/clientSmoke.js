@@ -2813,17 +2813,29 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     return {
       path: window.location.pathname,
       hasSurfacePage: Boolean(document.querySelector(".courtSurfacePage")),
+      polishMarker: document.querySelector(".courtSurfacePage")?.getAttribute("data-polish-court") || "",
+      indexEntryCount: document.querySelectorAll(".courtSurfacePage [data-court-surface]").length,
       labels: labels.filter((label) => [...document.querySelectorAll(".courtSurfacePage button")].some((button) => (button.textContent || "").trim() === label)),
+      hasIndexCopy:
+        bodyText.includes("官署案头索引") &&
+        bodyText.includes("卷宗取材") &&
+        bodyText.includes("可拟草稿") &&
+        bodyText.includes("案卷未载") &&
+        bodyText.includes("候复边界") &&
+        bodyText.includes("候案卷回批"),
       hasBoundary: bodyText.includes("推演只拟草稿") || bodyText.includes("专题草稿") || bodyText.includes("案卷回批"),
       hiddenLeaks: tokens.filter((token) => bodyText.includes(token)),
-      forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+      forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
     };
   }, hiddenTextTokens);
 
   const failures = [];
   if (initialSnapshot.path !== `/game/${sessionId}/court`) failures.push(`path was ${initialSnapshot.path}`);
   if (!initialSnapshot.hasSurfacePage) failures.push("missing court surface page");
+  if (initialSnapshot.polishMarker !== "s89-17-court-directory") failures.push(`missing S89.17 court marker: ${initialSnapshot.polishMarker}`);
+  if (initialSnapshot.indexEntryCount !== 6) failures.push(`court directory index entry count was ${initialSnapshot.indexEntryCount}`);
   if (initialSnapshot.labels.length !== 6) failures.push(`missing topic surface labels: ${initialSnapshot.labels.join(", ")}`);
+  if (!initialSnapshot.hasIndexCopy) failures.push("court directory lacked player-facing index copy");
   if (!initialSnapshot.hasBoundary) failures.push("missing draft-only surface boundary");
   if (initialSnapshot.hiddenLeaks.length) failures.push(`hidden text leaked: ${initialSnapshot.hiddenLeaks.join(", ")}`);
   if (initialSnapshot.forbiddenText.length) failures.push(`unsafe text leaked: ${initialSnapshot.forbiddenText.join(", ")}`);

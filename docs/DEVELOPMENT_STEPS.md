@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.17 | DONE | 朝议专题目录与官署案头索引 polish | 承接 S89.16 后 CSS 预算仍紧的状态，已打磨 `/game/:sessionId/court` 朝议页，把六个专题入口整理为“官署案头索引”：每个专题展示卷宗取材、可拟草稿、候复边界和案卷未载不补造提示，入口仍保持唯一按钮并继续打开既有 `SurfaceHost` 专题层。范围限 React `CourtPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不递交回合、不裁决资源、身份、交易、NPC 行动、经济、考试、官职、任免、赏罚、定罪、战和、关系、婚姻、弹劾、背叛或隐藏信息。实现提交：待回填。 |
 | S89.16 | DONE | 全局壳与基础控件交互反馈 polish | 承接 S89.15 后 CSS 预算仍紧的状态，已打磨顶部主导航、右上角印匣按钮、纸按钮/纸链接的材质、hover/focus/active/disabled/selected 反馈和低动效降级；同时移除 AppShell 内联临时视觉样式，改为 CSS 统一承载并保留可检测标记。范围限 React `AppShell`、全局 CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或隐藏信息。实现提交：`ad2cbab4`。 |
 | S89.15 | DONE | 来函与账解证据读法 polish | 承接 S89.14 CSS 预算风险和 S89.10/S88.7/S88.8 证据组件后续建议，集中打磨 `NpcFollowUpEvidenceSection` 与 `EconomyTraceSection` 的玩家可见读法、内部术语清洗和只读/草稿边界提示；人物页与史册页继续消费安全 follow-up evidence，人物/囊箧/主卷继续消费安全 economy trace。范围限 React 前端证据组件、相关 App 测试、客户端 smoke/source canary 和文档；未新增 CSS，复用既有 `.statusLine` / `.inventoryMiniCard` / `.peopleMeta` 等样式。不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest；浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或隐藏信息。实现提交：`99072f6e`。 |
 | S89.14 | DONE | 玩家身份标签中文化与 CSS 预算缓冲 polish | 承接 S89.13 残余建议，集中前端玩家身份显示 helper，避免 `scholar` / `official` / `general` 等 role 枚举在印匣、首页续局、主卷案头、人物页和旧案架中作为兜底文案露出；设置目录短章法标签复用既有标签样式，释放少量 CSS 预算缓冲。范围限 React 前端文本 helper、相关页面/组件接线、少量 CSS 复用、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器不裁决资源、身份、交易、NPC 行动、经济、考试、官职或隐藏信息。实现提交：`0739b7f9`。 |
@@ -152,7 +153,8 @@
 - 2026-05-25：S89.12 完成舆图筛选专题层体验 polish。当前范围限 React SurfaceHost/registry、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.15 启动来函与账解证据读法 polish。当前范围限 React 前端证据组件、人物/史册/囊箧/主卷既有消费路径、客户端 smoke/source canary、前端测试和文档；原则上不新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.16 完成全局壳与基础控件交互反馈 polish。当前范围限 React `AppShell`、全局 CSS、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.16 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.17 完成朝议专题目录与官署案头索引 polish。当前范围限 React `CourtPage`、客户端 smoke/source canary、前端测试和文档；零新增 CSS，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.17 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -234,6 +236,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.17 朝议专题目录与官署案头索引 polish
+
+- 范围：`CourtPage` 新增 `data-polish-court="s89-17-court-directory"`，把奏折队列、拟圣旨、朝议、堂审、军议和人物档案六个专题入口整理为官署案头索引；每个专题读取既有 `surfaceRegistry` 的公开说明，展示“卷宗取材 / 可拟草稿 / 案卷未载 / 候复边界”，并保留唯一按钮打开既有 `SurfaceHost` 专题层。
+- 体验：朝议页不再只是三组按钮，玩家能在入专题前看清每个入口取材范围、能写什么草稿、案卷未载时不会补造什么事实，以及哪些结果仍须候主卷回批；入口数量不增加，设置/印匣不回到主功能导航。
+- CSS 预算：本步零新增 CSS，复用 `.courtSurfaceGroup`、`.courtSurfaceActions`、`.peopleMeta`、`.surfaceSafetyList` 和 `.paperButton`。最终构建预算仍为 `JS 618.6 KiB / CSS 99.8 KiB`；CSS 仍贴近硬门，后续新增视觉样式前应继续优先复用或瘦身。
+- Smoke/canary：`App.test.tsx` 的朝议专题层用例新增 S89.17 marker、6 个唯一入口、案头索引文案、四类读法和玩家可见污染词守门；`scripts/clientSmoke.js` 的 topic surface 初始快照守住 S89.17 marker、6 个目录条目、索引文案和禁词；`test/reactClientScaffold.test.js` 新增 S89.17 source canary，并确认没有新增 S89.17 CSS 或回合提交入口。
+- 边界：本步只改 React `CourtPage`、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改 runtime manifest、素材 manifest、后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式或服务器裁决。浏览器仍只打开本地专题层和写本地草稿，不递交回合、不裁决资源、身份、交易、NPC 行动、经济、考试、官职、任免、赏罚、定罪、战和、关系、婚姻、弹劾、背叛或 hidden 事实。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（53 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "registry-backed local surfaces" --pool=vmThreads --fileParallelism=false --maxWorkers=1`（1 test）、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。`npm run test:client` 复现既有 Vitest fork worker 启动超时：5 files / 119 tests 已通过，`assetRegistry.test.ts` worker 未启动；已用串行池完整复核同一客户端套件。
+- 复审：开工只读子代理建议把 S89.17 收窄为朝议专题目录与官署案头索引，保持零 CSS、复用既有 `surfaceRegistry` 与专题层行为，并守住不提交回合、不扩权的边界；本轮按建议实现。提交前只读复审已通过，未发现阻断问题；非阻断建议为后续可把 6 个 `data-court-surface` exact set 加入 App 测试。
+- 提交：实现提交待回填。
 
 ### 2026-05-25：S89.16 全局壳与基础控件交互反馈 polish
 

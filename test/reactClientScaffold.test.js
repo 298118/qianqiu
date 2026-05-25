@@ -2032,6 +2032,34 @@ test("S78 topic surfaces are safe workbenches and draft-only", () => {
   );
 });
 
+test("S89.17 court directory keeps topic entries player-facing and draft-only", () => {
+  const courtPageSource = readText("client/src/pages/CourtPage.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+
+  assert.match(courtPageSource, /data-polish-court="s89-17-court-directory"/);
+  assert.match(courtPageSource, /官署案头索引/);
+  assert.match(courtPageSource, /卷宗取材/);
+  assert.match(courtPageSource, /可拟草稿/);
+  assert.match(courtPageSource, /案卷未载/);
+  assert.match(courtPageSource, /候复边界/);
+  assert.match(courtPageSource, /formatCourtRegistryLine/);
+  for (const surfaceId of ["memorial-review", "edict-draft", "court-debate", "trial", "war-council", "npc-profile"]) {
+    assert.match(courtPageSource, new RegExp(surfaceId));
+  }
+  assert.match(appTestSource, /s89-17-court-directory/);
+  assert.match(appTestSource, /document\.querySelectorAll\("\[data-court-surface\]"\)\)\.toHaveLength\(6\)/);
+  assert.match(clientSmokeSource, /s89-17-court-directory/);
+  assert.match(clientSmokeSource, /court directory index entry count/);
+  assert.match(clientSmokeSource, /court directory lacked player-facing index copy/);
+  assert.doesNotMatch(styleSource, /s89-17|data-polish-court/);
+  assert.doesNotMatch(
+    courtPageSource,
+    /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver/
+  );
+});
+
 test("S74.7 client smoke verifies default UI start and safe route recovery", () => {
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const appShellSource = readText("client/src/components/AppShell.tsx");
