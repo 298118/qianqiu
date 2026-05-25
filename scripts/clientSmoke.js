@@ -1057,6 +1057,140 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
   }
 }
 
+async function assertS8932HomeShellPolish(page, label, expected = {}) {
+  const snapshot = await page.evaluate((expectedOptions) => {
+    const styleOf = (selector, pseudo = null) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const style = window.getComputedStyle(element, pseudo);
+      return {
+        animationName: style.animationName,
+        backdropFilter: style.backdropFilter || style.webkitBackdropFilter || "",
+        backgroundImage: style.backgroundImage,
+        boxShadow: style.boxShadow,
+        opacity: style.opacity,
+        transform: style.transform
+      };
+    };
+    const keyframesOf = (name) => {
+      for (const sheet of [...document.styleSheets]) {
+        let rules;
+        try {
+          rules = sheet.cssRules;
+        } catch {
+          continue;
+        }
+        for (const rule of [...rules]) {
+          if ("name" in rule && rule.name === name) return rule.cssText;
+        }
+      }
+      return "";
+    };
+    const bodyText = document.body.innerText || "";
+    const allLinks = [...document.querySelectorAll("a[href]")].map((link) => ({
+      text: (link.textContent || "").trim(),
+      path: new URL(link.href).pathname
+    }));
+    return {
+      shellEntry: document.querySelector(".appShell")?.getAttribute("data-polish-entry") || "",
+      shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
+      homeScene: document.querySelector(".homeScene")?.getAttribute("data-polish-home") || "",
+      homeDesk: document.querySelector(".homeDesk")?.getAttribute("data-polish-home-entry") || "",
+      homeDeskStyle: styleOf(".homeDesk[data-polish-home-entry='s89-32-opening-desk']"),
+      homePath: document.querySelector(".homeOpeningPath")?.getAttribute("data-polish-home-path") || "",
+      homePathText: document.querySelector(".homeOpeningPath")?.textContent || "",
+      homePathItemStyle: styleOf(".homeOpeningPath li"),
+      sampleLinks: allLinks.filter((link) => link.path.includes("s74-preview")).map((link) => link.text),
+      topBarMarker: document.querySelector(".topBar")?.getAttribute("data-polish-shell") || "",
+      topBarGlass: styleOf(".topBar", "::before"),
+      topNavMarker: document.querySelector(".topNav")?.getAttribute("data-polish-shell-nav") || "",
+      topNavInk: styleOf(".topNav a", "::after"),
+      topToolsMarker: document.querySelector(".topTools")?.getAttribute("data-polish-shell-tools") || "",
+      topToolsStyle: styleOf(".topTools"),
+      inkboxButtonCount: document.querySelectorAll("button[aria-label='打开印匣']").length,
+      settingsLinks: allLinks.filter((link) => link.text === "印匣" || link.path.endsWith("/settings")),
+      inkboxDrawer: document.querySelector(".inkboxDrawer")?.getAttribute("data-polish-inkbox") || "",
+      inkboxOverview: document.querySelector(".inkboxOverview")?.getAttribute("data-polish-inkbox-overview") || "",
+      inkboxTabs: document.querySelector(".inkboxTabs")?.getAttribute("data-polish-inkbox-tabs") || "",
+      inkboxPanel: document.querySelector(".inkboxPanel")?.getAttribute("data-polish-inkbox-panel") || "",
+      inkboxPanelStyle: styleOf(".inkboxPanel[data-polish-inkbox-panel='s89-32-inkbox-glass-ledger']"),
+      settingsEntry: document.querySelector(".settingsDirectoryRoute")?.getAttribute("data-polish-settings-entry") || "",
+      settingsTabs: [...document.querySelectorAll(".settingsDirectoryCard[data-settings-tab]")].map((card) => card.getAttribute("data-settings-tab")),
+      keyframes: {
+        scroll: keyframesOf("s8932ScrollUnfurl"),
+        path: keyframesOf("s8932InkPathRise"),
+        glass: keyframesOf("s8932InkboxGlassIn"),
+        nav: keyframesOf("s8932NavInkGlow"),
+        seal: keyframesOf("s8932SealPressBloom")
+      },
+      horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 4,
+      unsafeText: bodyText.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
+      expected: expectedOptions
+    };
+  }, expected);
+
+  const failures = [];
+  if (snapshot.shellEntry !== "s89-32-shell-entry-glass") failures.push(`shell entry marker was ${snapshot.shellEntry}`);
+  if (snapshot.topBarMarker !== "s89-32-shell-entry-glass") failures.push(`top bar marker was ${snapshot.topBarMarker}`);
+  if (snapshot.topNavMarker !== "s89-32-main-nav-density") failures.push(`top nav marker was ${snapshot.topNavMarker}`);
+  if (snapshot.topToolsMarker !== "s89-32-inkbox-entry") failures.push(`top tools marker was ${snapshot.topToolsMarker}`);
+  if (!snapshot.topBarGlass?.backgroundImage.includes("linear-gradient")) failures.push("top bar glass layer missing");
+  if (!snapshot.topToolsStyle?.backdropFilter.includes("blur")) failures.push("top tools glass blur missing");
+  if (snapshot.inkboxButtonCount !== 1) failures.push(`inkbox button count was ${snapshot.inkboxButtonCount}`);
+  if (snapshot.settingsLinks.length) {
+    failures.push(`settings/inkbox leaked as route link: ${snapshot.settingsLinks.map((link) => `${link.text}:${link.path}`).join(", ")}`);
+  }
+  if (expected.home) {
+    if (snapshot.homeScene !== "s89-32-home-entry-scroll") failures.push(`home scene marker was ${snapshot.homeScene}`);
+    if (snapshot.homeDesk !== "s89-32-opening-desk") failures.push(`home desk marker was ${snapshot.homeDesk}`);
+    if (snapshot.homePath !== "s89-32-opening-path") failures.push(`home path marker was ${snapshot.homePath}`);
+    for (const text of ["开卷路径", "题名", "立身", "候复", "先题名，再入世，诸事候复。"]) {
+      if (!snapshot.homePathText.includes(text)) failures.push(`home path lacked ${text}`);
+    }
+    if (!snapshot.sampleLinks.includes("试阅样卷") || !snapshot.sampleLinks.includes("样卷舆图")) {
+      failures.push(`home sample links were ${snapshot.sampleLinks.join(", ")}`);
+    }
+    if (!snapshot.homeDeskStyle?.boxShadow || snapshot.homeDeskStyle.boxShadow === "none") failures.push("home desk material shadow missing");
+    if (snapshot.shellMotion !== "reduced" && !snapshot.homeDeskStyle?.animationName.includes("s8932ScrollUnfurl")) {
+      failures.push(`home desk animation was ${snapshot.homeDeskStyle?.animationName}`);
+    }
+    if (snapshot.shellMotion !== "reduced" && !snapshot.homePathItemStyle?.animationName.includes("s8932InkPathRise")) {
+      failures.push(`home path animation was ${snapshot.homePathItemStyle?.animationName}`);
+    }
+  }
+  if (expected.drawer) {
+    if (snapshot.inkboxDrawer !== "s89-32-inkbox-glass-ledger") failures.push(`inkbox drawer marker was ${snapshot.inkboxDrawer}`);
+    if (snapshot.inkboxOverview !== "s89-32-inkbox-glass-ledger") failures.push(`inkbox overview marker was ${snapshot.inkboxOverview}`);
+    if (snapshot.inkboxTabs !== "s89-32-inkbox-glass-ledger") failures.push(`inkbox tabs marker was ${snapshot.inkboxTabs}`);
+    if (snapshot.inkboxPanel !== "s89-32-inkbox-glass-ledger") failures.push(`inkbox panel marker was ${snapshot.inkboxPanel}`);
+    if (!snapshot.inkboxPanelStyle?.backdropFilter.includes("blur")) failures.push("inkbox panel glass blur missing");
+    if (snapshot.shellMotion !== "reduced" && !snapshot.inkboxPanelStyle?.animationName.includes("s8932InkboxGlassIn")) {
+      failures.push(`inkbox panel animation was ${snapshot.inkboxPanelStyle?.animationName}`);
+    }
+  }
+  if (expected.settings) {
+    if (snapshot.settingsEntry !== "s89-32-settings-directory-entry") failures.push(`settings entry marker was ${snapshot.settingsEntry}`);
+    const expectedTabs = ["ai-settings", "display", "saves", "safe-summary"];
+    for (const tab of expectedTabs) {
+      if (!snapshot.settingsTabs.includes(tab)) failures.push(`settings directory lacked tab ${tab}`);
+    }
+    if (snapshot.settingsTabs.length !== expectedTabs.length) failures.push(`settings tab count was ${snapshot.settingsTabs.length}`);
+  }
+  if (snapshot.shellMotion !== "reduced") {
+    for (const [name, cssText] of Object.entries(snapshot.keyframes)) {
+      if (!/opacity|transform|box-shadow|filter/i.test(cssText)) failures.push(`S89.32 keyframes ${name} lacked visible material motion`);
+    }
+  }
+  if (expected.reduced && snapshot.inkboxPanelStyle && snapshot.inkboxPanelStyle.animationName !== "none") {
+    failures.push(`reduced inkbox panel animation was ${snapshot.inkboxPanelStyle.animationName}`);
+  }
+  if (snapshot.horizontalOverflow) failures.push("S89.32 surface caused horizontal overflow");
+  if (snapshot.unsafeText.length) failures.push(`S89.32 polish leaked unsafe text: ${snapshot.unsafeText.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`${label} S89.32 home/shell polish failed: ${failures.join("; ")}`);
+  }
+}
+
 async function assertNoVisibleTextOverlap(page, label) {
   const rects = await page.evaluate(({ selectors, ignoreSelectors }) => {
     const elements = [...document.querySelectorAll(selectors.join(","))];
@@ -2515,6 +2649,7 @@ async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
   const drawer = page.locator("aside.drawerHost[aria-label='印匣']");
   await drawer.waitFor({ timeout: 10000 });
   await assertS895MaterialFeedbackPolish(page, "S89.5 desktop inkbox", { drawer: true });
+  await assertS8932HomeShellPolish(page, "S89.32 desktop inkbox", { drawer: true });
 
   await assertInkboxTab(page, drawer, "推演", "推演设置");
   const narratorRoute = drawer.locator(".aiTaskRoute").filter({ hasText: "叙事" }).first();
@@ -2708,6 +2843,7 @@ async function assertDisplayPreferencesPersistence(page, gamePath) {
   await page.getByRole("checkbox", { name: "自动滚动新回合" }).uncheck();
   await page.getByRole("checkbox", { name: "舆图动效" }).uncheck();
   await assertS895MaterialFeedbackPolish(page, "S89.5 reduced inkbox", { drawer: true, reducedOverlay: true });
+  await assertS8932HomeShellPolish(page, "S89.32 reduced inkbox", { drawer: true, reduced: true });
   await page.getByRole("button", { name: "关闭抽屉" }).click();
 
   const storedBeforeReload = await page.evaluate(() => {
@@ -3095,6 +3231,7 @@ async function runClientSmoke(options = {}) {
 
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-desktop", options.screenshotsDir));
     await assertS895MaterialFeedbackPolish(page, "S89.5 desktop home");
+    await assertS8932HomeShellPolish(page, "S89.32 desktop home", { home: true });
     await assertHomeStartSealTypography(page, "S89.2 desktop home");
     await assertHomeSaveShelfPolish(page, "S89.4 desktop home");
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 desktop home backdrop");
@@ -3579,6 +3716,7 @@ async function runClientSmoke(options = {}) {
           throw new Error(`S89.3 settings route leaked unsafe/player-facing terms: ${settingsRouteSnapshot.forbiddenText.join(", ")}`);
         }
         await assertS895MaterialFeedbackPolish(page, "S89.5 settings directory", { settings: true });
+        await assertS8932HomeShellPolish(page, "S89.32 settings directory", { settings: true });
       }
       screenshots.push(
         await assertRouteRefresh(page, route.path, route.screenshot, options.screenshotsDir, {
@@ -3846,6 +3984,7 @@ async function runClientSmoke(options = {}) {
     screenshots.push(await assertMobileInkbox(page, options.screenshotsDir));
     screenshots.push(await assertReactClientPage(page, baseUrl, "/", "s74-react-home-mobile", options.screenshotsDir));
     await assertS895MaterialFeedbackPolish(page, "S89.5 mobile home");
+    await assertS8932HomeShellPolish(page, "S89.32 mobile home", { home: true });
     await assertHomeStartSealTypography(page, "S89.2 mobile home");
     await assertHomeSaveShelfPolish(page, "S89.4 mobile home");
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 mobile home backdrop");

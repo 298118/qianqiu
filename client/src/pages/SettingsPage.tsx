@@ -78,6 +78,7 @@ export function SettingsPage() {
       aria-labelledby="settings-title"
       data-polish-surface="s89-5-settings-directory"
       data-polish-settings="s89-13-settings-directory"
+      data-polish-settings-entry="s89-32-settings-directory-entry"
     >
       <div className="routePanelHeader settingsDirectoryHeader">
         <div className="settingsDirectorySeal" aria-hidden="true">
@@ -96,7 +97,13 @@ export function SettingsPage() {
       ) : null}
       <div className="settingsDirectoryGrid" aria-label="印匣分栏入口">
         {settingsCards.map((card) => (
-          <section className="settingsDirectoryCard" key={card.tab} data-polish-card="s89-5-settings-card" data-polish-settings-state="s89-19-settings-card-state">
+          <section
+            className="settingsDirectoryCard"
+            key={card.tab}
+            data-polish-card="s89-5-settings-card"
+            data-polish-settings-state="s89-19-settings-card-state"
+            data-settings-tab={card.tab}
+          >
             <span className="settingsDirectoryCardIcon" aria-hidden="true">{card.icon}</span>
             <div>
               <h2>{card.title}</h2>

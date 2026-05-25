@@ -37,6 +37,12 @@ const scholarFamilyOptions: readonly { value: ScholarFamilyBackground; label: st
   { value: "gentry", label: "世家", text: "出身地方世家，族中旧望既是助力亦是牵累。" }
 ] as const;
 
+const openingPathItems = [
+  { title: "题名", text: "朝代、年份、姓名与身份先入案。" },
+  { title: "立身", text: "家境、背景与立绘只作开卷取材。" },
+  { title: "候复", text: "新卷开启后，行动仍回主卷落笔候复。" }
+] as const;
+
 const sourceLabels: Record<string, string> = {
   start: "新卷",
   "player-state": "读档",
@@ -230,7 +236,7 @@ export function HomePage() {
   }
 
   return (
-    <section className="homeScene" aria-labelledby="home-title">
+    <section className="homeScene" aria-labelledby="home-title" data-polish-home="s89-32-home-entry-scroll">
       <div className="homeBackdrop" aria-hidden="true" />
       <div className="homeMist homeMistA" aria-hidden="true" />
       <div className="homeMist homeMistB" aria-hidden="true" />
@@ -241,15 +247,19 @@ export function HomePage() {
           <h1 id="home-title">千秋</h1>
           <p className="lede">一卷入世，万事由心。朝堂、贡院、边关与市井皆在纸上起伏。</p>
         </div>
-        <div className="homeDesk">
+        <div
+          className="homeDesk"
+          data-polish-home-entry="s89-32-opening-desk"
+          data-entry-state={startError || formError ? "error" : isStarting ? "loading" : "ready"}
+        >
           <div className="homeDeskHeader">
             <span>题名入册</span>
-            <div className="homeActions" aria-label="案卷入口">
+            <div className="homeActions" aria-label="样卷入口" data-polish-home-actions="s89-32-sample-entry">
               <Link className="paperLink" to="/game/s74-preview">
-                预览
+                试阅样卷
               </Link>
               <Link className="paperLink" to="/game/s74-preview/map">
-                观舆图
+                样卷舆图
               </Link>
             </div>
           </div>
@@ -258,6 +268,7 @@ export function HomePage() {
             onSubmit={handleStart}
             aria-label="新开案卷"
             aria-busy={isStarting}
+            data-polish-home-form="s89-32-opening-form"
           >
             <label>
               朝代
@@ -350,6 +361,20 @@ export function HomePage() {
                 placeholder="如：幼承庭训，曾随父游学江南。"
               />
             </label>
+            <section className="homeOpeningPath" aria-label="开卷路径" data-polish-home-path="s89-32-opening-path">
+              <div>
+                <p className="eyebrow">开卷路径</p>
+                <strong>先题名，再入世，诸事候复。</strong>
+              </div>
+              <ol>
+                {openingPathItems.map((item) => (
+                  <li key={item.title}>
+                    <span>{item.title}</span>
+                    <p>{item.text}</p>
+                  </li>
+                ))}
+              </ol>
+            </section>
             <button
               className={`sealButton homeStartSeal${sealFeedback === "stamping" ? " isStamping" : ""}${sealFeedback === "error" ? " isSealError" : ""}`}
               type="submit"
@@ -367,7 +392,7 @@ export function HomePage() {
           {startError ? <p className="statusLine" role="alert">{startError}</p> : null}
         </div>
         {canContinueCurrentSession && currentSessionId && currentPlayerPayload ? (
-          <section className="continueShelf" aria-label="当前本局">
+          <section className="continueShelf" aria-label="当前本局" data-polish-home-current="s89-32-current-case">
             <div>
               <p className="eyebrow">当前本局</p>
               <h2>{safeHomeSummaryText(currentPlayerPayload.player?.name, "无名")}</h2>
@@ -388,7 +413,7 @@ export function HomePage() {
             </Link>
           </section>
         ) : null}
-        <section className="saveShelf" aria-labelledby="home-save-title" data-save-state={saveShelfState}>
+        <section className="saveShelf" aria-labelledby="home-save-title" data-save-state={saveShelfState} data-polish-home-saves="s89-32-save-shelf">
           <div className="saveShelfHeader">
             <div>
               <p className="eyebrow">案架</p>

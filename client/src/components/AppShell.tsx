@@ -25,13 +25,14 @@ export function AppShell() {
       data-shell-version="s75-9"
       data-polish-surface="s89-5-material-feedback"
       data-polish-atmosphere="s89-30-shared-material-motion"
+      data-polish-entry="s89-32-shell-entry-glass"
       data-motion={displayPreferences.motion}
       data-text-size={displayPreferences.textSize}
       data-contrast={displayPreferences.contrast}
       data-body-font={displayPreferences.bodyFont}
     >
       <UiRouteStateBridge pageFrameRef={pageFrameRef} />
-      <header className="topBar" aria-label="千秋主导航" data-polish-controls="s89-16-shell-controls">
+      <header className="topBar" aria-label="千秋主导航" data-polish-controls="s89-16-shell-controls" data-polish-shell="s89-32-shell-entry-glass">
         <Link className="brandMark" to="/" aria-label="返回千秋首页" onClick={returnHome}>
           <span className="brandSeal" aria-hidden="true" />
           <span>
@@ -39,14 +40,14 @@ export function AppShell() {
             <small>案上新卷</small>
           </span>
         </Link>
-        <nav className="topNav" aria-label="页面">
+        <nav className="topNav" aria-label="页面" data-polish-shell-nav="s89-32-main-nav-density">
           {primaryNav.map((route) => (
             <NavLink key={route.id} to={resolvePrimaryHref(route.href, currentSessionId)} end={route.id === "game"}>
               {route.label}
             </NavLink>
           ))}
         </nav>
-        <div className="topTools" aria-label="案头工具">
+        <div className="topTools" aria-label="案头工具" data-polish-shell-tools="s89-32-inkbox-entry">
           <button className="inkboxButton" type="button" title="印匣" aria-label="打开印匣" data-polish-controls="s89-16-inkbox-button" onClick={(event) => { markOverlayTrigger(event.currentTarget); openInkbox(); }}>
             <Archive size={18} aria-hidden="true" />
             <span>印匣</span>

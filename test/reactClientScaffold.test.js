@@ -2422,6 +2422,62 @@ test("S89.30 shared material and motion polish stays visual-only", () => {
   );
 });
 
+test("S89.32 home and shell entry polish stays visual-only", () => {
+  const homePageSource = readText("client/src/pages/HomePage.tsx");
+  const appShellSource = readText("client/src/components/AppShell.tsx");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const settingsPageSource = readText("client/src/pages/SettingsPage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const runtimeCombined = stripSafeGuardPatterns(`${homePageSource}\n${appShellSource}\n${settingsPageSource}\n${styleSource}`);
+
+  assert.ok(styleSource.length < 200_000);
+  assert.match(homePageSource, /data-polish-home="s89-32-home-entry-scroll"/);
+  assert.match(homePageSource, /data-polish-home-entry="s89-32-opening-desk"/);
+  assert.match(homePageSource, /data-polish-home-form="s89-32-opening-form"/);
+  assert.match(homePageSource, /data-polish-home-path="s89-32-opening-path"/);
+  assert.match(homePageSource, /data-polish-home-current="s89-32-current-case"/);
+  assert.match(homePageSource, /data-polish-home-saves="s89-32-save-shelf"/);
+  assert.match(homePageSource, /试阅样卷/);
+  assert.match(homePageSource, /样卷舆图/);
+  assert.match(homePageSource, /开卷路径/);
+  assert.match(homePageSource, /先题名，再入世，诸事候复/);
+  assert.match(homePageSource, /新卷开启后，行动仍回主卷落笔候复/);
+  assert.match(appShellSource, /data-polish-entry="s89-32-shell-entry-glass"/);
+  assert.match(appShellSource, /data-polish-shell="s89-32-shell-entry-glass"/);
+  assert.match(appShellSource, /data-polish-shell-nav="s89-32-main-nav-density"/);
+  assert.match(appShellSource, /data-polish-shell-tools="s89-32-inkbox-entry"/);
+  assert.match(surfaceHostSource, /data-polish-inkbox="s89-32-inkbox-glass-ledger"/);
+  assert.match(surfaceHostSource, /data-polish-inkbox-overview="s89-32-inkbox-glass-ledger"/);
+  assert.match(surfaceHostSource, /data-polish-inkbox-tabs="s89-32-inkbox-glass-ledger"/);
+  assert.match(surfaceHostSource, /data-polish-inkbox-panel="s89-32-inkbox-glass-ledger"/);
+  assert.match(settingsPageSource, /data-polish-settings-entry="s89-32-settings-directory-entry"/);
+  assert.match(settingsPageSource, /data-settings-tab=\{card\.tab\}/);
+  assert.match(styleSource, /@keyframes s8932ScrollUnfurl/);
+  assert.match(styleSource, /@keyframes s8932InkPathRise/);
+  assert.match(styleSource, /@keyframes s8932InkboxGlassIn/);
+  assert.match(styleSource, /@keyframes s8932NavInkGlow/);
+  assert.match(styleSource, /@keyframes s8932SealPressBloom/);
+  assert.match(styleSource, /\.topTools\[data-polish-shell-tools="s89-32-inkbox-entry"\][\s\S]*backdrop-filter: blur\(10px\) saturate\(1\.04\)/);
+  assert.match(styleSource, /\.homeOpeningPath ol/);
+  assert.match(styleSource, /\.inkboxPanel\[data-polish-inkbox-panel="s89-32-inkbox-glass-ledger"\][\s\S]*backdrop-filter: blur\(8px\) saturate\(1\.03\)/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*s89-32-opening-desk/);
+  assert.match(styleSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*s89-32-inkbox-glass-ledger/);
+  assert.match(appTestSource, /s89-32-home-entry-scroll/);
+  assert.match(appTestSource, /试阅样卷/);
+  assert.match(clientSmokeSource, /assertS8932HomeShellPolish/);
+  assert.match(clientSmokeSource, /S89\.32 desktop home/);
+  assert.match(clientSmokeSource, /S89\.32 desktop inkbox/);
+  assert.match(clientSmokeSource, /S89\.32 settings directory/);
+  assert.match(clientSmokeSource, /S89\.32 mobile home/);
+  assert.match(clientSmokeSource, /S89\.32 reduced inkbox/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|hiddenNotes|完整提示词|本地路径|密钥|AI read scope|proposal boundary|server adjudication|draftContext|schema|manifest/
+  );
+});
+
 test("S89.28 Vite vendor chunking protects the client JS budget", () => {
   const viteConfigSource = readText("vite.config.mjs");
   const budgetSource = readText("scripts/clientBuildBudget.js");

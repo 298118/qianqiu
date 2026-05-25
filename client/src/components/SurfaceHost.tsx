@@ -234,7 +234,7 @@ function InkboxDrawer() {
   }
 
   return (
-    <section className="drawerContent inkboxDrawer">
+    <section className="drawerContent inkboxDrawer" data-polish-inkbox="s89-32-inkbox-glass-ledger">
       <div className="inkboxHeader">
         <div>
           <p className="eyebrow">印匣</p>
@@ -245,7 +245,7 @@ function InkboxDrawer() {
           <span>返回首页</span>
         </button>
       </div>
-      <section className="inkboxOverview" aria-label="印匣总览" data-polish-settings="s89-13-inkbox-overview">
+      <section className="inkboxOverview" aria-label="印匣总览" data-polish-settings="s89-13-inkbox-overview" data-polish-inkbox-overview="s89-32-inkbox-glass-ledger">
         <article>
           <span>当前案卷</span>
           <strong>{payload ? playerName : "未载入"}</strong>
@@ -257,7 +257,7 @@ function InkboxDrawer() {
           <small>{displayModeDetail(displayPreferences)}</small>
         </article>
       </section>
-      <div className="inkboxTabs" role="tablist" aria-label="印匣分栏">
+      <div className="inkboxTabs" role="tablist" aria-label="印匣分栏" data-polish-inkbox-tabs="s89-32-inkbox-glass-ledger">
         {inkboxTabs.map((tab) => (
           <button
             key={tab.id}
@@ -274,7 +274,7 @@ function InkboxDrawer() {
           </button>
         ))}
       </div>
-      <div className="inkboxPanel" role="tabpanel" id={`inkbox-panel-${activeTab}`} aria-labelledby={`inkbox-tab-${activeTab}`}>
+      <div className="inkboxPanel" role="tabpanel" id={`inkbox-panel-${activeTab}`} aria-labelledby={`inkbox-tab-${activeTab}`} data-polish-inkbox-panel="s89-32-inkbox-glass-ledger">
         {activeTab === "ai-settings" ? <AiSettingsPanel /> : null}
         {activeTab === "saves" ? <SavePanel /> : null}
         {activeTab === "display" ? <DisplayPreferencesPanel /> : null}

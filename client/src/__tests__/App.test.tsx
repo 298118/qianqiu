@@ -148,7 +148,8 @@ describe("S74.1 React client shell", () => {
     renderRoute("/");
 
     expect(screen.getByRole("heading", { name: "千秋" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "预览" }).getAttribute("href")).toBe("/game/s74-preview");
+    expect(screen.getByRole("link", { name: "试阅样卷" }).getAttribute("href")).toBe("/game/s74-preview");
+    expect(screen.getByRole("link", { name: "样卷舆图" }).getAttribute("href")).toBe("/game/s74-preview/map");
     expect(screen.getByRole("button", { name: "新开一卷" })).toBeTruthy();
     expect(screen.getByLabelText("朝代")).toBeTruthy();
     expect(screen.getByLabelText("年份")).toBeTruthy();
@@ -156,7 +157,13 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByLabelText("姓名")).toBeTruthy();
     expect(screen.getByRole("group", { name: "书生家境" })).toBeTruthy();
     expect(screen.getByLabelText("自定背景")).toBeTruthy();
+    expect(screen.getByText("开卷路径")).toBeTruthy();
+    expect(screen.getByText("先题名，再入世，诸事候复。")).toBeTruthy();
     expect(document.querySelector(".homeDesk .startDesk")).toBeTruthy();
+    expect(document.querySelector("[data-polish-home='s89-32-home-entry-scroll']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-home-path='s89-32-opening-path']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-shell='s89-32-shell-entry-glass']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-shell-tools='s89-32-inkbox-entry']")).toBeTruthy();
     expect(document.querySelector("#start-form")).toBeNull();
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
