@@ -3364,6 +3364,9 @@ async function runClientSmoke(options = {}) {
         hasEconomyTrace: Boolean(document.querySelector(".economyTraceSection")),
         economyTraceMarker: document.querySelector(".economyTraceSection")?.getAttribute("data-polish-evidence") || "",
         economyBoundaryMarker: document.querySelector(".economyTraceSection [data-polish-evidence-boundary]")?.getAttribute("data-polish-evidence-boundary") || "",
+        transferLedgerMarker: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.getAttribute("data-polish-inventory") || "",
+        transferBoundaryMarker: document.querySelector("[data-polish-inventory-boundary='s89-23-transfer-boundary']")?.getAttribute("data-polish-inventory-boundary") || "",
+        transferLedgerText: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.textContent || "",
         horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
         forbiddenText: text.match(inventoryLeakPattern) || []
       };
@@ -3373,6 +3376,15 @@ async function runClientSmoke(options = {}) {
     }
     if (inventorySnapshot.economyTraceMarker !== "s89-15-economy-reader" || inventorySnapshot.economyBoundaryMarker !== "s89-15-economy-boundary") {
       throw new Error(`S89.15 desktop inventory economy reader marker missing: ${JSON.stringify(inventorySnapshot)}`);
+    }
+    if (
+      inventorySnapshot.transferLedgerMarker !== "s89-23-inventory-ledger-reader" ||
+      inventorySnapshot.transferBoundaryMarker !== "s89-23-transfer-boundary" ||
+      !inventorySnapshot.transferLedgerText.includes("流转候批笺") ||
+      !inventorySnapshot.transferLedgerText.includes("未获案卷回批前") ||
+      !inventorySnapshot.transferLedgerText.includes("主卷回音")
+    ) {
+      throw new Error(`S89.23 desktop inventory transfer reader missing: ${JSON.stringify(inventorySnapshot)}`);
     }
     if (inventorySnapshot.horizontalOverflow) {
       throw new Error(`S89.2 desktop inventory caused horizontal overflow: ${JSON.stringify(inventorySnapshot)}`);
@@ -3567,6 +3579,9 @@ async function runClientSmoke(options = {}) {
         hasEconomyTrace: Boolean(document.querySelector(".economyTraceSection")),
         economyTraceMarker: document.querySelector(".economyTraceSection")?.getAttribute("data-polish-evidence") || "",
         economyBoundaryMarker: document.querySelector(".economyTraceSection [data-polish-evidence-boundary]")?.getAttribute("data-polish-evidence-boundary") || "",
+        transferLedgerMarker: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.getAttribute("data-polish-inventory") || "",
+        transferBoundaryMarker: document.querySelector("[data-polish-inventory-boundary='s89-23-transfer-boundary']")?.getAttribute("data-polish-inventory-boundary") || "",
+        transferLedgerText: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.textContent || "",
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
         forbiddenText: text.match(inventoryLeakPattern) || []
       };
@@ -3576,6 +3591,15 @@ async function runClientSmoke(options = {}) {
     }
     if (mobileInventory.economyTraceMarker !== "s89-15-economy-reader" || mobileInventory.economyBoundaryMarker !== "s89-15-economy-boundary") {
       throw new Error(`S89.15 mobile inventory economy reader marker missing: ${JSON.stringify(mobileInventory)}`);
+    }
+    if (
+      mobileInventory.transferLedgerMarker !== "s89-23-inventory-ledger-reader" ||
+      mobileInventory.transferBoundaryMarker !== "s89-23-transfer-boundary" ||
+      !mobileInventory.transferLedgerText.includes("流转候批笺") ||
+      !mobileInventory.transferLedgerText.includes("未获案卷回批前") ||
+      !mobileInventory.transferLedgerText.includes("主卷回音")
+    ) {
+      throw new Error(`S89.23 mobile inventory transfer reader missing: ${JSON.stringify(mobileInventory)}`);
     }
     if (mobileInventory.horizontalOverflow) {
       throw new Error(`S89.2 mobile inventory caused horizontal overflow: ${JSON.stringify(mobileInventory)}`);

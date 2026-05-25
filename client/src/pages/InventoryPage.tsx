@@ -70,7 +70,8 @@ function safeLabel(value: unknown, fallback: string, maxLength = 80) {
 }
 
 function itemLabel(item: InventoryItemView) {
-  const quantity = typeof item.quantity === "number" ? `${item.quantity}${item.unit || ""}` : "";
+  const unit = safeLabel(item.unit, "", 8);
+  const quantity = typeof item.quantity === "number" ? `${item.quantity}${unit}` : "";
   return `${safeLabel(item.name, "无名物件", 48)}${quantity ? ` · ${quantity}` : ""}`;
 }
 
@@ -80,6 +81,21 @@ function containerLabel(container: InventoryContainerView | undefined) {
     ? ` · ${container.currentWeight}/${container.capacityWeight}`
     : "";
   return `${safeLabel(container.label, "容器", 40)}${load}`;
+}
+
+function transferReadinessLabel(options: {
+  readonly routeSessionSupported: boolean;
+  readonly runnable: boolean;
+  readonly routeInventoryStatus: string;
+  readonly transferItem: InventoryItemView | undefined;
+  readonly selectedTargetContainer: string;
+}) {
+  if (!options.routeSessionSupported) return "断卷不可移置";
+  if (!options.runnable) return "预览只读";
+  if (options.routeInventoryStatus === "loading") return "候账中";
+  if (!options.transferItem) return "暂无可流转物件";
+  if (!options.selectedTargetContainer) return "暂无可入容器";
+  return "可呈请候批";
 }
 
 export function InventoryPage() {
@@ -170,6 +186,22 @@ export function InventoryPage() {
   const selectedTargetContainer = activeTargetContainerId && targetContainers.some((container) => container.containerId === activeTargetContainerId)
     ? activeTargetContainerId
     : targetContainers[0]?.containerId || "";
+  const selectedTargetContainerView = selectedTargetContainer ? containersById.get(selectedTargetContainer) : undefined;
+  const resourceAccountCount = resourceLedgerView?.accounts?.length ?? 0;
+  const assetCount = assetLedgerView?.assets?.length ?? 0;
+  const credentialCount = inventoryView?.importantCredentials?.length ?? 0;
+  const transferLedgerStatus = transferReadinessLabel({
+    routeSessionSupported,
+    runnable,
+    routeInventoryStatus,
+    transferItem,
+    selectedTargetContainer
+  });
+  const transferLedgerRoute = transferItem && selectedTargetContainerView
+    ? `${itemLabel(transferItem)}：${containerLabel(transferItem.containerId ? containersById.get(transferItem.containerId) : undefined)} 至 ${containerLabel(selectedTargetContainerView)}`
+    : transferItem
+      ? `${itemLabel(transferItem)}：暂无可入容器。`
+      : "本卷暂无可呈请流转的物件。";
 
   useEffect(() => {
     if (containers[0] && (!activeSelectedContainerId || !containersById.has(activeSelectedContainerId))) {
@@ -237,7 +269,7 @@ export function InventoryPage() {
             resourceLedgerView?.accounts.map((account) => (
               <dl className="compactLedgerRow" key={account.accountId}>
                 <dt>{safeLabel(account.label, "资源", 32)}</dt>
-                <dd>{account.amount}{account.unit || ""}</dd>
+                <dd>{account.amount}{safeLabel(account.unit, "", 8)}</dd>
               </dl>
             ))
           ) : <p className="statusLine">暂无可见资源账。</p>}
@@ -293,7 +325,7 @@ export function InventoryPage() {
                 <h3>{safeLabel(item.name, "无名物件", 48)}</h3>
               </div>
               <dl className="inventoryItemStats">
-                <div><dt>数量</dt><dd>{item.quantity ?? 1}{item.unit || ""}</dd></div>
+                <div><dt>数量</dt><dd>{item.quantity ?? 1}{safeLabel(item.unit, "", 8)}</dd></div>
                 <div><dt>品相</dt><dd>{safeLabel(item.condition, "未题", 24)}</dd></div>
                 <div><dt>法度</dt><dd>{legalStatusLabels[item.legalStatus || ""] || safeLabel(item.legalStatus, "寻常", 24)}</dd></div>
                 <div><dt>流转</dt><dd>{transferPolicyLabels[item.transferPolicy || ""] || safeLabel(item.transferPolicy, "待裁", 24)}</dd></div>
@@ -339,6 +371,36 @@ export function InventoryPage() {
           呈请移置
         </button>
         {localStateIsCurrent && transferNotice ? <p className="statusLine" role="status">{transferNotice}</p> : null}
+      </section>
+
+      <section
+        className="inventoryTransferPanel"
+        aria-label="囊箧流转候批笺"
+        data-polish-inventory="s89-23-inventory-ledger-reader"
+      >
+        <div>
+          <p className="eyebrow">囊箧读法</p>
+          <h2>流转候批笺</h2>
+          <p>把本卷可见账目、当前移置选择和候批口径先列清楚；未获案卷回批前，不写成已入账或已移置。</p>
+        </div>
+        <dl className="surfaceSafetyList" aria-label="流转候批笺">
+          <div>
+            <dt>本卷取材</dt>
+            <dd>资源 {resourceAccountCount} 笔，资产 {assetCount} 项，物件 {items.length} 件，凭证 {credentialCount} 件。</dd>
+          </div>
+          <div>
+            <dt>可流转</dt>
+            <dd>{transferableItems.length} 件可呈请；官物、禁物、绑定凭证和封存容器仍候回批。</dd>
+          </div>
+          <div>
+            <dt>本次移置</dt>
+            <dd>{transferLedgerRoute}</dd>
+          </div>
+          <div data-polish-inventory-boundary="s89-23-transfer-boundary">
+            <dt>候批边界</dt>
+            <dd>{transferLedgerStatus}；浏览器只记当前选择和提示，成交、入账、扣减、赠予、借用与关系影响仍等主卷回音。</dd>
+          </div>
+        </dl>
       </section>
 
       <EconomyTraceSection

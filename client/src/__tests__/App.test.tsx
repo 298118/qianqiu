@@ -776,8 +776,13 @@ describe("S74.1 React client shell", () => {
     renderRoute("/game/not-a-session/inventory");
 
     expect(screen.getByRole("heading", { name: "囊箧" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "流转候批笺" })).toBeTruthy();
+    expect(document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-inventory-boundary='s89-23-transfer-boundary']")).toBeTruthy();
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
     expect(screen.getAllByText("此案卷编号暂不可用于浏览器囊箧；请从首页开卷或载入旧案。").length).toBeGreaterThan(0);
+    expect(document.body.textContent || "").toContain("断卷不可移置");
+    expect(document.body.textContent || "").toContain("未获案卷回批前，不写成已入账或已移置");
     expect(screen.getByRole("button", { name: "呈请移置" })).toHaveProperty("disabled", true);
     expect(fetchMock.mock.calls.map((call) => String((call as unknown[])[0])).some((url) => url.startsWith("/api/game/"))).toBe(false);
     expect(document.body.textContent || "").not.toMatch(/not-a-session|OPENAI_API_KEY|data\/sessions|provider payload|raw audit/i);
@@ -5332,6 +5337,17 @@ describe("S74.1 React client shell", () => {
           containerId: "bag",
           quantity: 1,
           unit: "册"
+        },
+        {
+          itemId: "item:polluted-unit",
+          name: "污染单位札",
+          category: "文书",
+          condition: "可阅",
+          transferPolicy: "tradeable",
+          legalStatus: "ordinary",
+          containerId: "bag",
+          quantity: 2,
+          unit: "draftContext schema /home/user/.env"
         }
       ],
       importantCredentials: [],
@@ -5451,6 +5467,19 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
     expect(document.querySelector(".gameMainDeck")).toBeFalsy();
     expect(document.querySelector(".memorialComposer")).toBeFalsy();
+    const transferLedger = document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']");
+    expect(transferLedger).toBeTruthy();
+    const transferLedgerText = transferLedger?.textContent || "";
+    expect(transferLedgerText).toContain("流转候批笺");
+    expect(transferLedgerText).toContain("资源 1 笔，资产 1 项，物件 2 件，凭证 0 件");
+    expect(transferLedgerText).toContain("2 件可呈请");
+    expect(transferLedgerText).toContain("清丈册 · 1册：书箧 · 1/10 至 县署库房 · 0/20");
+    expect(transferLedgerText).toContain("可呈请候批");
+    expect(transferLedgerText).toContain("不写成已入账或已移置");
+    expect(transferLedgerText).toContain("主卷回音");
+    expect(transferLedger?.querySelector("[data-polish-inventory-boundary='s89-23-transfer-boundary']")).toBeTruthy();
+    expect(transferLedgerText).not.toMatch(/item:ledger|bag|store|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|服务器裁决|\/home\/|C:\\/i);
+    expect(document.body.textContent || "").not.toMatch(/draftContext schema|\/home\/user\/\.env/i);
     const inventoryTraceHeading = await screen.findByText("账本为何变化");
     const inventoryTraceSection = within(inventoryTraceHeading.closest("section") as HTMLElement);
     expect(inventoryTraceSection.getByText("交易议价留痕")).toBeTruthy();

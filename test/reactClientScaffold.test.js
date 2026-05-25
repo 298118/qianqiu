@@ -1651,6 +1651,38 @@ test("S89.22 main ledger reader stays player-facing and draft-status-only", () =
   assert.doesNotMatch(gamePageWithoutGuard, /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/);
 });
 
+test("S89.23 inventory transfer reader stays player-facing and CSS-neutral", () => {
+  const inventoryPageSource = readText("client/src/pages/InventoryPage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = inventoryPageSource.indexOf('data-polish-inventory="s89-23-inventory-ledger-reader"');
+  const readerEnd = inventoryPageSource.indexOf("<EconomyTraceSection", readerStart);
+  const readerBlock = readerStart >= 0 && readerEnd > readerStart
+    ? inventoryPageSource.slice(readerStart, readerEnd)
+    : "";
+  const inventoryPageWithoutGuard = stripSafeGuardPatterns(inventoryPageSource);
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.match(inventoryPageSource, /data-polish-inventory="s89-23-inventory-ledger-reader"/);
+  assert.match(inventoryPageSource, /data-polish-inventory-boundary="s89-23-transfer-boundary"/);
+  assert.match(inventoryPageSource, /transferReadinessLabel/);
+  assert.match(inventoryPageSource, /流转候批笺/);
+  assert.match(inventoryPageSource, /未获案卷回批前，不写成已入账或已移置/);
+  assert.match(inventoryPageSource, /成交、入账、扣减、赠予、借用与关系影响仍等主卷回音/);
+  assert.match(inventoryPageSource, /safeLabel\(item\.unit, "", 8\)/);
+  assert.match(inventoryPageSource, /safeLabel\(account\.unit, "", 8\)/);
+  assert.match(inventoryPageSource, /断卷不可移置/);
+  assert.match(inventoryPageSource, /可呈请候批/);
+  assert.match(appTestSource, /s89-23-inventory-ledger-reader/);
+  assert.match(appTestSource, /清丈册 · 1册：书箧 · 1\/10 至 县署库房 · 0\/20/);
+  assert.match(clientSmokeSource, /S89\.23 desktop inventory transfer reader/);
+  assert.match(clientSmokeSource, /S89\.23 mobile inventory transfer reader/);
+  assert.doesNotMatch(styleSource, /s89-23|data-polish-inventory/);
+  assert.doesNotMatch(readerBlock, /itemId|containerId|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|服务器裁决|worldState|payload/);
+  assert.doesNotMatch(inventoryPageWithoutGuard, /\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/);
+});
+
 test("S89.12 map filter surface is player-facing and display-only", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const surfaceRegistrySource = readText("client/src/surfaces/surfaceRegistry.tsx");
