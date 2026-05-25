@@ -10,6 +10,7 @@
   --qq-font-art-flow: "Long Cang", "Noto Serif SC", "Songti SC", serif;
   --qq-font-art-seal: "Ma Shan Zheng", "Noto Serif SC", "Songti SC", serif;
   --qq-material-xuan: url("/assets/ui/materials/paper-xuan-base-v1.webp");
+  --qq-material-silk: url("/assets/ui/materials/paper-aged-silk-v1.webp");
   --qq-material-folded: url("/assets/ui/materials/memorial-folded-paper-v1.webp");
   --qq-material-torn: url("/assets/ui/materials/torn-paper-card-v1.webp");
   --qq-material-edge: url("/assets/ui/materials/paper-edge-shadow-v1.webp");
@@ -214,6 +215,8 @@ a {
 .appShell[data-motion="reduced"] .sessionRouteShell > .surfacePanel,
 .appShell[data-motion="reduced"] .drawerHost,
 .appShell[data-motion="reduced"] li[data-draft-state="written"],
+.appShell[data-motion="reduced"] .portraitViewerCueGrid span,
+.appShell[data-motion="reduced"] .peopleCard,
 .appShell[data-motion="reduced"] .rankingGoldenNotice::before,
 .appShell[data-motion="reduced"] .rankingGoldenTitle span {
   animation: none !important;
@@ -3464,6 +3467,9 @@ li[data-draft-state="written"] {
   display: grid;
   gap: 14px;
   margin: 18px 0;
+  border: 1px solid rgba(84, 60, 43, 0.18);
+  background: rgba(255, 252, 238, 0.7);
+  padding: 14px;
 }
 
 .portraitLedgerHeader {
@@ -3509,8 +3515,15 @@ li[data-draft-state="written"] {
   align-items: stretch;
   min-width: 0;
   border: 1px solid rgba(84, 60, 43, 0.22);
-  background: rgba(255, 248, 230, 0.62);
+  background: linear-gradient(135deg, rgba(255, 252, 238, 0.78), rgba(238, 221, 190, 0.56));
   padding: 10px;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.peopleCard:hover,
+.peopleCard:focus-within {
+  border-color: rgba(142, 47, 39, 0.44);
+  transform: translateY(-1px);
 }
 
 .peoplePortrait {
@@ -5460,6 +5473,7 @@ li[data-draft-state="written"] {
   align-items: center;
   gap: clamp(16px, 3vw, 28px);
   overflow: auto;
+  background: linear-gradient(135deg, rgba(255, 248, 230, 0.94), rgba(231, 211, 180, 0.86)), var(--qq-material-silk) center / cover no-repeat;
   padding: clamp(20px, 3vw, 30px);
 }
 
@@ -5505,6 +5519,21 @@ li[data-draft-state="written"] {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.portraitViewerCueGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.portraitViewerCueGrid span {
+  min-width: 0;
+  border: 1px solid rgba(84, 60, 43, 0.22);
+  background: linear-gradient(135deg, rgba(255, 252, 238, 0.78), rgba(235, 218, 188, 0.54));
+  color: #49382a;
+  padding: 8px 9px;
+  animation: s899CueLift 420ms ease both;
 }
 
 .portraitViewerProfile section {
@@ -5899,6 +5928,10 @@ li[data-draft-state="written"] {
   }
 
   .portraitViewerMeta {
+    grid-template-columns: 1fr;
+  }
+
+  .portraitViewerCueGrid {
     grid-template-columns: 1fr;
   }
 
@@ -6431,6 +6464,8 @@ li[data-draft-state="written"] {
   .sessionRouteShell > .courtSurfacePage,
   .sessionRouteShell > .surfacePanel,
   li[data-draft-state="written"],
+  .portraitViewerCueGrid span,
+  .peopleCard,
   .rankingGoldenNotice::before,
   .rankingGoldenTitle span {
     animation: none !important;
@@ -6444,6 +6479,11 @@ li[data-draft-state="written"] {
 
 @keyframes s895S {
   from { outline: 2px solid #8e2f2738; }
+}
+
+@keyframes s899CueLift {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes rankingGoldDust {

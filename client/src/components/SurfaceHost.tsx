@@ -493,7 +493,7 @@ function PortraitViewerHost() {
                 {viewerCopy.tags.map((tag) => <span key={tag}>{tag}</span>)}
               </div>
             ) : null}
-            <div className="portraitViewerTags portraitViewerCueGrid" aria-label="画卷题签">
+            <div className="portraitViewerTags portraitViewerCueGrid" aria-label="画卷题签" data-polish-cue="s89-9-portrait-cue-material">
               {viewerCopy.cues.map((cue) => (
                 <span key={`${cue.label}-${cue.value}`}>
                   <b>{cue.label}</b>

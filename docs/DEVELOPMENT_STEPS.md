@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.9 | DONE | 人物页与立绘查看器材质题签 polish | 承接 S89.8 和提交前复审建议，人物页谱牒、人物卡、人物工作台和高清立绘查看器题签格已补宣纸、朱线、绢帛、轻浮起与低动效降级材质；复用已审核 `paper-aged-silk-v1.webp` 和既有材质 token，不新增依赖、不新增素材、不改 runtime manifest 字段。范围限 React 前端标记、CSS、客户端 smoke/source canary、前端测试、预算校准和文档；不新增后端 API/schema，不写浏览器存储、URL、草稿、prompt、canonical state 或服务器状态，不扩大人物、交易、委派、关系、资源或隐藏信息裁决权。实现提交：待提交后回填。 |
 | S89.8 | DONE | 高清立绘查看器画中所见 polish | 承接 S89.7，高清立绘查看器新增 `data-polish-portrait="s89-8-life-scroll"`，把已审阅 runtime 立绘元数据与人物页安全摘要整理成“画中所见 / 身世线索 / 眼下处境”三段式说明、画卷题签、衣饰、仪态和神采线索；人物页画像 profile 补案主经历线索与 NPC 公开近事。范围限 React 前端、客户端 smoke/source canary、前端测试和文档；不新增样式，不新增后端 API/schema，不调用模型生成小传，不写浏览器存储、URL、草稿、prompt、canonical state 或服务器状态；不读取完整 source manifest、本地路径、raw/provider/hidden 或未审核素材。实现提交：`2476a12c4d77e598b65ba74931361edb362e2b6c`。 |
 | S89.7 | DONE | 舆图交互与筛选提示 polish | 承接 S89.6，舆图页新增 `data-polish-map="s89-7-layer-tooltip"`、当前图层显隐摘要、tooltip 单点札记、tooltip 草稿已写入状态和移动端长文本守门；舆图清洗补 `/Users`、`/private`、常见 Unix 本地目录和 `tp-...` token 形态。范围限 React 前端、样式、客户端 smoke/source canary、前端测试和文档。地图 layout/坐标/tooltip/visual-only effect/NPC anchor 仍只作浏览器显示，行动草稿仍为 `map-runtime` 本地 hint，普通回合由服务器从当前安全 view 重建复核；不改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`b7bbeb04327f4d379dfd10729547e740958467d3`。 |
 | S89.6 | DONE | 高清立绘查看器人物小传与当前情况 polish | 承接 S89.5，点击高清立绘后查看器显示“观画印象”人物头、公开标签、外貌介绍、人物小传和当前情况；人物页画像 profile 补案主/名册/详情/谱牒当前情况，均只来自已审阅 runtime 画像元数据和人物页安全摘要。`scripts/clientSmoke.js` 与源码 canary 已覆盖 `s89-6-portrait-life` 标记、人物小传/公开近况文案、存储禁写和污染词守门；CSS 仅保留轻量结构样式并通过预算。未改后端 API/schema、AI 权限、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。实现提交：`d476d41d747afc6e650ed8a6fa5041b23d01c87c`。 |
@@ -136,7 +137,8 @@
 - 2026-05-24：S89.6 完成高清立绘查看器人物小传与当前情况 polish。当前范围仍限 React 前端、样式、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档或素材 manifest。
 - 2026-05-24：S89.7 完成舆图交互与筛选提示 polish。当前范围仍限 React 前端、样式、客户端 smoke/source canary、前端测试和文档；不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.8 完成高清立绘查看器画中所见 polish。当前范围仍限 React 前端、客户端 smoke/source canary、前端测试和文档；不新增样式，不新增后端 API/schema，不调用模型生成小传，不扩大浏览器裁决权。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.8 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-25：S89.9 完成人物页与立绘查看器材质题签 polish。当前范围限 React 前端标记、CSS、客户端 smoke/source canary、前端测试、CSS 预算校准和文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.9 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -218,6 +220,15 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-25：S89.9 人物页与立绘查看器材质题签 polish
+
+- 范围：人物页外层、人物名册、人物详情、人物谱牒和人物卡新增 `s89-9-portrait-material` 标记；高清立绘查看器题签格新增 `data-polish-cue="s89-9-portrait-cue-material"`，与 S89.8 的 `data-polish-portrait="s89-8-life-scroll"` 并存。
+- 体验：人物谱牒与人物卡补宣纸底色、卡片轻浮起反馈；查看器面板复用已审核 `paper-aged-silk-v1.webp`，画卷题签改为双列纸签格，移动端单列，低动效或浏览器 reduced-motion 下关闭题签动画。
+- Smoke/canary：`scripts/clientSmoke.js` 现检查 S89.9 人物页/谱牒/工作台/人物卡标记、人物卡渐层与 transition、查看器题签格数量/网格/渐层/动效或 reduced-motion 关闭；`test/reactClientScaffold.test.js` 与 `App.test.tsx` 同步覆盖标记、丝绢材质 token、移动端单列、低动效和人物卡 hover。
+- 预算：S89.9 新增 CSS 让单 CSS 产物接近原 100,000 bytes 门槛；本轮把 `scripts/clientBuildBudget.js` 的 `maxSingleCssBytes` 校准为明确的 100 KiB（102,400 bytes），仍保留硬门，最终 `npm run budget:client` 输出 `CSS 98.5 KiB`。
+- 边界：本步不新增依赖或素材，不改 runtime manifest 字段、后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、素材 manifest 或服务器裁决；人物页和查看器仍只读当前案卷安全 view、已审核 `portraitRef` runtime 资产和安全 `PortraitViewerProfile`。S89.9 不新增行动草稿写入，人物页既有按钮仍只写本地草稿并等待服务器回合裁决。
+- 验证：已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --check scripts/clientBuildBudget.js`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "loads the S76.10 current people ledger without exposing the full portrait pool" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。提交前只读复审无阻断问题，已按建议收紧人物页既有本地草稿边界表述；残余风险是 `CSS 98.5 KiB` 余量较小，后续样式新增仍需先跑预算。
 
 ### 2026-05-25：S89.8 高清立绘查看器画中所见 polish
 

@@ -870,7 +870,7 @@ export function PeoplePage() {
   }
 
   return (
-    <article className="surfacePanel routePanel peopleWorkbenchPanel" aria-labelledby="people-title">
+    <article className="surfacePanel routePanel peopleWorkbenchPanel" aria-labelledby="people-title" data-polish-people="s89-9-portrait-material">
       <div className="routePanelHeader">
         <div>
           <p className="eyebrow">人物案牍</p>
@@ -941,7 +941,7 @@ export function PeoplePage() {
           text
         })}
       />
-      <section className="npcWorkbench" aria-label="人物名册">
+      <section className="npcWorkbench" aria-label="人物名册" data-polish-people-workbench="s89-9-portrait-material">
         <aside className="npcGroupList" aria-label="人物分组">
           {npcGroups.length ? npcGroups.map((group) => (
             <section key={group.label}>
@@ -983,7 +983,7 @@ export function PeoplePage() {
             </section>
           )) : <p className="statusLine">{routeSessionSupported ? "等待人物名册。" : unsupportedRouteMessage}</p>}
         </aside>
-        <section className="npcDetailWorkbench" aria-label="人物详情">
+        <section className="npcDetailWorkbench" aria-label="人物详情" data-polish-people-detail="s89-9-portrait-material">
           {selectedNpc ? (
             <>
               <div className="npcDetailHeader">
@@ -1113,7 +1113,7 @@ export function PeoplePage() {
           ) : <p className="statusLine">{routeSessionSupported ? "请选择一名可见人物。" : unsupportedRouteMessage}</p>}
         </section>
       </section>
-      <section className="portraitLedger" aria-label="本局人物谱牒">
+      <section className="portraitLedger" aria-label="本局人物谱牒" data-polish-people-ledger="s89-9-portrait-material">
         <div className="portraitLedgerHeader">
           <div>
             <h3>人物谱牒</h3>
@@ -1134,7 +1134,7 @@ export function PeoplePage() {
             data-visible-portraits={visiblePeople.length}
           >
             {visiblePeople.map((person) => (
-              <article className="peopleCard" key={`${person.kind}-${person.id}`} data-person-kind={person.kind}>
+              <article className="peopleCard" key={`${person.kind}-${person.id}`} data-person-kind={person.kind} data-polish-people-card="s89-9-portrait-material">
                 {registry ? (
                   <Portrait
                     registry={registry}

@@ -694,6 +694,9 @@ describe("S74.1 React client shell", () => {
 
     expect(screen.getByRole("heading", { name: "人物" })).toBeTruthy();
     expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
+    expect(document.querySelector("[data-polish-people='s89-9-portrait-material']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-people-workbench='s89-9-portrait-material']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-people-ledger='s89-9-portrait-material']")).toBeTruthy();
     expect(document.querySelector(".gameCommandBar")).toBeFalsy();
     expect(document.querySelector(".gameMainDeck")).toBeFalsy();
     expect(document.querySelector(".memorialComposer")).toBeFalsy();
@@ -4364,6 +4367,7 @@ describe("S74.1 React client shell", () => {
     const firstPageImages = screen.getAllByRole("img");
     expect(firstPageImages.every((image) => image.getAttribute("loading") === "lazy")).toBe(true);
     expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-total-people")).toBe("4");
+    expect(document.querySelectorAll("[data-polish-people-card='s89-9-portrait-material']").length).toBeGreaterThan(0);
     expect(document.querySelector(".peopleLedgerList")?.getAttribute("data-total-portraits")).toBeNull();
     expect(document.querySelector("[data-portrait-remastered='true']")).toBeTruthy();
 
@@ -4373,6 +4377,7 @@ describe("S74.1 React client shell", () => {
     expect(viewer.getAttribute("data-portrait-viewer")).toBe("true");
     expect(viewer.getAttribute("data-polish-portrait")).toBe("s89-8-life-scroll");
     expect(viewer.querySelector("[data-polish-profile='s89-6-portrait-life']")).toBeTruthy();
+    expect(viewer.querySelector("[data-polish-cue='s89-9-portrait-cue-material']")).toBeTruthy();
     expect(within(viewer).getByRole("heading", { name: "外貌介绍" })).toBeTruthy();
     expect(within(viewer).getByRole("heading", { name: "生平介绍" })).toBeTruthy();
     expect(within(viewer).getByRole("heading", { name: "当前情况" })).toBeTruthy();

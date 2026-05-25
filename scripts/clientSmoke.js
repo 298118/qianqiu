@@ -3031,8 +3031,19 @@ async function runClientSmoke(options = {}) {
     assertRuntimeManifestRequestOnly(manifestRequests, "S88.11 desktop people");
     const portraitLedger = await page.evaluate(() => {
       const grid = document.querySelector(".peopleLedgerList");
+      const shell = document.querySelector("[data-polish-people='s89-9-portrait-material']");
+      const ledger = document.querySelector("[data-polish-people-ledger='s89-9-portrait-material']");
+      const workbench = document.querySelector("[data-polish-people-workbench='s89-9-portrait-material']");
+      const firstCard = document.querySelector("[data-polish-people-card='s89-9-portrait-material']");
+      const firstCardStyle = firstCard ? window.getComputedStyle(firstCard) : null;
       const images = [...document.querySelectorAll(".peopleLedgerList img")];
       return {
+        polishShell: Boolean(shell),
+        polishLedger: Boolean(ledger),
+        polishWorkbench: Boolean(workbench),
+        polishCardCount: document.querySelectorAll("[data-polish-people-card='s89-9-portrait-material']").length,
+        cardBackground: firstCardStyle?.backgroundImage || "",
+        cardTransition: firstCardStyle?.transitionProperty || "",
         visible: Number(grid?.getAttribute("data-visible-people") || 0),
         total: Number(grid?.getAttribute("data-total-people") || 0),
         eagerImages: images.filter((image) => image.getAttribute("loading") !== "lazy").length,
@@ -3042,6 +3053,9 @@ async function runClientSmoke(options = {}) {
     });
     if (portraitLedger.visible > 8 || portraitLedger.visible <= 0) {
       throw new Error(`People ledger loaded an unsafe initial person count: ${portraitLedger.visible}`);
+    }
+    if (!portraitLedger.polishShell || !portraitLedger.polishLedger || !portraitLedger.polishWorkbench || portraitLedger.polishCardCount < 1 || !portraitLedger.cardBackground.includes("linear-gradient") || !/transform|box-shadow|border-color/i.test(portraitLedger.cardTransition)) {
+      throw new Error(`S89.9 people portrait material polish hooks were incomplete: ${JSON.stringify(portraitLedger)}`);
     }
     if (portraitLedger.total <= 0 || portraitLedger.total > 80) {
       throw new Error(`People ledger did not stay on the current public person view: ${portraitLedger.total}`);
@@ -3068,10 +3082,25 @@ async function runClientSmoke(options = {}) {
         imageSrc: image?.getAttribute("src") || "",
         polishProfile: viewer?.querySelector("[data-polish-profile='s89-6-portrait-life']") ? "yes" : "",
         polishPortrait: viewer?.getAttribute("data-polish-portrait") || "",
+        polishCue: viewer?.querySelector("[data-polish-cue='s89-9-portrait-cue-material']") ? "yes" : "",
         hasAppearance: viewerText.includes("外貌介绍"),
         hasBiography: viewerText.includes("生平介绍"),
         hasCurrent: viewerText.includes("当前情况"),
         hasCueGrid: /画卷题签|衣饰|神采/.test(viewerText),
+        cueGrid: (() => {
+          const cue = viewer?.querySelector("[data-polish-cue='s89-9-portrait-cue-material']");
+          const style = cue ? window.getComputedStyle(cue) : null;
+          const first = cue?.querySelector("span");
+          const firstStyle = first ? window.getComputedStyle(first) : null;
+          return {
+            count: cue?.querySelectorAll("span").length || 0,
+            display: style?.display || "",
+            background: firstStyle?.backgroundImage || "",
+            animation: firstStyle?.animationName || "",
+            shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
+            reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          };
+        })(),
         hasRicherCopy: /观画印象|画中所见|身世线索|眼下处境/.test(viewerText),
         storageKeys: [
           ...Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index) || ""),
@@ -3083,7 +3112,8 @@ async function runClientSmoke(options = {}) {
     if (!portraitViewer.portraitRef || !portraitViewer.imageSrc.startsWith("/assets/ui/portraits/")) {
       throw new Error(`S79.3 portrait viewer did not use an audited runtime portrait path: ${JSON.stringify(portraitViewer)}`);
     }
-    if (portraitViewer.polishPortrait !== "s89-8-life-scroll" || !portraitViewer.polishProfile || !portraitViewer.hasAppearance || !portraitViewer.hasBiography || !portraitViewer.hasCurrent || !portraitViewer.hasCueGrid || !portraitViewer.hasRicherCopy) {
+    const cueAnimationExpected = portraitViewer.cueGrid.shellMotion !== "reduced" && !portraitViewer.cueGrid.reducedMotion;
+    if (portraitViewer.polishPortrait !== "s89-8-life-scroll" || portraitViewer.polishCue !== "yes" || !portraitViewer.polishProfile || !portraitViewer.hasAppearance || !portraitViewer.hasBiography || !portraitViewer.hasCurrent || !portraitViewer.hasCueGrid || !portraitViewer.hasRicherCopy || portraitViewer.cueGrid.count < 4 || portraitViewer.cueGrid.display !== "grid" || !portraitViewer.cueGrid.background.includes("linear-gradient") || (cueAnimationExpected ? portraitViewer.cueGrid.animation !== "s899CueLift" : portraitViewer.cueGrid.animation !== "none")) {
       throw new Error(`S89.8 portrait viewer missed player-facing life/current profile polish: ${JSON.stringify(portraitViewer)}`);
     }
     if (portraitViewer.storageKeys.some((key) => /portrait|viewer|image/i.test(key)) || portraitViewer.unsafeText.length) {

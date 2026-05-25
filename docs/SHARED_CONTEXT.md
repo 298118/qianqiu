@@ -20,7 +20,7 @@
 - Frontend: React + TypeScript + Vite 在 `client/`，生产构建在 `dist/client/`，Express 默认 `/` 服务 React SPA。React Router Data Mode 管理首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议和设置。旧 `public/index.html`、`public/app.js`、`public/styles.css`、`public/mapPanel.js` 只作迁移参考；`public/assets/`、`public/vendor/`、`public/mapRenderer.js` 继续提供已审核素材和 S72 地图 runtime。
 - Backend: Node.js + Express，当前以 CommonJS JavaScript 为主。S86 已建立渐进 TypeScript 检查地基，`npm run typecheck:server` 覆盖契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 的首批边界；S87 已完成 route/API response shape 首轮覆盖，`src/contracts/serverContracts.ts` 固定 public response，`src/routes/routeResponses.js` 用局部 `@ts-check` helper 接入大型 route 并运行时拒绝 public `worldState` raw ledger key。不得为了启用类型检查一次性 whole-file `@ts-check` 大型 route 文件，也不得放宽 raw ledger 剥离、Ajv/runtime 校验或服务器裁决。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地 `schema_migrations`、`world_sessions`、audit tables、`geo_*`、`people_*`、`office_*`、`event_archive_index`、`prompt_retrieval_index` 和 `safe_search_index`。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复，不是玩家 API、prompt 或服务器裁决的 raw truth source。
-- Roadmap status: S49-S87 已完成并归档或压缩记录。S88 全面系统打磨已从活动台账长表迁出，阶段性归档见 `docs/QIANQIU_POLISHING_ARCHIVE.md`，原规划见 `docs/QIANQIU_POLISHING_ROADMAP.md`；S89.1 已完成 React 玩家可见文案与移动端覆盖层润色，S89.2 已完成 React 视觉矩阵、轻量专题页壳与高清立绘查看器公开说明，S89.3 已完成 React 设置入口、专题文案与错误空态收束，S89.4 已完成 React 首页旧案状态与史册信息密度 polish，S89.5 已完成 React 全局材质、覆盖层过渡与交互反馈 polish，S89.6 已完成高清立绘查看器人物小传与当前情况 polish，S89.7 已完成舆图交互与筛选提示 polish，S89.8 已完成高清立绘查看器画中所见 polish，活动台账见 `docs/DEVELOPMENT_STEPS.md`。若继续 S88/S89 残余方向，应继续新开可审查小步骤，而不是把 S88 长流水复制回活动台账。
+- Roadmap status: S49-S87 已完成并归档或压缩记录。S88 全面系统打磨已从活动台账长表迁出，阶段性归档见 `docs/QIANQIU_POLISHING_ARCHIVE.md`，原规划见 `docs/QIANQIU_POLISHING_ROADMAP.md`；S89.1 已完成 React 玩家可见文案与移动端覆盖层润色，S89.2 已完成 React 视觉矩阵、轻量专题页壳与高清立绘查看器公开说明，S89.3 已完成 React 设置入口、专题文案与错误空态收束，S89.4 已完成 React 首页旧案状态与史册信息密度 polish，S89.5 已完成 React 全局材质、覆盖层过渡与交互反馈 polish，S89.6 已完成高清立绘查看器人物小传与当前情况 polish，S89.7 已完成舆图交互与筛选提示 polish，S89.8 已完成高清立绘查看器画中所见 polish，S89.9 已完成人物页与立绘查看器材质题签 polish，活动台账见 `docs/DEVELOPMENT_STEPS.md`。若继续 S88/S89 残余方向，应继续新开可审查小步骤，而不是把 S88 长流水复制回活动台账。
 - Current collaboration: 2026-05-14 起停止 Gemini CLI 协作。后续开发、素材生成/审核、验证、文档同步和 Git 提交由 Codex 负责；用户已授权本仓库使用 Codex 子代理，实施子代理不得提交，提交前复审子代理必须只读。
 - Current local `.env`: 可能含用户 provider keys。`.env` 被 Git 忽略，不能打印、复制到文档或提交。
 
@@ -65,22 +65,16 @@
 
 ## Current Work Note
 
-2026-05-25：S89.8 完成高清立绘查看器画中所见 polish。立绘查看器现在带 `data-polish-portrait="s89-8-life-scroll"`，在原有 `data-polish-profile="s89-6-portrait-life"` 公开说明区上，补“画卷题签 / 仪态 / 衣饰 / 神采”可见题签，并把说明整理为“画中所见 / 身世线索 / 眼下处境”三段。
+2026-05-25：S89.9 已完成人物页与立绘查看器材质题签 polish。人物页外层、人物名册、人物详情、人物谱牒和人物卡带 `s89-9-portrait-material` 可检测标记，高清立绘查看器题签格带 `data-polish-cue="s89-9-portrait-cue-material"`；CSS 复用已审核 `paper-aged-silk-v1.webp` 和宣纸底色，补人物卡悬停浮起、题签格网格材质、移动端题签单列与低动效降级。
 
-人物页传入查看器的安全 profile 也同步补强：案主画像说明会把公开身份与读书、应考、入仕、任事经历串成可继续补录的公开小传线索；NPC 当前情况可显示已在人物页安全摘要中的 `currentGoal`，否则退回安全关系说明或公开近况未详。所有文本继续经过既有 portrait/people 清洗，路径、key、raw/provider/hidden/prompt 等污染不得进入查看器。
+本步仍只改 React 前端标记、CSS、客户端 smoke/source canary、前端测试和文档；不新增依赖或素材，不改 runtime manifest 字段，不触碰后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式或服务器裁决。人物页和查看器仍只读取当前案卷安全 view、已审核 `portraitRef` runtime 资产和人物页安全 `PortraitViewerProfile`；S89.9 不新增行动草稿写入，人物页既有按钮仍只写本地草稿并等待服务器回合裁决，不写浏览器存储、URL、prompt、canonical state 或服务器状态。
 
-本轮只改 React 前端、客户端 smoke/source canary、前端测试和验收文档；没有新增样式，未触碰后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 字段、素材 manifest 或服务器裁决。查看器仍只读取已审核 `portraitRef` 的 runtime 主图路径、画像元数据和人物页传入的安全 `PortraitViewerProfile`，不写浏览器存储、URL、行动草稿、prompt、canonical state 或服务器状态，不调用模型生成小传。
+验证已通过：`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --check scripts/clientBuildBudget.js`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "loads the S76.10 current people ledger without exposing the full portrait pool" --pool=vmThreads --fileParallelism=false --maxWorkers=1`、完整串行 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 129 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run smoke:browser`、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。CSS 单文件预算已从 100,000 bytes 校准为 100 KiB（102,400 bytes），最终预算输出 `CSS 98.5 KiB`；提交前只读复审无阻断问题，已按建议收紧人物页既有本地草稿边界表述。
 
-本轮验证结果：
-
-- 已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "loads the S76.10 current people ledger without exposing the full portrait pool" --pool=vmThreads --fileParallelism=false --maxWorkers=1`。
-- `npm run test:client` 本机仍命中 Vitest fork worker 启动超时：4 files / 114 tests 已通过，`client/src/assets/assetRegistry.test.ts` 与 `client/src/api/qianqiuClient.test.ts` worker 未启动；已用 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1` 通过同一客户端套件（6 files / 129 tests）。
-- 已通过 `npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`；本轮未新增样式，最终预算输出为 `CSS 97.5 KiB`。Vite 仍输出既有 `/assets/ui/...` runtime asset 与 chunk size warnings。
-- 已通过 `npm run smoke:browser`；另以 `node scripts/clientSmoke.js --screenshots artifacts/browser-visual-matrix` 做直接浏览器验收，覆盖 S89.8 立绘查看器标记、画卷题签、三段式人物说明、runtime 画像路径、浏览器存储禁写和安全污染守门，并写出 `artifacts/browser-visual-matrix`。
-- 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。实现提交 `2476a12c4d77e598b65ba74931361edb362e2b6c`；哈希回填为低风险纯文档改动，跳过子代理复审。
+上一轮 S89.8 完成高清立绘查看器画中所见 polish，实现提交 `2476a12c4d77e598b65ba74931361edb362e2b6c`，哈希回填提交 `d55cd94e`。立绘查看器带 `data-polish-portrait="s89-8-life-scroll"`，在原有 `data-polish-profile="s89-6-portrait-life"` 公开说明区上，显示“画卷题签 / 仪态 / 衣饰 / 神采”和“画中所见 / 身世线索 / 眼下处境”三段；人物页传入查看器的安全 profile 也补案主经历线索与 NPC 公开近事。
 
 ## Next Recommended Step
 
-若继续前端产品化打磨，建议新开 S89.9 或 S90，优先做移动端长文本二轮审查、史册右侧空白区域跨列信息密度压缩、S89 polish 阶段归档，或更深入的地图全关图层空态/筛选专题层体验。若转向系统深度，优先候选包括更深关系后果、真实 keyed provider 长跑证据和视觉素材 QA 消费层巡检。
+先完成 S89.9 提交和哈希回填。若继续前端产品化打磨，下一候选为移动端长文本二轮审查、史册右侧空白区域跨列信息密度压缩、S89 polish 阶段归档，或更深入的地图全关图层空态/筛选专题层体验。
 
 无论下一步是什么，都必须继续从安全 view 重建 evidence，保持 proposal-only、browser-draft-only 和服务器裁决，不让浏览器 task、地图 layout、visual-only effect、NPC anchor、runtime manifest 元数据、world entity impact/recent impact、交游 evidence、world thread 或 draftContext 变成真实任务队列、资源结算器、关系/婚姻/弹劾/定罪/背叛裁决器。
