@@ -1141,7 +1141,7 @@ export function PeoplePage() {
               {group.items.map((npc) => (
                 <button
                   key={npc.npcId}
-                  className="npcListButton"
+                  className="npcListButton paperMotionSelected"
                   type="button"
                   aria-pressed={selectedNpc?.npcId === npc.npcId}
                   data-gallery-selected={selectedNpc?.npcId === npc.npcId ? "true" : "false"}
@@ -1210,7 +1210,7 @@ export function PeoplePage() {
                 {npcWorkbenchTabs.map((tab) => (
                   <button
                     key={tab.id}
-                    className="inkboxTab"
+                    className="inkboxTab paperMotionSelected"
                     type="button"
                     aria-selected={activeTab === tab.id}
                     onClick={() => setActiveTab(tab.id)}

@@ -969,9 +969,12 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
         semanticCardCount: document.querySelectorAll(".paperMotionCard.paperMotionInteractive").length,
         statusLine: styleOf(".statusLine"),
         statusAccent: styleOf(".statusLine", "::before"),
-        selectedControl: styleOf(".npcListButton[aria-pressed='true'], .inventoryContainerButton[aria-pressed='true'], .topicDraftSlot[aria-pressed='true'], .inkboxTab[aria-selected='true'], .mapLayerToggle:has(input:checked)"),
+        selectedControl: styleOf(".paperMotionSelected[aria-pressed='true'], .paperMotionSelected[aria-selected='true'], .paperMotionSelected:has(input:checked)"),
+        selectedControlCount: document.querySelectorAll(".paperMotionSelected[aria-pressed='true'], .paperMotionSelected[aria-selected='true'], .paperMotionSelected:has(input:checked)").length,
+        unselectedControl: styleOf(".paperMotionSelected:not([aria-pressed='true']):not([aria-selected='true']):not(:has(input:checked))"),
         draftWritten: styleOf("li[data-draft-state='written'], .quickActionSlip[data-draft-state='written'], .inkMapTooltip .paperButton[data-draft-state='written']"),
-        emptyState: styleOf(".saveCaseEmpty, .scholarPanelEmpty, .quickActionEmpty, .archiveEmpty, .rankingEmpty, .inkMapRuntimeFallback, .inkMapLayerEmptyOverlay, .aiSettingsMatrixStatus[data-state='error']")
+        emptyState: styleOf(".paperMotionEmpty"),
+        emptyStateCount: document.querySelectorAll(".paperMotionEmpty").length
       },
       modal: styleOf("[data-polish-overlay='s89-5-modal-paper'], [data-polish-overlay='s89-5-surface-paper'], [data-polish-overlay='s89-5-portrait-gallery']"),
       mapSurface: Boolean(document.querySelector("[data-polish-surface='s89-5-map-command']")),
@@ -1041,8 +1044,17 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
   if (snapshot.s8930.selectedControl && !snapshot.s8930.selectedControl.backgroundImage.includes("red-ink-smudge")) {
     failures.push("S89.30 selected control lacked cinnabar material");
   }
+  if (snapshot.s8930.unselectedControl && (snapshot.s8930.unselectedControl.backgroundImage.includes("red-ink-smudge") || snapshot.s8930.unselectedControl.animationName.includes("s8930SealBloom"))) {
+    failures.push("S89.30 unselected semantic control received selected material");
+  }
+  if (expected.map && snapshot.s8930.selectedControlCount < 1) {
+    failures.push(`semantic selected utility was absent: ${snapshot.s8930.selectedControlCount}`);
+  }
   if (snapshot.s8930.emptyState && (!snapshot.s8930.emptyState.backgroundImage.includes("linear-gradient") || snapshot.s8930.emptyState.boxShadow === "none")) {
     failures.push("S89.30 empty/error state lacked paper material");
+  }
+  if (expected.empty && snapshot.s8930.emptyStateCount < 1) {
+    failures.push(`semantic empty utility was absent: ${snapshot.s8930.emptyStateCount}`);
   }
   if (expected.reducedOverlay && snapshot.drawer && snapshot.drawer.animationName !== "none") {
     failures.push(`reduced drawer animation was ${snapshot.drawer.animationName}`);
@@ -3569,6 +3581,7 @@ async function runClientSmoke(options = {}) {
     ) {
       throw new Error(`S89.11 map all layers hidden state unsafe or incomplete: ${JSON.stringify(allHiddenLayer)}`);
     }
+    await assertS895MaterialFeedbackPolish(page, "S89.5 desktop map all layers empty", { empty: true });
     await page.getByRole("button", { name: "展开三层" }).first().click();
     await page.locator(".inkMapLabel").first().waitFor({ timeout: 10000 });
     await page.locator(".inkMapLabel").first().click();

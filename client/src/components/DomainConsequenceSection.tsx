@@ -238,7 +238,7 @@ export function DomainConsequenceSection({
           ))}
         </ul>
       ) : (
-        <p className="scholarPanelEmpty">{emptyText}</p>
+        <p className="scholarPanelEmpty paperMotionEmpty">{emptyText}</p>
       )}
       <div className="scholarPanelActions domainConsequenceActions">
         {actions.map((action) => (

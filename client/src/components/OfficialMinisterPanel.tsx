@@ -868,7 +868,7 @@ export function OfficialMinisterPanel({
 
 function OfficialMinisterPanelList({ items, emptyText }: { readonly items: readonly SafeListItem[]; readonly emptyText: string }) {
   if (!items.length) {
-    return <p className="scholarPanelEmpty">{emptyText}</p>;
+    return <p className="scholarPanelEmpty paperMotionEmpty">{emptyText}</p>;
   }
 
   return (

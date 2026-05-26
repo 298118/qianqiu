@@ -2705,6 +2705,60 @@ test("S89.39 semantic paper motion utilities reduce route-specific selector coup
   );
 });
 
+test("S89.40 selected and empty paper motion utilities stay semantic and gated", () => {
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const inventoryPageSource = readText("client/src/pages/InventoryPage.tsx");
+  const homePageSource = readText("client/src/pages/HomePage.tsx");
+  const inkMapSource = readText("client/src/components/InkMapRuntimeBridge.tsx");
+  const memorialSource = readText("client/src/components/MemorialComposer.tsx");
+  const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
+  const rankingPageSource = readText("client/src/pages/RankingPage.tsx");
+  const aiSettingsSource = readText("client/src/components/AiSettingsPanel.tsx");
+  const scholarPanelSource = readText("client/src/components/ScholarPanel.tsx");
+  const magistratePanelSource = readText("client/src/components/MagistratePanel.tsx");
+  const generalPanelSource = readText("client/src/components/GeneralPanel.tsx");
+  const emperorPanelSource = readText("client/src/components/EmperorPanel.tsx");
+  const ministerPanelSource = readText("client/src/components/OfficialMinisterPanel.tsx");
+  const consequenceSource = readText("client/src/components/DomainConsequenceSection.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+
+  assert.match(surfaceHostSource, /className="inkboxTab paperMotionSelected"[\s\S]*aria-selected=\{activeTab === tab\.id\}/);
+  assert.match(surfaceHostSource, /className="topicDraftSlot paperMotionSelected"[\s\S]*aria-pressed=\{\(draftKind \|\| topicView\.draftSlots\[0\]\?\.draftKind\) === slot\.draftKind\}/);
+  assert.match(peoplePageSource, /className="npcListButton paperMotionSelected"[\s\S]*aria-pressed=\{selectedNpc\?\.npcId === npc\.npcId\}[\s\S]*data-gallery-selected=/);
+  assert.match(peoplePageSource, /className="inkboxTab paperMotionSelected"[\s\S]*aria-selected=\{activeTab === tab\.id\}/);
+  assert.match(inventoryPageSource, /className="inventoryContainerButton paperMotionSelected"[\s\S]*aria-pressed=\{selectedContainer === container\.containerId\}/);
+  assert.match(mapPageSource, /className="mapLayerToggle paperMotionSelected"[\s\S]*data-layer-state=\{visibleLayers\[layer\] \? "shown" : "hidden"\}[\s\S]*checked=\{visibleLayers\[layer\]\}/);
+
+  assert.match(homePageSource, /className="saveCaseEmpty paperMotionEmpty"/);
+  assert.match(inkMapSource, /className="inkMapRuntimeFallback paperMotionEmpty"[\s\S]*role="status"/);
+  assert.match(inkMapSource, /className="inkMapLayerEmptyOverlay paperMotionEmpty"[\s\S]*role="status"/);
+  assert.match(memorialSource, /className="quickActionEmpty paperMotionEmpty"/);
+  assert.match(archivePageSource, /className="archiveEmpty paperMotionEmpty"/);
+  assert.match(rankingPageSource, /className="rankingEmpty paperMotionEmpty"/);
+  for (const panelSource of [scholarPanelSource, magistratePanelSource, generalPanelSource, emperorPanelSource, ministerPanelSource, consequenceSource]) {
+    assert.match(panelSource, /className="scholarPanelEmpty paperMotionEmpty"/);
+  }
+  assert.match(aiSettingsSource, /matrixState === "error" \? "aiSettingsMatrixStatus paperMotionEmpty" : "aiSettingsMatrixStatus"/);
+
+  assert.match(styleSource, /:where\(\.paperSurface, \.rolePanel, \.statusSurface, \.ledgerCard, \.paperMotionCard, \.paperMotionInteractive, \.paperMotionSelected, \.paperMotionDraft, \.paperMotionEmpty\)/);
+  assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] \.paperMotionSelected:is\(\[aria-pressed="true"\], \[aria-selected="true"\], :has\(input:checked\)\)/);
+  assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] \.paperMotionEmpty/);
+  assert.match(styleSource, /\.appShell\[data-contrast="high"\] \.paperMotionSelected:is\(\[aria-pressed="true"\], \[aria-selected="true"\], :has\(input:checked\)\)/);
+  assert.match(styleSource, /\.paperMotionSelected\[aria-pressed="true"\], \.paperMotionSelected\[aria-selected="true"\], \.paperMotionSelected:has\(input:checked\)/);
+  assert.doesNotMatch(styleSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.npcListButton\[aria-pressed="true"\]/);
+  assert.doesNotMatch(styleSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.saveCaseEmpty/);
+
+  assert.match(clientSmokeSource, /selectedControlCount: document\.querySelectorAll\("\.paperMotionSelected\[aria-pressed='true'\], \.paperMotionSelected\[aria-selected='true'\], \.paperMotionSelected:has\(input:checked\)"\)\.length/);
+  assert.match(clientSmokeSource, /unselectedControl: styleOf\("\.paperMotionSelected:not\(\[aria-pressed='true'\]\):not\(\[aria-selected='true'\]\):not\(:has\(input:checked\)\)"\)/);
+  assert.match(clientSmokeSource, /expected\.map && snapshot\.s8930\.selectedControlCount < 1/);
+  assert.match(clientSmokeSource, /emptyState: styleOf\("\.paperMotionEmpty"\)/);
+  assert.match(clientSmokeSource, /emptyStateCount: document\.querySelectorAll\("\.paperMotionEmpty"\)\.length/);
+  assert.match(clientSmokeSource, /S89\.5 desktop map all layers empty", \{ empty: true \}/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");

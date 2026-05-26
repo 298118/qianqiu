@@ -528,7 +528,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
             </p>
           </article>
         )) : (
-          <div className="aiSettingsMatrixStatus" data-state={matrixState} role={matrixState === "error" ? "alert" : "status"} aria-live="polite">
+          <div className={matrixState === "error" ? "aiSettingsMatrixStatus paperMotionEmpty" : "aiSettingsMatrixStatus"} data-state={matrixState} role={matrixState === "error" ? "alert" : "status"} aria-live="polite">
             <strong>{matrixState === "loading" ? "候矩阵" : matrixState === "error" ? "矩阵受阻" : "矩阵未载"}</strong>
             <span>{matrixStatusText}</span>
           </div>

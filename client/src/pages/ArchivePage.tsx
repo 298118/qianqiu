@@ -448,7 +448,7 @@ export function ArchivePage() {
               ))}
             </ol>
           ) : (
-            <p className="archiveEmpty">
+            <p className="archiveEmpty paperMotionEmpty">
               {!routeSessionSupported
                 ? "此案卷编号暂不可用于浏览器史册；请从首页开卷或载入旧案。"
                 : isRunnable && status === "loading"

@@ -263,7 +263,7 @@ function InkboxDrawer() {
         {inkboxTabs.map((tab) => (
           <button
             key={tab.id}
-            className="inkboxTab"
+            className="inkboxTab paperMotionSelected"
             type="button"
             role="tab"
             aria-selected={activeTab === tab.id}
@@ -1557,7 +1557,7 @@ function TopicSurfaceWorkbench({
             {topicView.draftSlots.map((slot) => (
               <button
                 key={slot.id}
-                className="topicDraftSlot"
+                className="topicDraftSlot paperMotionSelected"
                 type="button"
                 aria-pressed={(draftKind || topicView.draftSlots[0]?.draftKind) === slot.draftKind}
                 onClick={() => onDraftKindChange(slot.draftKind)}

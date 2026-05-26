@@ -302,7 +302,7 @@ export function InventoryPage() {
           {containers.length ? containers.map((container) => (
             <button
               key={container.containerId}
-              className="inventoryContainerButton"
+              className="inventoryContainerButton paperMotionSelected"
               type="button"
               aria-pressed={selectedContainer === container.containerId}
               onClick={() => {

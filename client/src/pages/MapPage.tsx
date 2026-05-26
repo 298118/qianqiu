@@ -720,7 +720,7 @@ export function MapPage() {
       <section className="mapCommandDeck" aria-label="舆图操作">
         <div className="mapLayerControls" aria-label="图层筛选">
           {(Object.keys(mapLayerLabels) as MapLayerKey[]).map((layer) => (
-            <label className="mapLayerToggle" key={layer} data-polish-action="s89-5-map-layer" data-layer-state={visibleLayers[layer] ? "shown" : "hidden"}>
+            <label className="mapLayerToggle paperMotionSelected" key={layer} data-polish-action="s89-5-map-layer" data-layer-state={visibleLayers[layer] ? "shown" : "hidden"}>
               <input
                 type="checkbox"
                 checked={visibleLayers[layer]}

@@ -69,7 +69,7 @@
   .mapTideCompass::before,
   .inkMapTooltip,
   .inkMapTooltip::before,
-  .appShell[data-material-motion="shared-paper"] :is(.paperMotionCard, .paperMotionInteractive, .paperMotionDraft[data-draft-state="written"], .scholarPanelCard, .npcRelationshipAgendaCard, .npcListButton[aria-pressed="true"], .inventoryContainerButton[aria-pressed="true"], .topicDraftSlot[aria-pressed="true"], .inkboxTab[aria-selected="true"], .quickActionSlip[data-draft-state="written"], .inkMapTooltip .paperButton[data-draft-state="written"]) {
+  .appShell[data-material-motion="shared-paper"] :is(.paperMotionCard, .paperMotionInteractive, .paperMotionSelected[aria-pressed="true"], .paperMotionSelected[aria-selected="true"], .paperMotionSelected:has(input:checked), .paperMotionDraft[data-draft-state="written"], .scholarPanelCard, .npcRelationshipAgendaCard, .quickActionSlip[data-draft-state="written"], .inkMapTooltip .paperButton[data-draft-state="written"]) {
     animation: none !important;
     transition: none;
   }

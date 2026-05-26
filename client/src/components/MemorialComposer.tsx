@@ -147,7 +147,7 @@ export function MemorialComposer({
                 );
               })
             ) : (
-              <p className="quickActionEmpty">新开一卷后显示可行事。</p>
+              <p className="quickActionEmpty paperMotionEmpty">新开一卷后显示可行事。</p>
             )}
           </div>
         </section>

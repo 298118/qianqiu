@@ -448,7 +448,7 @@ export function HomePage() {
               <span className="saveCaseSkeleton" />
             </div>
           ) : (
-            <div className="saveCaseEmpty">
+            <div className="saveCaseEmpty paperMotionEmpty">
               <strong>{saveShelfState === "error" ? "旧案架暂不可取" : "暂无可读旧卷"}</strong>
               <p>
                 {saveShelfState === "error"

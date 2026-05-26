@@ -436,7 +436,7 @@ export function RankingPage() {
                 })}
               </ol>
             ) : (
-              <p className="rankingEmpty">{routeSessionSupported ? "榜文尚未张挂。交卷、评阅与放榜完成后，此处才会显示定榜结果。" : unsupportedRouteMessage}</p>
+              <p className="rankingEmpty paperMotionEmpty">{routeSessionSupported ? "榜文尚未张挂。交卷、评阅与放榜完成后，此处才会显示定榜结果。" : unsupportedRouteMessage}</p>
             )}
           </section>
 

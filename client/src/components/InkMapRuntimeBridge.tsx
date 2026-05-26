@@ -507,12 +507,12 @@ export function InkMapRuntimeBridge({
             </aside>
           ) : null}
           {status !== "ready" ? (
-            <div className="inkMapRuntimeFallback" role="status">
+            <div className="inkMapRuntimeFallback paperMotionEmpty" role="status">
               {fallbackText}
             </div>
           ) : null}
           {status === "ready" && allLayersHidden ? (
-            <div className="inkMapLayerEmptyOverlay" data-polish-map-empty="s89-11-runtime-empty" role="status">
+            <div className="inkMapLayerEmptyOverlay paperMotionEmpty" data-polish-map-empty="s89-11-runtime-empty" role="status">
               <strong>卷上三层皆暂收</strong>
               <p>山河底图仍在，地点、驿路与近事只是在浏览器卷面暂隐。</p>
               {onRestoreLayers ? (
