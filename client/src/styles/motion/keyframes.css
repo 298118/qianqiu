@@ -3,7 +3,7 @@
 }
 
 @keyframes draftWrittenPulse {
-  from { outline: 2px solid #8e2f2738; }
+  from { outline: 2px solid var(--qq-color-vermilion-glow-outline); }
 }
 
 @keyframes s899CueLift {
@@ -11,7 +11,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes s8930PaperRise {
+@keyframes paperSurfaceRise {
   from {
     filter: blur(1px);
     opacity: 0;
@@ -25,30 +25,30 @@
   }
 }
 
-@keyframes s8930StateWash {
+@keyframes paperWrittenStateWash {
   0% {
     box-shadow:
-      0 0 0 0 rgb(142 47 39 / .2),
-      0 12px 28px rgb(86 40 31 / .12),
-      inset 0 0 0 1px rgb(255 252 238 / .5);
+      0 0 0 0 var(--qq-color-vermilion-glow-strong),
+      0 12px 28px var(--qq-color-warm-shadow-soft),
+      inset 0 0 0 1px var(--qq-color-paper-inset-soft);
   }
 
   54% {
     box-shadow:
-      0 0 0 8px rgb(142 47 39 / .12),
-      0 16px 34px rgb(86 40 31 / .16),
-      inset 0 0 0 1px rgb(255 252 238 / .58);
+      0 0 0 8px var(--qq-color-vermilion-glow-medium),
+      0 16px 34px var(--qq-color-warm-shadow-medium),
+      inset 0 0 0 1px var(--qq-color-paper-inset-medium);
   }
 
   100% {
     box-shadow:
-      0 0 0 3px rgb(142 47 39 / .1),
-      0 12px 28px rgb(86 40 31 / .12),
-      inset 0 0 0 1px rgb(255 252 238 / .5);
+      0 0 0 3px var(--qq-color-vermilion-glow-soft),
+      0 12px 28px var(--qq-color-warm-shadow-soft),
+      inset 0 0 0 1px var(--qq-color-paper-inset-soft);
   }
 }
 
-@keyframes s8930SealBloom {
+@keyframes paperSelectedSealBloom {
   from {
     background-position: center, right -44px center;
     filter: saturate(0.96);

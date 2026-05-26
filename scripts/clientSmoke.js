@@ -965,9 +965,9 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
       keyframes: {
         drawer: keyframesOf("drawerPanelFade"),
         draft: keyframesOf("draftWrittenPulse"),
-        paperRise: keyframesOf("s8930PaperRise"),
-        stateWash: keyframesOf("s8930StateWash"),
-        sealBloom: keyframesOf("s8930SealBloom")
+        paperRise: keyframesOf("paperSurfaceRise"),
+        stateWash: keyframesOf("paperWrittenStateWash"),
+        sealBloom: keyframesOf("paperSelectedSealBloom")
       },
       s8930: {
         saveShelf: styleOf(".saveShelf"),
@@ -1057,7 +1057,7 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
   if (expected.rolePanel && (snapshot.s8930.rolePanelCount < 1 || snapshot.s8930.paperMotionPanelCount < snapshot.s8930.rolePanelCount)) {
     failures.push(`semantic role panel utilities were absent: ${JSON.stringify({ paperMotionPanelCount: snapshot.s8930.paperMotionPanelCount, rolePanelCount: snapshot.s8930.rolePanelCount })}`);
   }
-  if (snapshot.s8930.animatedSharedCard && snapshot.shellMotion !== "reduced" && !snapshot.s8930.animatedSharedCard.animationName.includes("s8930PaperRise")) {
+  if (snapshot.s8930.animatedSharedCard && snapshot.shellMotion !== "reduced" && !snapshot.s8930.animatedSharedCard.animationName.includes("paperSurfaceRise")) {
     failures.push(`S89.30 shared card animation was ${snapshot.s8930.animatedSharedCard.animationName}`);
   }
   if (snapshot.s8930.statusLine && (!snapshot.s8930.statusLine.backgroundImage.includes("linear-gradient") || snapshot.s8930.statusAccent?.backgroundImage === "none")) {
@@ -1066,7 +1066,7 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
   if (snapshot.s8930.selectedControl && !snapshot.s8930.selectedControl.backgroundImage.includes("red-ink-smudge")) {
     failures.push("S89.30 selected control lacked cinnabar material");
   }
-  if (snapshot.s8930.unselectedControl && (snapshot.s8930.unselectedControl.backgroundImage.includes("red-ink-smudge") || snapshot.s8930.unselectedControl.animationName.includes("s8930SealBloom"))) {
+  if (snapshot.s8930.unselectedControl && (snapshot.s8930.unselectedControl.backgroundImage.includes("red-ink-smudge") || snapshot.s8930.unselectedControl.animationName.includes("paperSelectedSealBloom"))) {
     failures.push("S89.30 unselected semantic control received selected material");
   }
   if (expected.map && snapshot.s8930.selectedControlCount < 1) {
@@ -1097,7 +1097,7 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
   if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !snapshot.mapWrittenAnimation.some((name) => name.includes("draftWrittenPulse"))) {
     failures.push(`map written animation missing: ${snapshot.mapWrittenAnimation.join(", ")}`);
   }
-  if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !snapshot.s8930.draftWritten?.animationName.includes("s8930StateWash")) {
+  if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !snapshot.s8930.draftWritten?.animationName.includes("paperWrittenStateWash")) {
     failures.push(`S89.30 written draft material animation missing: ${snapshot.s8930.draftWritten?.animationName}`);
   }
   if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !/outline|box-shadow|transform|opacity|background/i.test(snapshot.keyframes.draft)) {

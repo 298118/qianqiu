@@ -16,6 +16,14 @@
   --qq-color-state-red-bg: rgb(165 58 47 / .1);
   --qq-color-state-green-bg: rgb(246 251 224 / .64);
   --qq-color-state-gold-bg: rgb(255 248 230 / .7);
+  --qq-color-vermilion-glow-soft: rgb(142 47 39 / .1);
+  --qq-color-vermilion-glow-medium: rgb(142 47 39 / .12);
+  --qq-color-vermilion-glow-strong: rgb(142 47 39 / .2);
+  --qq-color-vermilion-glow-outline: rgb(142 47 39 / .22);
+  --qq-color-warm-shadow-soft: rgb(86 40 31 / .12);
+  --qq-color-warm-shadow-medium: rgb(86 40 31 / .16);
+  --qq-color-paper-inset-soft: rgb(255 252 238 / .5);
+  --qq-color-paper-inset-medium: rgb(255 252 238 / .58);
   --qq-color-disabled-text: rgb(92 74 55 / .76);
   --qq-color-disabled-border: rgb(84 60 43 / .24);
   --qq-color-paper: #eadcc4;

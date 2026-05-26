@@ -1608,7 +1608,7 @@ test("S89.5 material polish stays frontend-only and reduced-motion aware", () =>
   assert.match(styleSource, /\.paperLink:hover:not\(:disabled\):not\(\[aria-disabled="true"\]\)/);
   assert.match(styleSource, /\.paperMotionDraft\[data-draft-state="written"\]/);
   assert.match(styleSource, /@keyframes drawerPanelFade[\s\S]*opacity: \.9/);
-  assert.match(styleSource, /@keyframes draftWrittenPulse[\s\S]*outline: 2px solid #8e2f2738/);
+  assert.match(styleSource, /@keyframes draftWrittenPulse[\s\S]*outline: 2px solid var\(--qq-color-vermilion-glow-outline\)/);
   assert.doesNotMatch(styleSource, /@keyframes drawerPanelFade\s*\{\s*\}/);
   assert.doesNotMatch(styleSource, /@keyframes draftWrittenPulse\s*\{\s*\}/);
   assert.doesNotMatch(styleSource, /s895D|s895S|s895OverlayFade|s895PanelEnter|settingsDirectoryCard:hover::after|portraitViewerFigure::after/);
@@ -1657,7 +1657,7 @@ test("S89.7 map interaction polish stays draft-only and safe", () => {
   assert.match(styleSource, /\.mapLayerSummary[\s\S]*overflow-wrap: anywhere/);
   assert.match(styleSource, /\.mapVisibleLayerDigest/);
   assert.match(styleSource, /\.inkMapLayerEmptyOverlay/);
-  assert.match(styleSource, /\.inkMapTooltip \.paperButton\[data-draft-state="written"\][\s\S]*s8930StateWash/);
+  assert.match(styleSource, /\.inkMapTooltip \.paperButton\[data-draft-state="written"\][\s\S]*paperWrittenStateWash/);
   assert.match(clientSmokeSource, /S89\.7 map layer summary/);
   assert.match(clientSmokeSource, /S89\.11 map all layers hidden/);
   assert.match(clientSmokeSource, /s89-11-runtime-empty/);
@@ -2671,7 +2671,7 @@ test("S89.38 CSS module entry keeps stable Vite import order", () => {
   );
   assert.match(readClientStyleSource(), /--qq-color-ink: #241b16/);
   assert.match(readClientStyleSource(), /@media \(max-width: 760px\)/);
-  assert.match(readClientStyleSource(), /@keyframes s8930PaperRise/);
+  assert.match(readClientStyleSource(), /@keyframes paperSurfaceRise/);
 });
 
 test("S89.39 semantic paper motion utilities reduce route-specific selector coupling", () => {
@@ -3016,6 +3016,34 @@ test("S89.49 exam static surfaces use paper surface utilities", () => {
   assert.match(clientSmokeSource, /S89\.49 exam static surfaces were incomplete after question/);
 });
 
+test("S89.50 shared paper motion keyframes use semantic names and tokens", () => {
+  const tokensSource = readClientStyleModule("tokens/tokens.css");
+  const keyframesSource = readClientStyleModule("motion/keyframes.css");
+  const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(tokensSource, /--qq-color-vermilion-glow-outline: rgb\(142 47 39 \/ \.22\)/);
+  assert.match(tokensSource, /--qq-color-warm-shadow-soft: rgb\(86 40 31 \/ \.12\)/);
+  assert.match(tokensSource, /--qq-color-paper-inset-medium: rgb\(255 252 238 \/ \.58\)/);
+  assert.match(keyframesSource, /@keyframes paperSurfaceRise/);
+  assert.match(keyframesSource, /@keyframes paperWrittenStateWash/);
+  assert.match(keyframesSource, /@keyframes paperSelectedSealBloom/);
+  assert.match(keyframesSource, /outline: 2px solid var\(--qq-color-vermilion-glow-outline\)/);
+  assert.match(keyframesSource, /var\(--qq-color-vermilion-glow-strong\)/);
+  assert.match(keyframesSource, /var\(--qq-color-warm-shadow-medium\)/);
+  assert.match(keyframesSource, /var\(--qq-color-paper-inset-soft\)/);
+  assert.doesNotMatch(keyframesSource, /@keyframes s8930PaperRise|@keyframes s8930StateWash|@keyframes s8930SealBloom|#8e2f2738/);
+
+  assert.match(polishSource, /animation: paperSurfaceRise 360ms/);
+  assert.match(polishSource, /animation: paperSelectedSealBloom 420ms/);
+  assert.match(polishSource, /animation: draftWrittenPulse \.36s, paperWrittenStateWash 720ms/);
+  assert.doesNotMatch(polishSource, /s8930PaperRise|s8930StateWash|s8930SealBloom/);
+  assert.match(clientSmokeSource, /keyframesOf\("paperSurfaceRise"\)/);
+  assert.match(clientSmokeSource, /keyframesOf\("paperWrittenStateWash"\)/);
+  assert.match(clientSmokeSource, /keyframesOf\("paperSelectedSealBloom"\)/);
+  assert.doesNotMatch(clientSmokeSource, /s8930PaperRise|s8930StateWash|s8930SealBloom/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");
@@ -3073,9 +3101,9 @@ test("S89.30 shared material and motion polish stays visual-only", () => {
   assert.match(appShellSource, /data-polish-atmosphere="s89-30-shared-material-motion"/);
   assert.match(appShellSource, /data-material-motion="shared-paper"/);
   assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] \.statusLine/);
-  assert.match(styleSource, /@keyframes s8930PaperRise/);
-  assert.match(styleSource, /@keyframes s8930StateWash/);
-  assert.match(styleSource, /@keyframes s8930SealBloom/);
+  assert.match(styleSource, /@keyframes paperSurfaceRise/);
+  assert.match(styleSource, /@keyframes paperWrittenStateWash/);
+  assert.match(styleSource, /@keyframes paperSelectedSealBloom/);
   assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard/);
   assert.match(styleSource, /\.quickActionSlip\[data-draft-state="written"\]/);
   assert.match(styleSource, /\.topicDraftSlot\[aria-pressed="true"\]/);
@@ -3085,7 +3113,7 @@ test("S89.30 shared material and motion polish stays visual-only", () => {
   assert.match(budgetSource, /maxSingleCssBytes:\s*200_000/);
   assert.match(clientSmokeSource, /shellAtmosphere/);
   assert.match(clientSmokeSource, /shellMaterialMotion/);
-  assert.match(clientSmokeSource, /s8930PaperRise/);
+  assert.match(clientSmokeSource, /paperSurfaceRise/);
   assert.match(clientSmokeSource, /S89\.30 shared material/);
   assert.doesNotMatch(
     runtimeCombined,

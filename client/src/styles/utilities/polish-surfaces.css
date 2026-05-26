@@ -26,7 +26,7 @@
 }
 
 .appShell[data-material-motion="shared-paper"] :is(.paperMotionCard, .paperMotionPanel) {
-  animation: s8930PaperRise 360ms cubic-bezier(0.2, 0.82, 0.22, 1) both;
+  animation: paperSurfaceRise 360ms cubic-bezier(0.2, 0.82, 0.22, 1) both;
 }
 
 .appShell[data-material-motion="shared-paper"] .paperMotionSelected:is([aria-pressed="true"], [aria-selected="true"], :has(input:checked)) {
@@ -40,7 +40,7 @@
     var(--qq-shadow-ink-focus),
     0 12px 26px rgb(142 47 39 / .12),
     inset 0 0 0 1px rgb(255 252 238 / .5);
-  animation: s8930SealBloom 420ms ease-out both;
+  animation: paperSelectedSealBloom 420ms ease-out both;
 }
 
 .appShell[data-material-motion="shared-paper"] :is(.paperMotionDraft[data-draft-state="written"], .quickActionSlip[data-draft-state="written"], .inkMapTooltip .paperButton[data-draft-state="written"]) {
@@ -55,7 +55,7 @@
     0 0 0 3px rgb(142 47 39 / .1),
     0 12px 28px rgb(86 40 31 / .12),
     inset 0 0 0 1px rgb(255 252 238 / .5);
-  animation: draftWrittenPulse .36s, s8930StateWash 720ms ease-out both;
+  animation: draftWrittenPulse .36s, paperWrittenStateWash 720ms ease-out both;
 }
 
 .appShell[data-material-motion="shared-paper"] .paperMotionEmpty {
