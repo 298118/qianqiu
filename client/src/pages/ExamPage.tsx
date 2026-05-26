@@ -469,7 +469,7 @@ export function ExamPage() {
             <h2>科举仪程</h2>
             <dl className="surfaceSafetyList">
               {examRitualLedger.map((item) => (
-                <div key={item.label}>
+                <div className="surfaceSafetyRow paperMotionSurface" key={item.label}>
                   <dt>{item.label}</dt>
                   <dd>{item.text}</dd>
                 </div>

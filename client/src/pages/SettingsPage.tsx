@@ -112,11 +112,11 @@ export function SettingsPage() {
                 {card.badges.map((badge) => <span key={badge}>{badge}</span>)}
               </div>
               <dl className="surfaceSafetyList" aria-label={`${card.title}状态`}>
-                <div>
+                <div className="surfaceSafetyRow paperMotionSurface">
                   <dt>眼下可做</dt>
                   <dd>{card.status}</dd>
                 </div>
-                <div>
+                <div className="surfaceSafetyRow paperMotionSurface">
                   <dt>候复边界</dt>
                   <dd>{card.boundary}</dd>
                 </div>

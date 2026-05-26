@@ -401,7 +401,7 @@ export function ArchivePage() {
         <h2>史册证据读法</h2>
         <dl className="surfaceSafetyList">
           {archiveReaderRows.map((row) => (
-            <div key={row.label}>
+            <div className="surfaceSafetyRow paperMotionSurface" key={row.label}>
               <dt>{row.label}</dt>
               <dd>{row.value}</dd>
               <dd>{row.detail}</dd>

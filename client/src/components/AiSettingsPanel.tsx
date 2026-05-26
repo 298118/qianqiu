@@ -450,7 +450,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
 
       <dl className="surfaceSafetyList" aria-label="推演设置状态簿" data-polish-ai-settings-ledger="s89-19-ai-state-ledger">
         {stateLedgerRows.map((row) => (
-          <div key={row.label}>
+          <div className="surfaceSafetyRow paperMotionSurface" key={row.label}>
             <dt>{row.label}</dt>
             <dd>{row.value}</dd>
           </div>
@@ -459,7 +459,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
 
       <section className="aiTaskMatrix" aria-label="推演分工">
         {form.routes.length ? form.routes.map((route) => (
-          <article className="aiTaskRoute" key={route.taskType} data-effective-status={route.effectiveStatus}>
+          <article className="aiTaskRoute paperMotionSurface" key={route.taskType} data-effective-status={route.effectiveStatus}>
             <div className="aiTaskRouteHeader">
               <div>
                 <strong>{route.label}</strong>

@@ -177,19 +177,19 @@ export function CourtPage() {
                     </div>
                     <p>{entry.description}</p>
                     <dl className="surfaceSafetyList">
-                      <div>
+                      <div className="surfaceSafetyRow paperMotionSurface">
                         <dt>卷宗取材</dt>
                         <dd>{formatCourtRegistryLine(entry.dataSource)}</dd>
                       </div>
-                      <div>
+                      <div className="surfaceSafetyRow paperMotionSurface">
                         <dt>可拟草稿</dt>
                         <dd>{courtSurfaceDraftUses[surface] ?? "只把公开材料整理为案头草稿，回主卷后再呈递。"}</dd>
                       </div>
-                      <div>
+                      <div className="surfaceSafetyRow paperMotionSurface">
                         <dt>案卷未载</dt>
                         <dd>{formatCourtRegistryLine(entry.emptyState)}</dd>
                       </div>
-                      <div>
+                      <div className="surfaceSafetyRow paperMotionSurface">
                         <dt>候复边界</dt>
                         <dd>{formatCourtRegistryLine(entry.safetyNote)}</dd>
                       </div>

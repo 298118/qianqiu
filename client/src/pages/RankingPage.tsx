@@ -448,7 +448,7 @@ export function RankingPage() {
               <h3>放榜仪程</h3>
               <dl className="surfaceSafetyList">
                 {rankingCeremonyLedger.map((item) => (
-                  <div key={item.label}>
+                  <div className="surfaceSafetyRow paperMotionSurface" key={item.label}>
                     <dt>{item.label}</dt>
                     <dd>{item.text}</dd>
                   </div>

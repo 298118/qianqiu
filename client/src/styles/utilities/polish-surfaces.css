@@ -1,8 +1,8 @@
-.appShell[data-material-motion="shared-paper"] :is(.paperMotionCard, .paperMotionPanel, .homeDesk, .saveShelf, .continueShelf, .narrativeScroll, .gameSideLedger, .openingClaimPanel, .mapSituationLedger, .mapVisibleLayerDigest, .mapSituationIndex, .archiveDigestBand, .archiveDigestIntro, .portraitLedger, .npcGroupList, .npcDetailWorkbench, .inventoryContainerList, .inventoryItemList, .inventoryLedgerBlock, .inventoryTransferPanel, .economyTraceSection, .examQuestionPanel, .examDesk, .examRecordPanel, .examPeerPanel, .examPreviewPanel, .examRecentSubmitPanel, .rankingNoticeBoard, .rankingListPanel, .rankingDetailPanel, .rankingBoundary, .aiTaskRoute, .topicSurfaceColumn, .surfaceSafetyList div) {
+.appShell[data-material-motion="shared-paper"] :is(.paperMotionCard, .paperMotionPanel, .paperMotionSurface, .homeDesk, .saveShelf, .continueShelf, .narrativeScroll, .gameSideLedger, .openingClaimPanel, .mapSituationLedger, .mapVisibleLayerDigest, .mapSituationIndex, .archiveDigestBand, .archiveDigestIntro, .portraitLedger, .npcGroupList, .npcDetailWorkbench, .inventoryContainerList, .inventoryItemList, .inventoryLedgerBlock, .inventoryTransferPanel, .economyTraceSection, .examQuestionPanel, .examDesk, .examRecordPanel, .examPeerPanel, .examPreviewPanel, .examRecentSubmitPanel, .rankingNoticeBoard, .rankingListPanel, .rankingDetailPanel, .rankingBoundary, .topicSurfaceColumn) {
   box-shadow: var(--qq-shadow-card-rest);
 }
 
-.appShell[data-material-motion="shared-paper"] :is(.paperMotionInteractive, .paperMotionPanel, .rankingList button) {
+.appShell[data-material-motion="shared-paper"] :is(.paperMotionInteractive, .paperMotionPanel) {
   transition:
     border-color 160ms ease,
     box-shadow 180ms ease,
@@ -10,7 +10,7 @@
     transform 180ms ease;
 }
 
-.appShell[data-material-motion="shared-paper"] :is(.paperMotionInteractive, .paperMotionPanel, .rankingList button):hover {
+.appShell[data-material-motion="shared-paper"] :is(.paperMotionInteractive, .paperMotionPanel):hover {
   border-color: rgb(142 47 39 / .46);
   box-shadow: var(--qq-shadow-card-hover);
   filter: saturate(1.02);

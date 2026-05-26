@@ -965,8 +965,13 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
       },
       s8930: {
         saveShelf: styleOf(".saveShelf"),
-        sharedCard: styleOf(".paperMotionCard, .paperMotionPanel, .mapActionList li, .archiveItemList li, .peopleCard, .inventoryItemCard, .rankingTopSeal, .settingsDirectoryCard, .topicSurfaceItem"),
+        sharedCard: styleOf(".paperMotionCard, .paperMotionPanel, .paperMotionSurface, .mapActionList li, .archiveItemList li, .peopleCard, .inventoryItemCard, .rankingTopSeal, .settingsDirectoryCard, .topicSurfaceItem"),
+        animatedSharedCard: styleOf(".paperMotionCard, .paperMotionPanel, .mapActionList li, .archiveItemList li, .peopleCard, .inventoryItemCard, .rankingTopSeal, .settingsDirectoryCard, .topicSurfaceItem"),
         semanticCardCount: document.querySelectorAll(".paperMotionCard.paperMotionInteractive").length,
+        staticSurfaceCount: document.querySelectorAll(".paperMotionSurface").length,
+        safetyRowCount: document.querySelectorAll(".surfaceSafetyRow.paperMotionSurface").length,
+        legacySafetyRowCount: document.querySelectorAll(".surfaceSafetyList > div:not(.surfaceSafetyRow)").length,
+        aiTaskRouteSurfaceCount: document.querySelectorAll(".aiTaskRoute.paperMotionSurface").length,
         paperMotionPanelCount: document.querySelectorAll(".scholarPanelCard.paperMotionPanel").length,
         rolePanelCount: document.querySelectorAll(".scholarPanelCard.rolePanel").length,
         statusLine: styleOf(".statusLine"),
@@ -1037,11 +1042,17 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
   if ((expected.map || expected.settings) && snapshot.s8930.semanticCardCount < 1) {
     failures.push(`semantic paper motion utilities were absent: ${snapshot.s8930.semanticCardCount}`);
   }
+  if (expected.staticSurface && (snapshot.s8930.staticSurfaceCount < 1 || snapshot.s8930.safetyRowCount < 1 || snapshot.s8930.legacySafetyRowCount !== 0)) {
+    failures.push(`semantic static paper surfaces were absent or mixed with legacy rows: ${JSON.stringify({ staticSurfaceCount: snapshot.s8930.staticSurfaceCount, safetyRowCount: snapshot.s8930.safetyRowCount, legacySafetyRowCount: snapshot.s8930.legacySafetyRowCount })}`);
+  }
+  if (expected.aiTaskRoute && snapshot.s8930.aiTaskRouteSurfaceCount < 1) {
+    failures.push(`AI task routes lacked static paper surface hook: ${snapshot.s8930.aiTaskRouteSurfaceCount}`);
+  }
   if (expected.rolePanel && (snapshot.s8930.rolePanelCount < 1 || snapshot.s8930.paperMotionPanelCount < snapshot.s8930.rolePanelCount)) {
     failures.push(`semantic role panel utilities were absent: ${JSON.stringify({ paperMotionPanelCount: snapshot.s8930.paperMotionPanelCount, rolePanelCount: snapshot.s8930.rolePanelCount })}`);
   }
-  if (snapshot.s8930.sharedCard && snapshot.shellMotion !== "reduced" && !snapshot.s8930.sharedCard.animationName.includes("s8930PaperRise")) {
-    failures.push(`S89.30 shared card animation was ${snapshot.s8930.sharedCard.animationName}`);
+  if (snapshot.s8930.animatedSharedCard && snapshot.shellMotion !== "reduced" && !snapshot.s8930.animatedSharedCard.animationName.includes("s8930PaperRise")) {
+    failures.push(`S89.30 shared card animation was ${snapshot.s8930.animatedSharedCard.animationName}`);
   }
   if (snapshot.s8930.statusLine && (!snapshot.s8930.statusLine.backgroundImage.includes("linear-gradient") || snapshot.s8930.statusAccent?.backgroundImage === "none")) {
     failures.push("S89.30 status line lacked paper/accent material");
@@ -2183,6 +2194,9 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
       hasBoard: Boolean(board),
       hasCeremonyLedger: Boolean(document.querySelector('[data-polish-ranking-ledger="s89-18-ranking-ceremony"]')),
       hasCeremonyCopy: text.includes("放榜仪程") && text.includes("张榜取材") && text.includes("我名") && text.includes("同年座师") && text.includes("授官过渡"),
+      rankingInteractiveRows: document.querySelectorAll(".rankingList button.paperMotionInteractive").length,
+      rankingSelectedHookRows: document.querySelectorAll(".rankingList button.paperMotionSelected").length,
+      selectedRowInteractive: selectedRow?.classList.contains("paperMotionInteractive") || false,
       hasBoundary: text.includes("本榜只录已经张挂的定榜结果"),
       hasServerList: text.includes("金榜名单"),
       hasListOrEmpty: Boolean(document.querySelector(".rankingList")) || text.includes("榜文尚未张挂"),
@@ -2210,6 +2224,8 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
   if (!snapshot.hasTopThree) failures.push("missing top-three ranking seals");
   if (!snapshot.hasBoard) failures.push("missing ranking notice board");
   if (!snapshot.hasCeremonyLedger || !snapshot.hasCeremonyCopy) failures.push("missing S89.18 ranking ceremony ledger");
+  if (snapshot.hasPlayerRow && (!snapshot.selectedRowInteractive || snapshot.rankingInteractiveRows < 1)) failures.push("S89.42 ranking rows lacked semantic interactive hook");
+  if (snapshot.rankingSelectedHookRows !== 0) failures.push(`S89.42 ranking rows were incorrectly marked as shared selected controls: ${snapshot.rankingSelectedHookRows}`);
   if (!snapshot.hasBoundary) failures.push("missing server-owned ranking boundary");
   if (!snapshot.hasServerList) failures.push("missing server-owned ranking list heading");
   if (!snapshot.hasListOrEmpty) failures.push("missing ranking list or empty state");
@@ -2776,6 +2792,7 @@ async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
   await assertS8932HomeShellPolish(page, "S89.32 desktop inkbox", { drawer: true });
 
   await assertInkboxTab(page, drawer, "推演", "推演设置");
+  await assertS895MaterialFeedbackPolish(page, "S89.42 desktop inkbox static surfaces", { drawer: true, staticSurface: true, aiTaskRoute: true });
   const narratorRoute = drawer.locator(".aiTaskRoute").filter({ hasText: "叙事" }).first();
   await narratorRoute.waitFor({ timeout: 10000 });
   const narratorOutput = narratorRoute.getByLabel("输出");

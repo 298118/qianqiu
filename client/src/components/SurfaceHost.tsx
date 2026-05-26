@@ -1111,15 +1111,15 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
         <h2 id={`${entry.id}-title`}>{entry.title}</h2>
         <p>{entry.description}</p>
         <dl className="surfaceSafetyList" aria-label={`${entry.title}案卷口径`}>
-          <div>
+          <div className="surfaceSafetyRow paperMotionSurface">
             <dt>卷宗取材</dt>
             <dd>{topicView ? topicSourceSummary(topicView) : entry.dataSource}</dd>
           </div>
-          <div>
+          <div className="surfaceSafetyRow paperMotionSurface">
             <dt>{topicView ? "材料进度" : "案卷状态"}</dt>
             <dd>{topicView ? topicMaterialSummary(topicView) : entry.emptyState}</dd>
           </div>
-          <div>
+          <div className="surfaceSafetyRow paperMotionSurface">
             <dt>回批口径</dt>
             <dd>{safeSurfaceText(topicView?.authorityBoundary || entry.safetyNote, entry.safetyNote, 140)}</dd>
           </div>

@@ -384,19 +384,19 @@ export function InventoryPage() {
           <p>把本卷可见账目、当前移置选择和候批口径先列清楚；未获案卷回批前，不写成已入账或已移置。</p>
         </div>
         <dl className="surfaceSafetyList" aria-label="流转候批笺">
-          <div>
+          <div className="surfaceSafetyRow paperMotionSurface">
             <dt>本卷取材</dt>
             <dd>资源 {resourceAccountCount} 笔，资产 {assetCount} 项，物件 {items.length} 件，凭证 {credentialCount} 件。</dd>
           </div>
-          <div>
+          <div className="surfaceSafetyRow paperMotionSurface">
             <dt>可流转</dt>
             <dd>{transferableItems.length} 件可呈请；官物、禁物、绑定凭证和封存容器仍候回批。</dd>
           </div>
-          <div>
+          <div className="surfaceSafetyRow paperMotionSurface">
             <dt>本次移置</dt>
             <dd>{transferLedgerRoute}</dd>
           </div>
-          <div data-polish-inventory-boundary="s89-23-transfer-boundary">
+          <div className="surfaceSafetyRow paperMotionSurface" data-polish-inventory-boundary="s89-23-transfer-boundary">
             <dt>候批边界</dt>
             <dd>{transferLedgerStatus}；浏览器只记当前选择和提示，成交、入账、扣减、赠予、借用与关系影响仍等主卷回音。</dd>
           </div>

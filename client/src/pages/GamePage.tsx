@@ -404,15 +404,15 @@ export function GamePage() {
             ))}
           </div>
           <dl className="surfaceSafetyList" aria-label="本旬行止笺">
-            <div>
+            <div className="surfaceSafetyRow paperMotionSurface">
               <dt>本旬行止笺</dt>
               <dd>本卷取材：已载 {activeSafeViewCount} / {safeViewItems.length} 类公开卷宗。</dd>
             </div>
-            <div>
+            <div className="surfaceSafetyRow paperMotionSurface">
               <dt>草稿状态</dt>
               <dd>{actionDraftStateLabel}；来处：{actionDraftSourceLabel}。</dd>
             </div>
-            <div>
+            <div className="surfaceSafetyRow paperMotionSurface">
               <dt>卷宗读法</dt>
               <dd>{safeViewReading}</dd>
             </div>

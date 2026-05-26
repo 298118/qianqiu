@@ -999,27 +999,27 @@ export function PeoplePage() {
           <span>{routeSessionSupported ? "只读索引" : "归路"}</span>
         </div>
         <dl className="surfaceSafetyList">
-          <div>
+          <div className="surfaceSafetyRow paperMotionSurface">
             <dt>卷上人物 · 入谱 {peopleRows.length} 人 · 相识 {npcCount} 人</dt>
             <dd>{peopleRows.length ? `人物谱牒只列当前案卷公开人物；当前案头人物为${selectedNpcName}。` : "人物谱牒正在候载；本页不会从全量立绘池补造人物。"}</dd>
           </div>
-          <div>
+          <div className="surfaceSafetyRow paperMotionSurface">
             <dt>当前案头 · 当前页签：{activeTabLabel}</dt>
             <dd>档案、对话、交易、委派、礼法和记录只读当前人物工作台；可写草稿，真实结果仍候主卷回批。</dd>
           </div>
-          <div>
+          <div className="surfaceSafetyRow paperMotionSurface">
             <dt>候复线索 · 来函 {activeSession?.npcActiveRequestView?.items?.length ?? 0} 件 · 后续 {activeSession?.npcActiveRequestView?.followUpTasks?.length ?? 0} 件 · 证据 {followUpEvidenceCount} 条</dt>
             <dd>来函、后续簿和风宪留察只作公开线索，不直接生成人情债、婚姻、弹劾、定罪或背叛结果。</dd>
           </div>
-          <div>
+          <div className="surfaceSafetyRow paperMotionSurface">
             <dt>交游账解 · 关系网 {relationshipEntitySignals.length} 条 · 交游议题 {relationshipAgendaThreads.length} 条 · 账解 {economyTraceCount} 条</dt>
             <dd>论道、切磋、求爱、交易和委派只在入卷后成为可追踪材料；不成交、不扣银、不改关系。</dd>
           </div>
-          <div>
+          <div className="surfaceSafetyRow paperMotionSurface">
             <dt>本地草稿 · {hasLocalDraft ? "已有候复稿" : "暂无候复稿"}</dt>
             <dd>{hasLocalDraft ? "案头已有本地候复稿；索引只提示有无，不展示正文、来处枚举或内部复核线索。" : "当前尚无本地候复稿；人物页按钮仍只写草稿，不直接递交主卷。"}</dd>
           </div>
-          <div>
+          <div className="surfaceSafetyRow paperMotionSurface">
             <dt>候复边界 · 只作草稿</dt>
             <dd>所有按钮都只写案头草稿或读取公开卷宗；资源、身份、NPC 行动、经济、关系和未公开事实仍由案卷回批。</dd>
           </div>

@@ -934,7 +934,7 @@
   margin: 18px 0;
 }
 
-.surfaceSafetyList div {
+.surfaceSafetyRow {
   border-left: 3px solid rgb(142 47 39 / .42);
   background: rgb(255 252 238 / .54);
   padding: 10px 12px;

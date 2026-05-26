@@ -2743,7 +2743,7 @@ test("S89.40 selected and empty paper motion utilities stay semantic and gated",
   }
   assert.match(aiSettingsSource, /matrixState === "error" \? "aiSettingsMatrixStatus paperMotionEmpty" : "aiSettingsMatrixStatus"/);
 
-  assert.match(styleSource, /:where\(\.paperSurface, \.rolePanel, \.statusSurface, \.ledgerCard, \.paperMotionCard, \.paperMotionPanel, \.paperMotionInteractive, \.paperMotionSelected, \.paperMotionDraft, \.paperMotionEmpty\)/);
+  assert.match(styleSource, /:where\(\.paperSurface, \.rolePanel, \.statusSurface, \.ledgerCard, \.paperMotionCard, \.paperMotionPanel, \.paperMotionSurface, \.paperMotionInteractive, \.paperMotionSelected, \.paperMotionDraft, \.paperMotionEmpty\)/);
   assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] \.paperMotionSelected:is\(\[aria-pressed="true"\], \[aria-selected="true"\], :has\(input:checked\)\)/);
   assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] \.paperMotionEmpty/);
   assert.match(styleSource, /\.appShell\[data-contrast="high"\] \.paperMotionSelected:is\(\[aria-pressed="true"\], \[aria-selected="true"\], :has\(input:checked\)\)/);
@@ -2796,7 +2796,7 @@ test("S89.41 paper motion panel utilities reduce scholar panel selector coupling
   assert.doesNotMatch(genericPanelSources, /\brolePanel\b/);
 
   assert.match(polishSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard, \.paperMotionPanel/);
-  assert.match(polishSource, /:is\(\.paperMotionInteractive, \.paperMotionPanel, \.rankingList button\)/);
+  assert.match(polishSource, /:is\(\.paperMotionInteractive, \.paperMotionPanel\)/);
   assert.match(polishSource, /:is\(\.paperMotionCard, \.paperMotionPanel\):nth-child\(2\)/);
   assert.doesNotMatch(polishSource, /\.scholarPanelCard|\.npcRelationshipAgendaCard/);
   assert.match(preferencesSource, /\.appShell\[data-contrast="high"\] :is\(\.paperSurface, \.rolePanel, \.statusSurface, \.ledgerCard, \.paperMotionCard, \.paperMotionPanel/);
@@ -2807,6 +2807,47 @@ test("S89.41 paper motion panel utilities reduce scholar panel selector coupling
   assert.match(clientSmokeSource, /paperMotionPanelCount: document\.querySelectorAll\("\.scholarPanelCard\.paperMotionPanel"\)\.length/);
   assert.match(clientSmokeSource, /rolePanelCount: document\.querySelectorAll\("\.scholarPanelCard\.rolePanel"\)\.length/);
   assert.match(clientSmokeSource, /S89\.41 scholar role panels", \{ rolePanel: true \}/);
+});
+
+test("S89.42 static surface utilities reduce structural selector coupling", () => {
+  const surfaceSafetySources = [
+    "client/src/pages/GamePage.tsx",
+    "client/src/pages/InventoryPage.tsx",
+    "client/src/pages/SettingsPage.tsx",
+    "client/src/pages/CourtPage.tsx",
+    "client/src/pages/ArchivePage.tsx",
+    "client/src/pages/ExamPage.tsx",
+    "client/src/pages/RankingPage.tsx",
+    "client/src/pages/PeoplePage.tsx",
+    "client/src/components/SurfaceHost.tsx",
+    "client/src/components/AiSettingsPanel.tsx"
+  ].map((sourcePath) => readText(sourcePath)).join("\n");
+  const aiSettingsSource = readText("client/src/components/AiSettingsPanel.tsx");
+  const rankingSource = readText("client/src/pages/RankingPage.tsx");
+  const surfacesSource = readClientStyleModule("utilities/surfaces.css");
+  const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
+  const preferencesSource = readClientStyleModule("base/preferences.css");
+  const overlaysSource = readClientStyleModule("components/overlays-surfaces.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(surfacesSource, /\.paperMotionSurface/);
+  assert.match(aiSettingsSource, /className="aiTaskRoute paperMotionSurface"/);
+  assert.match(surfaceSafetySources, /className="surfaceSafetyRow paperMotionSurface"/);
+  assert.ok((surfaceSafetySources.match(/className="surfaceSafetyRow paperMotionSurface"/g) || []).length >= 26);
+  assert.doesNotMatch(surfaceSafetySources, /<div key=\{(?:item|row)\.label\}|<div data-polish-inventory-boundary/);
+  assert.match(rankingSource, /className="paperMotionInteractive"/);
+  assert.doesNotMatch(rankingSource, /className="paperMotionInteractive paperMotionSelected"/);
+
+  assert.match(overlaysSource, /\.surfaceSafetyRow/);
+  assert.doesNotMatch(overlaysSource, /\.surfaceSafetyList div/);
+  assert.match(polishSource, /\.paperMotionSurface/);
+  assert.doesNotMatch(polishSource, /\.aiTaskRoute|\.surfaceSafetyList div|\.rankingList button/);
+  assert.match(preferencesSource, /\.paperMotionSurface/);
+
+  assert.match(clientSmokeSource, /staticSurfaceCount: document\.querySelectorAll\("\.paperMotionSurface"\)\.length/);
+  assert.match(clientSmokeSource, /legacySafetyRowCount: document\.querySelectorAll\("\.surfaceSafetyList > div:not\(\.surfaceSafetyRow\)"\)\.length/);
+  assert.match(clientSmokeSource, /S89\.42 desktop inkbox static surfaces", \{ drawer: true, staticSurface: true, aiTaskRoute: true \}/);
+  assert.match(clientSmokeSource, /rankingSelectedHookRows !== 0/);
 });
 
 test("S89.25 overlay glass polish stays shared and safe", () => {
