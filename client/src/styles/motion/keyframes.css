@@ -6,7 +6,7 @@
   from { outline: 2px solid var(--qq-color-vermilion-glow-outline); }
 }
 
-@keyframes s899CueLift {
+@keyframes portraitViewerCueTagLift {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
@@ -257,7 +257,7 @@
   }
 }
 
-@keyframes s8935GalleryUnroll {
+@keyframes peoplePortraitGalleryUnroll {
   from {
     clip-path: inset(0 2% 10% 2%);
     filter: blur(1px);
@@ -273,7 +273,7 @@
   }
 }
 
-@keyframes s8935SlipRise {
+@keyframes peoplePortraitReadoutSlipRise {
   from {
     opacity: 0;
     transform: translateY(7px);

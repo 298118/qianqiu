@@ -3830,6 +3830,8 @@ async function runClientSmoke(options = {}) {
       const galleryReadout = galleryBand?.querySelector(".peopleGalleryReadout");
       const galleryReadoutStyle = galleryReadout ? window.getComputedStyle(galleryReadout) : null;
       const galleryBandStyle = galleryBand ? window.getComputedStyle(galleryBand) : null;
+      const galleryReadoutLedger = galleryBand?.querySelector(".peopleGalleryReadout dl");
+      const galleryReadoutLedgerStyle = galleryReadoutLedger ? window.getComputedStyle(galleryReadoutLedger) : null;
       const crossTrace = document.querySelector("[data-polish-cross-trace='s89-36-cross-page-trace'][data-cross-trace-page='people']");
       const crossTraceCard = crossTrace?.querySelector(".crossPageTraceGrid article");
       const crossTraceCardStyle = crossTraceCard ? window.getComputedStyle(crossTraceCard) : null;
@@ -3852,6 +3854,7 @@ async function runClientSmoke(options = {}) {
         galleryReadoutGrid: galleryReadoutStyle?.display || "",
         galleryReadoutColumns: galleryReadoutStyle?.gridTemplateColumns || "",
         galleryAnimation: galleryBandStyle?.animationName || "",
+        galleryReadoutAnimation: galleryReadoutLedgerStyle?.animationName || "",
         shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
         reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
         galleryReadoutRows: galleryReadout?.querySelectorAll("dt").length || 0,
@@ -3889,8 +3892,19 @@ async function runClientSmoke(options = {}) {
     if (portraitLedger.peopleStaticSurfaceCount !== 3 || portraitLedger.peopleStaticSurfaceMissing) {
       throw new Error(`S89.48 people static surfaces were incomplete: ${JSON.stringify({ peopleStaticSurfaceCount: portraitLedger.peopleStaticSurfaceCount, peopleStaticSurfaceMissing: portraitLedger.peopleStaticSurfaceMissing })}`);
     }
-    if (!portraitLedger.galleryShell || !portraitLedger.galleryBand || portraitLedger.galleryState !== "ready" || portraitLedger.galleryLedgerState !== "ready" || portraitLedger.galleryCardCount < 1 || portraitLedger.galleryPortraitCards < 1 || portraitLedger.gallerySelectedButtons !== 1 || !/人物画屏|入谱照面|画屏|公开小传|草稿|候复线索/.test(portraitLedger.galleryReadoutText) || portraitLedger.galleryReadoutRows < 5 || portraitLedger.galleryReadoutGrid !== "grid" || !portraitLedger.galleryReadoutColumns || (portraitLedger.galleryAnimation !== "s8935GalleryUnroll" && portraitLedger.galleryAnimation !== "none")) {
+    if (!portraitLedger.galleryShell || !portraitLedger.galleryBand || portraitLedger.galleryState !== "ready" || portraitLedger.galleryLedgerState !== "ready" || portraitLedger.galleryCardCount < 1 || portraitLedger.galleryPortraitCards < 1 || portraitLedger.gallerySelectedButtons !== 1 || !/人物画屏|入谱照面|画屏|公开小传|草稿|候复线索/.test(portraitLedger.galleryReadoutText) || portraitLedger.galleryReadoutRows < 5 || portraitLedger.galleryReadoutGrid !== "grid" || !portraitLedger.galleryReadoutColumns) {
       throw new Error(`S89.35 people portrait gallery readout missing or unsafe: ${JSON.stringify(portraitLedger)}`);
+    }
+    if (portraitLedger.shellMotion !== "reduced" && !portraitLedger.reducedMotion) {
+      if (!portraitLedger.galleryAnimation.includes("peoplePortraitGalleryUnroll")) {
+        throw new Error(`S89.62 people portrait gallery animation was ${portraitLedger.galleryAnimation}`);
+      }
+      if (!portraitLedger.galleryReadoutAnimation.includes("peoplePortraitReadoutSlipRise")) {
+        throw new Error(`S89.62 people portrait gallery readout animation was ${portraitLedger.galleryReadoutAnimation}`);
+      }
+    }
+    if ((portraitLedger.shellMotion === "reduced" || portraitLedger.reducedMotion) && (portraitLedger.galleryAnimation !== "none" || portraitLedger.galleryReadoutAnimation !== "none")) {
+      throw new Error(`S89.62 reduced people portrait gallery animations were ${JSON.stringify({ gallery: portraitLedger.galleryAnimation, readout: portraitLedger.galleryReadoutAnimation })}`);
     }
     if (!portraitLedger.hasCrossTrace || !/^(ready|empty)$/.test(portraitLedger.crossTraceState)) {
       throw new Error(`S89.36 people cross trace missing: ${JSON.stringify({ hasCrossTrace: portraitLedger.hasCrossTrace, crossTraceState: portraitLedger.crossTraceState })}`);
@@ -3946,14 +3960,17 @@ async function runClientSmoke(options = {}) {
         hasCueGrid: /画卷题签|衣饰|神采/.test(viewerText),
         cueGrid: (() => {
           const cue = viewer?.querySelector("[data-polish-cue='s89-9-portrait-cue-material']");
+          const dossierRail = viewer?.querySelector("[data-polish-portrait-dossier='s89-35-people-portrait-gallery']");
           const style = cue ? window.getComputedStyle(cue) : null;
           const first = cue?.querySelector("span");
           const firstStyle = first ? window.getComputedStyle(first) : null;
+          const dossierStyle = dossierRail ? window.getComputedStyle(dossierRail) : null;
           return {
             count: cue?.querySelectorAll("span").length || 0,
             display: style?.display || "",
             background: firstStyle?.backgroundImage || "",
             animation: firstStyle?.animationName || "",
+            dossierAnimation: dossierStyle?.animationName || "",
             shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
             reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches
           };
@@ -3970,11 +3987,17 @@ async function runClientSmoke(options = {}) {
       throw new Error(`S79.3 portrait viewer did not use an audited runtime portrait path: ${JSON.stringify(portraitViewer)}`);
     }
     const cueAnimationExpected = portraitViewer.cueGrid.shellMotion !== "reduced" && !portraitViewer.cueGrid.reducedMotion;
-    if (portraitViewer.polishPortrait !== "s89-8-life-scroll" || portraitViewer.polishCue !== "yes" || !portraitViewer.polishProfile || !portraitViewer.hasAppearance || !portraitViewer.hasBiography || !portraitViewer.hasCurrent || !portraitViewer.hasCueGrid || !portraitViewer.hasRicherCopy || portraitViewer.cueGrid.count < 4 || portraitViewer.cueGrid.display !== "grid" || !portraitViewer.cueGrid.background.includes("linear-gradient") || (cueAnimationExpected ? portraitViewer.cueGrid.animation !== "s899CueLift" : portraitViewer.cueGrid.animation !== "none")) {
+    if (portraitViewer.polishPortrait !== "s89-8-life-scroll" || portraitViewer.polishCue !== "yes" || !portraitViewer.polishProfile || !portraitViewer.hasAppearance || !portraitViewer.hasBiography || !portraitViewer.hasCurrent || !portraitViewer.hasCueGrid || !portraitViewer.hasRicherCopy || portraitViewer.cueGrid.count < 4 || portraitViewer.cueGrid.display !== "grid" || !portraitViewer.cueGrid.background.includes("linear-gradient") || (cueAnimationExpected ? portraitViewer.cueGrid.animation !== "portraitViewerCueTagLift" : portraitViewer.cueGrid.animation !== "none")) {
       throw new Error(`S89.8 portrait viewer missed player-facing life/current profile polish: ${JSON.stringify(portraitViewer)}`);
     }
     if (portraitViewer.polishGalleryViewer !== "s89-35-people-portrait-gallery" || portraitViewer.viewerState !== "ready" || portraitViewer.polishDossier !== "yes" || !portraitViewer.hasDossierRail) {
       throw new Error(`S89.35 portrait viewer dossier rail missing: ${JSON.stringify(portraitViewer)}`);
+    }
+    if (cueAnimationExpected && portraitViewer.cueGrid.dossierAnimation !== "peoplePortraitReadoutSlipRise") {
+      throw new Error(`S89.62 portrait viewer dossier rail animation was ${portraitViewer.cueGrid.dossierAnimation}`);
+    }
+    if (!cueAnimationExpected && portraitViewer.cueGrid.dossierAnimation !== "none") {
+      throw new Error(`S89.62 reduced portrait viewer dossier rail animation was ${portraitViewer.cueGrid.dossierAnimation}`);
     }
     if (portraitViewer.storageKeys.some((key) => /portrait|viewer|image/i.test(key)) || portraitViewer.unsafeText.length) {
       throw new Error(`S79.3 portrait viewer widened storage or text safety: ${JSON.stringify(portraitViewer)}`);

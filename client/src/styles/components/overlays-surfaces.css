@@ -789,7 +789,7 @@
   background: linear-gradient(135deg, rgb(255 252 238 / .78), rgb(235 218 188 / .54));
   color: #49382a;
   padding: 8px 9px;
-  animation: s899CueLift 420ms ease both;
+  animation: portraitViewerCueTagLift 420ms ease both;
 }
 
 .portraitViewerProfile section {
@@ -822,7 +822,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   margin: 2px 0 0;
-  animation: s8935SlipRise 420ms ease both;
+  animation: peoplePortraitReadoutSlipRise 420ms ease both;
 }
 
 .portraitViewerDossierRail div {
