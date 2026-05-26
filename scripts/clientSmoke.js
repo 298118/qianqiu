@@ -839,6 +839,8 @@ async function assertArchiveDigestPolish(page, label) {
     const reader = document.querySelector("[data-polish-archive-reader='s89-29-evidence-reader']");
     const readerBoundary = reader?.querySelector("[data-polish-archive-boundary]");
     const crossTrace = document.querySelector("[data-polish-cross-trace='s89-36-cross-page-trace'][data-cross-trace-page='archive']");
+    const crossTraceCard = crossTrace?.querySelector(".crossPageTraceGrid article");
+    const crossTraceCardStyle = crossTraceCard ? window.getComputedStyle(crossTraceCard) : null;
     const traceGrid = document.querySelector(".archiveTraceGrid");
     const evidenceStack = document.querySelector(".archiveEvidenceStack");
     const text = digest?.textContent || "";
@@ -856,11 +858,14 @@ async function assertArchiveDigestPolish(page, label) {
       readerRows: reader ? reader.querySelectorAll(".surfaceSafetyList > div").length : 0,
       readerBoundaryMarker: readerBoundary?.getAttribute("data-polish-archive-boundary") || "",
       readerBoundaryText: readerBoundary?.textContent || "",
+      shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
+      reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       hasCrossTrace: Boolean(crossTrace),
       crossTraceState: crossTrace?.getAttribute("data-cross-trace-state") || "",
       crossTraceTargets: [...(crossTrace?.querySelectorAll("[data-cross-trace-target]") || [])].map((entry) => entry.getAttribute("data-cross-trace-target") || "").sort(),
       crossTraceText,
       crossTraceLinks,
+      crossTraceAnimation: crossTraceCardStyle?.animationName || "",
       hasTraceGrid: Boolean(traceGrid),
       tracePolishMarker: traceGrid?.getAttribute("data-polish-archive-trace") || "",
       traceLayout: traceGrid?.getAttribute("data-archive-layout") || "",
@@ -891,6 +896,12 @@ async function assertArchiveDigestPolish(page, label) {
   }
   if (!snapshot.hasCrossTrace || !/^(ready|empty)$/.test(snapshot.crossTraceState)) {
     failures.push(`missing S89.36 archive cross trace: ${JSON.stringify({ hasCrossTrace: snapshot.hasCrossTrace, crossTraceState: snapshot.crossTraceState })}`);
+  }
+  if (snapshot.shellMotion !== "reduced" && !snapshot.reducedMotion && !snapshot.crossTraceAnimation.includes("crossPageTraceCardSlipIn")) {
+    failures.push(`S89.61 archive cross trace animation was ${snapshot.crossTraceAnimation}`);
+  }
+  if ((snapshot.shellMotion === "reduced" || snapshot.reducedMotion) && snapshot.crossTraceAnimation !== "none") {
+    failures.push(`S89.61 reduced archive cross trace animation was ${snapshot.crossTraceAnimation}`);
   }
   if (snapshot.crossTraceTargets.join("|") !== "archive|court|game|people") {
     failures.push(`archive cross trace targets were ${snapshot.crossTraceTargets.join(", ")}`);
@@ -3299,6 +3310,8 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     const bodyText = document.body.innerText || "";
     const agendaBand = document.querySelector('[data-polish-court-agenda-band="s89-34-main-court-desk"]');
     const crossTrace = document.querySelector('[data-polish-cross-trace="s89-36-cross-page-trace"][data-cross-trace-page="court"]');
+    const crossTraceCard = crossTrace?.querySelector(".crossPageTraceGrid article");
+    const crossTraceCardStyle = crossTraceCard ? window.getComputedStyle(crossTraceCard) : null;
     const agendaStyle = agendaBand ? window.getComputedStyle(agendaBand) : null;
     const agendaSealStyle = agendaBand ? window.getComputedStyle(agendaBand, "::before") : null;
     const agendaStep = document.querySelector(".courtAgendaSteps li");
@@ -3328,6 +3341,7 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
       crossTraceTargets: [...(crossTrace?.querySelectorAll("[data-cross-trace-target]") || [])].map((entry) => entry.getAttribute("data-cross-trace-target") || "").sort(),
       crossTraceText: crossTrace?.textContent || "",
       crossTraceLinks,
+      crossTraceAnimation: crossTraceCardStyle?.animationName || "",
       indexEntryCount: document.querySelectorAll(".courtSurfacePage [data-court-surface]").length,
       surfaceIds,
       surfaceStates: surfaceEntries.map((entry) => entry.getAttribute("data-court-state") || ""),
@@ -3366,6 +3380,12 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
   }
   if (!initialSnapshot.hasCrossTrace || initialSnapshot.crossTraceState !== "ready") {
     failures.push(`missing S89.36 court cross trace: ${JSON.stringify({ hasCrossTrace: initialSnapshot.hasCrossTrace, crossTraceState: initialSnapshot.crossTraceState })}`);
+  }
+  if (initialSnapshot.shellMotion !== "reduced" && !initialSnapshot.reducedMotion && !initialSnapshot.crossTraceAnimation.includes("crossPageTraceCardSlipIn")) {
+    failures.push(`S89.61 court cross trace animation was ${initialSnapshot.crossTraceAnimation}`);
+  }
+  if ((initialSnapshot.shellMotion === "reduced" || initialSnapshot.reducedMotion) && initialSnapshot.crossTraceAnimation !== "none") {
+    failures.push(`S89.61 reduced court cross trace animation was ${initialSnapshot.crossTraceAnimation}`);
   }
   if (initialSnapshot.crossTraceTargets.join("|") !== "archive|game|people") {
     failures.push(`court cross trace targets were ${initialSnapshot.crossTraceTargets.join(", ")}`);
@@ -3811,6 +3831,8 @@ async function runClientSmoke(options = {}) {
       const galleryReadoutStyle = galleryReadout ? window.getComputedStyle(galleryReadout) : null;
       const galleryBandStyle = galleryBand ? window.getComputedStyle(galleryBand) : null;
       const crossTrace = document.querySelector("[data-polish-cross-trace='s89-36-cross-page-trace'][data-cross-trace-page='people']");
+      const crossTraceCard = crossTrace?.querySelector(".crossPageTraceGrid article");
+      const crossTraceCardStyle = crossTraceCard ? window.getComputedStyle(crossTraceCard) : null;
       const crossTraceLinks = [...(crossTrace?.querySelectorAll("a[href]") || [])].map((link) => new URL(link.href).pathname);
       const firstCard = document.querySelector("[data-polish-people-card='s89-9-portrait-material']");
       const firstCardStyle = firstCard ? window.getComputedStyle(firstCard) : null;
@@ -3830,6 +3852,8 @@ async function runClientSmoke(options = {}) {
         galleryReadoutGrid: galleryReadoutStyle?.display || "",
         galleryReadoutColumns: galleryReadoutStyle?.gridTemplateColumns || "",
         galleryAnimation: galleryBandStyle?.animationName || "",
+        shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
+        reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
         galleryReadoutRows: galleryReadout?.querySelectorAll("dt").length || 0,
         gallerySelectedButtons: document.querySelectorAll(".npcListButton[data-gallery-selected='true']").length,
         gallerySelectedCards: document.querySelectorAll("[data-polish-people-gallery-card='s89-35-people-portrait-gallery'][data-selected='true']").length,
@@ -3842,6 +3866,7 @@ async function runClientSmoke(options = {}) {
         crossTraceTargets: [...(crossTrace?.querySelectorAll("[data-cross-trace-target]") || [])].map((entry) => entry.getAttribute("data-cross-trace-target") || "").sort(),
         crossTraceText: crossTrace?.textContent || "",
         crossTraceLinks,
+        crossTraceAnimation: crossTraceCardStyle?.animationName || "",
         polishCardCount: document.querySelectorAll("[data-polish-people-card='s89-9-portrait-material']").length,
         cardBackground: firstCardStyle?.backgroundImage || "",
         cardTransition: firstCardStyle?.transitionProperty || "",
@@ -3869,6 +3894,12 @@ async function runClientSmoke(options = {}) {
     }
     if (!portraitLedger.hasCrossTrace || !/^(ready|empty)$/.test(portraitLedger.crossTraceState)) {
       throw new Error(`S89.36 people cross trace missing: ${JSON.stringify({ hasCrossTrace: portraitLedger.hasCrossTrace, crossTraceState: portraitLedger.crossTraceState })}`);
+    }
+    if (portraitLedger.shellMotion !== "reduced" && !portraitLedger.reducedMotion && !portraitLedger.crossTraceAnimation.includes("crossPageTraceCardSlipIn")) {
+      throw new Error(`S89.61 people cross trace animation was ${portraitLedger.crossTraceAnimation}`);
+    }
+    if ((portraitLedger.shellMotion === "reduced" || portraitLedger.reducedMotion) && portraitLedger.crossTraceAnimation !== "none") {
+      throw new Error(`S89.61 reduced people cross trace animation was ${portraitLedger.crossTraceAnimation}`);
     }
     if (portraitLedger.crossTraceTargets.join("|") !== "archive|court|game|people") {
       throw new Error(`S89.36 people cross trace targets were ${portraitLedger.crossTraceTargets.join(", ")}`);

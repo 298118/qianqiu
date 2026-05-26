@@ -60,7 +60,7 @@
   }
 }
 
-@keyframes s8936TraceSlipIn {
+@keyframes crossPageTraceCardSlipIn {
   from {
     filter: blur(.6px);
     opacity: 0;

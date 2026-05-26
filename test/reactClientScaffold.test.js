@@ -1959,7 +1959,8 @@ test("S89.36 cross-page trace rail stays frontend-only and safe-view-only", () =
   assert.match(archiveTraceBlock, /courtHref/);
   assert.match(styleSource, /\.crossPageTraceRail\[data-polish-cross-trace="s89-36-cross-page-trace"\]/);
   assert.match(styleSource, /\.crossPageTraceGrid[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
-  assert.match(styleSource, /@keyframes s8936TraceSlipIn/);
+  assert.match(styleSource, /@keyframes crossPageTraceCardSlipIn/);
+  assert.match(styleSource, /\.crossPageTraceGrid article \{[\s\S]*animation: crossPageTraceCardSlipIn \.46s ease both/);
   assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*\.crossPageTraceGrid article/);
   assert.match(styleSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.crossPageTraceGrid article/);
   assert.match(styleSource, /@media \(max-width: 760px\)[\s\S]*\.crossPageTraceGrid/);
@@ -1970,6 +1971,9 @@ test("S89.36 cross-page trace rail stays frontend-only and safe-view-only", () =
   assert.match(clientSmokeSource, /S89\.36 court cross trace/);
   assert.match(clientSmokeSource, /S89\.36 people cross trace/);
   assert.match(clientSmokeSource, /S89\.36 archive cross trace/);
+  assert.match(clientSmokeSource, /crossPageTraceCardSlipIn/);
+  assert.doesNotMatch(styleSource, /@keyframes s8936TraceSlipIn|animation(?:-name)?: s8936TraceSlipIn/);
+  assert.doesNotMatch(clientSmokeSource, /s8936TraceSlipIn/);
   assert.doesNotMatch(
     traceBlocks,
     /qianqiuApi|submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|sourceRef|relatedRefs|scopeRefs|payload/
