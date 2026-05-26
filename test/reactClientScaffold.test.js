@@ -3074,6 +3074,42 @@ test("S89.51 shared paper state surfaces reuse semantic color tokens", () => {
   assert.match(runtimeSource, /\.appShell\[data-motion="reduced"\]\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard/);
 });
 
+test("S89.52 high contrast mode overrides shared paper state tokens", () => {
+  const preferencesSource = readClientStyleModule("base/preferences.css");
+  const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
+  const runtimeSource = readClientStyleSource();
+  const highContrastBlock = preferencesSource.match(/\.appShell\[data-contrast="high"\] \{[\s\S]*?\n\}/)?.[0] || "";
+
+  for (const tokenName of [
+    "--qq-color-vermilion-glow-soft",
+    "--qq-color-vermilion-glow-medium",
+    "--qq-color-vermilion-glow-strong",
+    "--qq-color-vermilion-border-soft",
+    "--qq-color-vermilion-border-medium",
+    "--qq-color-vermilion-border-strong",
+    "--qq-color-warm-shadow-soft",
+    "--qq-color-warm-shadow-medium",
+    "--qq-color-paper-inset-faint",
+    "--qq-color-paper-inset-soft",
+    "--qq-color-paper-inset-medium",
+    "--qq-surface-paper-selected",
+    "--qq-surface-paper-written",
+    "--qq-surface-paper-empty"
+  ]) {
+    assert.match(highContrastBlock, new RegExp(`${tokenName}:`));
+  }
+
+  assert.match(highContrastBlock, /--qq-color-vermilion-glow-outline: rgb\(95 24 21 \/ \.34\)/);
+  assert.match(highContrastBlock, /--qq-color-vermilion-border-strong: rgb\(95 24 21 \/ \.74\)/);
+  assert.match(highContrastBlock, /--qq-color-paper-inset-soft: rgb\(255 252 238 \/ \.72\)/);
+
+  assert.match(polishSource, /box-shadow: var\(--qq-shadow-paper-selected\)/);
+  assert.match(polishSource, /box-shadow: var\(--qq-shadow-paper-written\)/);
+  assert.match(polishSource, /box-shadow: var\(--qq-shadow-paper-empty\)/);
+  assert.match(runtimeSource, /\.appShell\[data-contrast="high"\] \.paperMotionSelected:is/);
+  assert.match(runtimeSource, /\.appShell\[data-motion="reduced"\]\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");
