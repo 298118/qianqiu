@@ -3150,6 +3150,52 @@ test("S89.53 map tone colors use semantic state tokens", () => {
   assert.doesNotMatch(mapArchiveSource, /rgb\(47 111 94|rgb\(214 164 70|rgb\(112 84 149|#2f6f5e|#7b4d1f|#705495/);
 });
 
+test("S89.54 base controls and status lines use semantic tokens", () => {
+  const tokensSource = readClientStyleModule("tokens/tokens.css");
+  const preferencesSource = readClientStyleModule("base/preferences.css");
+  const controlsSource = readClientStyleModule("components/controls.css");
+  const highContrastBlock = preferencesSource.match(/\.appShell\[data-contrast="high"\] \{[\s\S]*?\n\}/)?.[0] || "";
+
+  for (const tokenName of [
+    "--qq-color-control-border",
+    "--qq-color-control-text",
+    "--qq-surface-control-field",
+    "--qq-color-paper-button-border",
+    "--qq-color-paper-button-border-hover",
+    "--qq-color-paper-button-border-active",
+    "--qq-color-paper-button-text",
+    "--qq-color-paper-button-text-shadow",
+    "--qq-color-paper-button-shine",
+    "--qq-color-paper-button-outline",
+    "--qq-shadow-paper-button-hover",
+    "--qq-shadow-paper-button-active",
+    "--qq-shadow-paper-button-disabled-inset",
+    "--qq-surface-paper-button",
+    "--qq-surface-paper-button-hover",
+    "--qq-surface-paper-button-active",
+    "--qq-color-status-surface-border",
+    "--qq-shadow-status-line",
+    "--qq-surface-status-line",
+    "--qq-surface-status-marker",
+    "--qq-shadow-status-marker",
+    "--qq-color-seal-status"
+  ]) {
+    assert.match(tokensSource, new RegExp(`${tokenName}:`));
+    assert.match(highContrastBlock, new RegExp(`${tokenName}:`));
+  }
+
+  assert.match(controlsSource, /input,[\s\S]*border: 1px solid var\(--qq-color-control-border\)[\s\S]*background: var\(--qq-surface-control-field\)[\s\S]*color: var\(--qq-color-control-text\)/);
+  assert.match(controlsSource, /\.paperButton \{[\s\S]*border: 1px solid var\(--qq-color-paper-button-border\)[\s\S]*background: var\(--qq-surface-paper-button\)[\s\S]*color: var\(--qq-color-paper-button-text\)/);
+  assert.match(controlsSource, /\.paperButton::before \{[\s\S]*var\(--qq-color-paper-button-shine\)/);
+  assert.match(controlsSource, /\.paperButton:hover:not\(:disabled\),[\s\S]*border-color: var\(--qq-color-paper-button-border-hover\)[\s\S]*background: var\(--qq-surface-paper-button-hover\)[\s\S]*var\(--qq-shadow-paper-button-hover\)/);
+  assert.match(controlsSource, /\.paperButton:active:not\(:disabled\) \{[\s\S]*border-color: var\(--qq-color-paper-button-border-active\)[\s\S]*background: var\(--qq-surface-paper-button-active\)[\s\S]*box-shadow: var\(--qq-shadow-paper-button-active\)/);
+  assert.match(controlsSource, /\.paperButton\[aria-disabled="true"\] \{[\s\S]*box-shadow: var\(--qq-shadow-paper-button-disabled-inset\)/);
+  assert.match(controlsSource, /\.appShell\[data-material-motion="shared-paper"\] \.statusLine \{[\s\S]*border: 1px solid var\(--qq-color-status-surface-border\)[\s\S]*background: var\(--qq-surface-status-line\)[\s\S]*box-shadow: var\(--qq-shadow-status-line\)/);
+  assert.match(controlsSource, /\.appShell\[data-material-motion="shared-paper"\] \.statusLine::before \{[\s\S]*background: var\(--qq-surface-status-marker\)[\s\S]*box-shadow: var\(--qq-shadow-status-marker\)/);
+  assert.match(controlsSource, /\.sealStatus \{[\s\S]*color: var\(--qq-color-seal-status\)/);
+  assert.doesNotMatch(controlsSource, /rgb\(84 60 43 \/ \.34|rgb\(255 252 238 \/ \.9\)|#241b16|rgb\(142 47 39 \/ \.58|rgb\(255 252 238 \/ \.88|rgb\(236 218 184 \/ \.72|rgb\(255 248 230 \/ \.52|rgb\(255 248 230 \/ \.34|rgb\(54 37 24 \/ \.13|rgb\(95 24 21 \/ \.82|rgb\(224 197 161 \/ \.82|rgb\(75 43 28 \/ \.18|rgb\(142 47 39 \/ \.18|rgb\(236 218 184 \/ \.46|rgb\(206 153 64 \/ \.52|#7a6048/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");

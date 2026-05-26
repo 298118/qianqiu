@@ -45,6 +45,28 @@
   --qq-color-paper-inset-medium: rgb(255 252 238 / .58);
   --qq-color-disabled-text: rgb(92 74 55 / .76);
   --qq-color-disabled-border: rgb(84 60 43 / .24);
+  --qq-color-control-border: rgb(84 60 43 / .34);
+  --qq-color-control-text: var(--qq-color-ink);
+  --qq-surface-control-field: rgb(255 252 238 / .9);
+  --qq-color-paper-button-border: rgb(142 47 39 / .58);
+  --qq-color-paper-button-border-hover: var(--qq-color-vermilion-dark);
+  --qq-color-paper-button-border-active: rgb(95 24 21 / .82);
+  --qq-color-paper-button-text: var(--qq-color-vermilion-dark);
+  --qq-color-paper-button-text-shadow: rgb(255 248 230 / .52);
+  --qq-color-paper-button-shine: rgb(255 248 230 / .34);
+  --qq-color-paper-button-outline: rgb(123 36 31 / .18);
+  --qq-shadow-paper-button-hover: 0 10px 22px rgb(54 37 24 / .13);
+  --qq-shadow-paper-button-active:
+    inset 0 2px 8px rgb(75 43 28 / .18),
+    0 4px 12px rgb(54 37 24 / .12);
+  --qq-shadow-paper-button-disabled-inset: inset 0 0 0 1px rgb(255 248 230 / .3);
+  --qq-color-status-surface-border: rgb(142 47 39 / .18);
+  --qq-shadow-status-line:
+    inset 0 0 0 1px rgb(255 252 238 / .34),
+    0 8px 18px rgb(54 37 24 / .07);
+  --qq-surface-status-marker: linear-gradient(180deg, rgb(142 47 39 / .62), rgb(206 153 64 / .52));
+  --qq-shadow-status-marker: 0 0 10px rgb(142 47 39 / .16);
+  --qq-color-seal-status: #7a6048;
   --qq-color-paper: #eadcc4;
   --qq-color-paper-light: rgb(255 252 238 / .72);
   --qq-color-paper-strong: rgb(255 248 230 / .94);
@@ -101,6 +123,18 @@
     var(--qq-material-xuan) center / 420px repeat;
   --qq-surface-disabled:
     linear-gradient(180deg, rgb(240 230 210 / .62), rgb(215 199 171 / .48)),
+    var(--qq-material-xuan) center / 420px repeat;
+  --qq-surface-paper-button:
+    linear-gradient(180deg, rgb(255 252 238 / .88), rgb(236 218 184 / .72)),
+    var(--qq-material-xuan) center / 420px repeat;
+  --qq-surface-paper-button-hover:
+    linear-gradient(180deg, rgb(255 253 242 / .94), rgb(241 222 187 / .82)),
+    var(--qq-material-xuan) center / 420px repeat;
+  --qq-surface-paper-button-active:
+    linear-gradient(180deg, rgb(224 197 161 / .82), rgb(255 248 230 / .76)),
+    var(--qq-material-seal-pressed) center / cover no-repeat;
+  --qq-surface-status-line:
+    linear-gradient(110deg, rgb(255 252 238 / .64), rgb(236 218 184 / .46)),
     var(--qq-material-xuan) center / 420px repeat;
   --qq-surface-paper-selected:
     linear-gradient(135deg, rgb(255 248 230 / .88), rgb(248 229 198 / .7)),

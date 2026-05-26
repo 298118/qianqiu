@@ -2,10 +2,10 @@ input,
 select,
 textarea {
   width: 100%;
-  border: 1px solid rgb(84 60 43 / .34);
+  border: 1px solid var(--qq-color-control-border);
   border-radius: 0;
-  background: rgb(255 252 238 / .9);
-  color: #241b16;
+  background: var(--qq-surface-control-field);
+  color: var(--qq-color-control-text);
   font: inherit;
   padding: 9px 10px;
 }
@@ -24,17 +24,15 @@ textarea {
   min-height: 40px;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid rgb(142 47 39 / .58);
-  background:
-    linear-gradient(180deg, rgb(255 252 238 / .88), rgb(236 218 184 / .72)),
-    var(--qq-material-xuan) center / 420px repeat;
-  color: #7b241f;
+  border: 1px solid var(--qq-color-paper-button-border);
+  background: var(--qq-surface-paper-button);
+  color: var(--qq-color-paper-button-text);
   font: inherit;
   font-weight: 700;
   line-height: 1.35;
   padding: 8px 12px;
   text-align: center;
-  text-shadow: 0 1px 0 rgb(255 248 230 / .52);
+  text-shadow: 0 1px 0 var(--qq-color-paper-button-text-shadow);
   overflow-wrap: anywhere;
   white-space: normal;
   transition:
@@ -57,7 +55,7 @@ textarea {
   inset: 0;
   z-index: -1;
   background:
-    linear-gradient(90deg, transparent, rgb(255 248 230 / .34), transparent),
+    linear-gradient(90deg, transparent, var(--qq-color-paper-button-shine), transparent),
     var(--qq-material-ink-line) center bottom / 100% 4px repeat-x;
   opacity: 0;
   transform: translateX(-24%);
@@ -84,15 +82,13 @@ textarea {
 .paperLink:focus-visible:not(:disabled):not([aria-disabled="true"]),
 .paperButton:hover:not(:disabled),
 .paperButton:focus-visible:not(:disabled) {
-  border-color: #7b241f;
-  background:
-    linear-gradient(180deg, rgb(255 253 242 / .94), rgb(241 222 187 / .82)),
-    var(--qq-material-xuan) center / 420px repeat;
+  border-color: var(--qq-color-paper-button-border-hover);
+  background: var(--qq-surface-paper-button-hover);
   box-shadow:
     var(--qq-shadow-ink-focus),
-    0 10px 22px rgb(54 37 24 / .13);
-  color: #7b241f;
-  outline: 2px solid rgb(123 36 31 / .18);
+    var(--qq-shadow-paper-button-hover);
+  color: var(--qq-color-paper-button-text);
+  outline: 2px solid var(--qq-color-paper-button-outline);
   outline-offset: 2px;
   transform: translateY(-1px);
 }
@@ -113,13 +109,9 @@ textarea {
 .sessionNav a:active,
 .paperLink:active:not(:disabled):not([aria-disabled="true"]),
 .paperButton:active:not(:disabled) {
-  border-color: rgb(95 24 21 / .82);
-  background:
-    linear-gradient(180deg, rgb(224 197 161 / .82), rgb(255 248 230 / .76)),
-    var(--qq-material-seal-pressed) center / cover no-repeat;
-  box-shadow:
-    inset 0 2px 8px rgb(75 43 28 / .18),
-    0 4px 12px rgb(54 37 24 / .12);
+  border-color: var(--qq-color-paper-button-border-active);
+  background: var(--qq-surface-paper-button-active);
+  box-shadow: var(--qq-shadow-paper-button-active);
   filter: saturate(0.96);
   transform: translateY(1px);
 }
@@ -139,7 +131,7 @@ button:disabled:hover {
 .paperButton[aria-disabled="true"] {
   border-color: var(--qq-color-disabled-border);
   background: var(--qq-surface-disabled);
-  box-shadow: inset 0 0 0 1px rgb(255 248 230 / .3);
+  box-shadow: var(--qq-shadow-paper-button-disabled-inset);
   color: var(--qq-color-disabled-text);
   text-shadow: none;
 }
@@ -164,13 +156,9 @@ button:disabled:hover {
   gap: 7px;
   width: fit-content;
   max-width: 100%;
-  border: 1px solid rgb(142 47 39 / .18);
-  background:
-    linear-gradient(110deg, rgb(255 252 238 / .64), rgb(236 218 184 / .46)),
-    var(--qq-material-xuan) center / 420px repeat;
-  box-shadow:
-    inset 0 0 0 1px rgb(255 252 238 / .34),
-    0 8px 18px rgb(54 37 24 / .07);
+  border: 1px solid var(--qq-color-status-surface-border);
+  background: var(--qq-surface-status-line);
+  box-shadow: var(--qq-shadow-status-line);
   color: var(--qq-color-state-red);
   padding: 5px 8px;
   overflow-wrap: anywhere;
@@ -180,14 +168,14 @@ button:disabled:hover {
   flex: 0 0 auto;
   width: 6px;
   height: 1.2em;
-  background: linear-gradient(180deg, rgb(142 47 39 / .62), rgb(206 153 64 / .52));
-  box-shadow: 0 0 10px rgb(142 47 39 / .16);
+  background: var(--qq-surface-status-marker);
+  box-shadow: var(--qq-shadow-status-marker);
   content: "";
 }
 
 .sealStatus {
   margin: -2px 0 0;
-  color: #7a6048;
+  color: var(--qq-color-seal-status);
   font-size: 0.86rem;
   font-weight: 700;
   text-align: center;
