@@ -2539,10 +2539,10 @@ test("S89.33 exam and ranking ceremony material stays visual-only", () => {
   assert.match(rankingPageSource, /data-selected=\{isSelected \? "true" : "false"\}/);
   assert.match(rankingPageSource, /金榜仪轨/);
   assert.match(rankingPageSource, /黄纸已张，循榜细读/);
-  assert.match(styleSource, /@keyframes s8933ExamPaperUnfurl/);
-  assert.match(styleSource, /@keyframes s8933ExamInkSettle/);
-  assert.match(styleSource, /@keyframes s8933RankingGoldSheen/);
-  assert.match(styleSource, /@keyframes s8933RankingRowSelect/);
+  assert.match(styleSource, /@keyframes examRankingCeremonyPaperUnfurl/);
+  assert.match(styleSource, /@keyframes examRankingCeremonyInkSettle/);
+  assert.match(styleSource, /@keyframes rankingHeroGoldSheen/);
+  assert.match(styleSource, /@keyframes rankingListSelectedRowSettle/);
   assert.match(styleSource, /\.examCeremonyBand/);
   assert.match(styleSource, /\.rankingCeremonyBand/);
   assert.match(styleSource, /\.rankingList button\[aria-pressed="true"\]/);
@@ -2556,6 +2556,31 @@ test("S89.33 exam and ranking ceremony material stays visual-only", () => {
     `${examWithoutGuard}\n${rankingWithoutGuard}`,
     /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver/
   );
+});
+
+test("S89.59 exam and ranking polish keyframes use semantic names", () => {
+  const keyframesSource = readText("client/src/styles/motion/keyframes.css");
+  const examRankingSource = readText("client/src/styles/routes/exam-ranking.css");
+  const styleSource = readText("client/src/styles/global.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(keyframesSource, /@keyframes examRankingCeremonyPaperUnfurl/);
+  assert.match(keyframesSource, /@keyframes examRankingCeremonyInkSettle/);
+  assert.match(keyframesSource, /@keyframes rankingHeroGoldSheen/);
+  assert.match(keyframesSource, /@keyframes rankingListSelectedRowSettle/);
+  assert.match(examRankingSource, /\.examHero\[data-polish-exam-hero="s89-33-exam-ceremony-material"\]::after[\s\S]*animation: examRankingCeremonyInkSettle 3600ms ease-in-out infinite alternate/);
+  assert.match(examRankingSource, /\.examCeremonyBand,[\s\S]*\.rankingCeremonyBand \{[\s\S]*animation: examRankingCeremonyPaperUnfurl 340ms cubic-bezier\(0\.2, 0\.78, 0\.2, 1\)/);
+  assert.match(examRankingSource, /\.examCeremonyBand li,[\s\S]*\.rankingCeremonyBand li \{[\s\S]*animation: examRankingCeremonyInkSettle 420ms ease both/);
+  assert.match(examRankingSource, /\.examDesk\[data-polish-exam-paper="s89-33-exam-ceremony-material"\][\s\S]*animation: examRankingCeremonyPaperUnfurl 380ms cubic-bezier\(0\.2, 0\.78, 0\.2, 1\)/);
+  assert.match(examRankingSource, /\.rankingHero\[data-polish-ranking-hero="s89-33-ranking-golden-board"\]::after[\s\S]*animation: rankingHeroGoldSheen 3800ms ease-in-out infinite alternate/);
+  assert.match(examRankingSource, /\.rankingCeremonyBand \{[\s\S]*animation: examRankingCeremonyPaperUnfurl 360ms cubic-bezier\(0\.2, 0\.78, 0\.2, 1\)/);
+  assert.match(examRankingSource, /\.rankingList button\[aria-pressed="true"\],[\s\S]*\.rankingList button\[data-selected="true"\] \{[\s\S]*animation: rankingListSelectedRowSettle 320ms ease both/);
+  assert.match(clientSmokeSource, /examRankingCeremonyInkSettle/);
+  assert.match(clientSmokeSource, /examRankingCeremonyPaperUnfurl/);
+  assert.match(clientSmokeSource, /rankingHeroGoldSheen/);
+  assert.match(clientSmokeSource, /rankingListSelectedRowSettle/);
+  assert.doesNotMatch(styleSource, /@keyframes s8933(?:ExamPaperUnfurl|ExamInkSettle|RankingGoldSheen|RankingRowSelect)|animation(?:-name)?: s8933(?:ExamPaperUnfurl|ExamInkSettle|RankingGoldSheen|RankingRowSelect)|--s8933-/);
+  assert.doesNotMatch(clientSmokeSource, /s8933(?:ExamPaperUnfurl|ExamInkSettle|RankingGoldSheen|RankingRowSelect)/);
 });
 
 test("S89.19 settings and route recovery states stay player-facing and local", () => {

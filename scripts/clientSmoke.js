@@ -2038,7 +2038,9 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
     const background = hero ? getComputedStyle(hero).backgroundImage : "";
     const band = document.querySelector("[data-polish-exam-ceremony-band='s89-33-exam-ceremony-material']");
     const paper = document.querySelector("[data-polish-exam-paper='s89-33-exam-ceremony-material']");
+    const heroGlowStyle = hero ? getComputedStyle(hero, "::after") : null;
     const bandStyle = band ? getComputedStyle(band) : null;
+    const paperStyle = paper ? getComputedStyle(paper) : null;
     const html = document.documentElement;
     return {
       path: window.location.pathname,
@@ -2050,7 +2052,11 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
       heroMarker: hero?.getAttribute("data-polish-exam-hero") || "",
       ceremonyBandMarker: band?.getAttribute("data-polish-exam-ceremony-band") || "",
       ceremonyBandState: band?.getAttribute("data-exam-state") || "",
+      shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
+      reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      heroGlowAnimation: heroGlowStyle?.animationName || "",
       ceremonyBandAnimation: bandStyle?.animationName || "",
+      paperAnimation: paperStyle?.animationName || "",
       hasCeremonyBandCopy: text.includes("科场仪幕") && text.includes("肃场") && text.includes("启封") && text.includes("落墨") && text.includes("候榜"),
       hasPaperMarker: Boolean(paper),
       hasRitualLedger: Boolean(document.querySelector('[data-polish-exam-ledger="s89-18-exam-ritual"]')),
@@ -2076,6 +2082,14 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   if (initialSnapshot.ceremonyBandMarker !== "s89-33-exam-ceremony-material" || !initialSnapshot.hasCeremonyBandCopy) failures.push("missing S89.33 exam ceremony band copy");
   if (initialSnapshot.ceremonyBandState !== "ready") failures.push(`unexpected S89.33 exam band state before question: ${initialSnapshot.ceremonyBandState}`);
   if (!initialSnapshot.hasPaperMarker) failures.push("missing S89.33 exam paper marker");
+  if (initialSnapshot.shellMotion !== "reduced" && !initialSnapshot.reducedMotion) {
+    if (!initialSnapshot.heroGlowAnimation.includes("examRankingCeremonyInkSettle")) failures.push(`S89.59 exam hero animation was ${initialSnapshot.heroGlowAnimation}`);
+    if (!initialSnapshot.ceremonyBandAnimation.includes("examRankingCeremonyPaperUnfurl")) failures.push(`S89.59 exam ceremony band animation was ${initialSnapshot.ceremonyBandAnimation}`);
+    if (!initialSnapshot.paperAnimation.includes("examRankingCeremonyPaperUnfurl")) failures.push(`S89.59 exam paper animation was ${initialSnapshot.paperAnimation}`);
+  }
+  if ((initialSnapshot.shellMotion === "reduced" || initialSnapshot.reducedMotion) && (initialSnapshot.heroGlowAnimation !== "none" || initialSnapshot.ceremonyBandAnimation !== "none" || initialSnapshot.paperAnimation !== "none")) {
+    failures.push(`S89.59 reduced exam animations were ${JSON.stringify({ hero: initialSnapshot.heroGlowAnimation, band: initialSnapshot.ceremonyBandAnimation, paper: initialSnapshot.paperAnimation })}`);
+  }
   if (!initialSnapshot.hasRitualLedger || !initialSnapshot.hasRitualCopy) failures.push("missing S89.18 exam ritual ledger copy");
   if (!initialSnapshot.hasQuestionPanel) failures.push("missing question panel");
   if (initialSnapshot.examStaticSurfaceCount < 6 || initialSnapshot.examStaticSurfaceMissing) failures.push(`S89.49 exam static surfaces were incomplete before question: ${JSON.stringify({ examStaticSurfaceCount: initialSnapshot.examStaticSurfaceCount, examStaticSurfaceMissing: initialSnapshot.examStaticSurfaceMissing })}`);
@@ -2120,6 +2134,8 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
     const textarea = document.querySelector(".examSubmit textarea");
     const band = document.querySelector("[data-polish-exam-ceremony-band='s89-33-exam-ceremony-material']");
     const paper = document.querySelector("[aria-label='当前试卷'][data-polish-exam-paper='s89-33-exam-ceremony-material']");
+    const bandStyle = band ? getComputedStyle(band) : null;
+    const paperStyle = paper ? getComputedStyle(paper) : null;
     return {
       text,
       hasShell: Boolean(shell),
@@ -2130,6 +2146,10 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
       hasRitualLedger: Boolean(document.querySelector('[data-polish-exam-ledger="s89-18-exam-ritual"]')),
       hasRitualCopy: text.includes("科举仪程") && text.includes("场内反馈只作案卷公开记录") && text.includes("候榜回音"),
       ceremonyBandState: band?.getAttribute("data-exam-state") || "",
+      shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
+      reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      ceremonyBandAnimation: bandStyle?.animationName || "",
+      paperAnimation: paperStyle?.animationName || "",
       hasCeremonyActiveCopy: text.includes("科场仪幕") && text.includes("题纸既启，落墨候批。"),
       hasPaperMarker: Boolean(paper),
       activePaperSurface: Boolean(document.querySelector("[aria-label='当前试卷'].examDesk.paperMotionSurface[data-polish-exam-paper='s89-33-exam-ceremony-material']")),
@@ -2155,6 +2175,13 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   if (!examSnapshot.hasRitualLedger || !examSnapshot.hasRitualCopy) afterFailures.push("missing S89.18 active exam ritual ledger");
   if (examSnapshot.ceremonyBandState !== "active" || !examSnapshot.hasCeremonyActiveCopy) afterFailures.push(`missing S89.33 active exam ceremony band: ${examSnapshot.ceremonyBandState}`);
   if (!examSnapshot.hasPaperMarker) afterFailures.push("missing S89.33 active exam paper marker");
+  if (examSnapshot.shellMotion !== "reduced" && !examSnapshot.reducedMotion) {
+    if (!examSnapshot.ceremonyBandAnimation.includes("examRankingCeremonyPaperUnfurl")) afterFailures.push(`S89.59 active exam ceremony band animation was ${examSnapshot.ceremonyBandAnimation}`);
+    if (!examSnapshot.paperAnimation.includes("examRankingCeremonyPaperUnfurl")) afterFailures.push(`S89.59 active exam paper animation was ${examSnapshot.paperAnimation}`);
+  }
+  if ((examSnapshot.shellMotion === "reduced" || examSnapshot.reducedMotion) && (examSnapshot.ceremonyBandAnimation !== "none" || examSnapshot.paperAnimation !== "none")) {
+    afterFailures.push(`S89.59 reduced active exam animations were ${JSON.stringify({ band: examSnapshot.ceremonyBandAnimation, paper: examSnapshot.paperAnimation })}`);
+  }
   if (!examSnapshot.activePaperSurface || examSnapshot.examStaticSurfaceCount < 6 || examSnapshot.examStaticSurfaceMissing) afterFailures.push(`S89.49 exam static surfaces were incomplete after question: ${JSON.stringify({ activePaperSurface: examSnapshot.activePaperSurface, examStaticSurfaceCount: examSnapshot.examStaticSurfaceCount, examStaticSurfaceMissing: examSnapshot.examStaticSurfaceMissing })}`);
   if (!examSnapshot.hasPeerPanel) afterFailures.push("missing safe virtual candidate panel");
   if (!examSnapshot.hasPhaseFeedback) afterFailures.push("missing server-owned phase feedback");
@@ -2194,6 +2221,8 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
     const background = hero ? getComputedStyle(hero).backgroundImage : "";
     const band = document.querySelector("[data-polish-ranking-ceremony-band='s89-33-ranking-golden-board']");
     const selectedRow = document.querySelector(".rankingList button[aria-pressed='true'][data-selected='true']");
+    const heroGlowStyle = hero ? getComputedStyle(hero, "::after") : null;
+    const bandStyle = band ? getComputedStyle(band) : null;
     const selectedStyle = selectedRow ? getComputedStyle(selectedRow) : null;
     const html = document.documentElement;
     return {
@@ -2206,6 +2235,10 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
       boardMarker: board?.getAttribute("data-polish-ranking-board") || "",
       ceremonyBandMarker: band?.getAttribute("data-polish-ranking-ceremony-band") || "",
       ceremonyBandState: band?.getAttribute("data-ranking-state") || "",
+      shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
+      reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      heroGlowAnimation: heroGlowStyle?.animationName || "",
+      ceremonyBandAnimation: bandStyle?.animationName || "",
       hasCeremonyBandCopy: text.includes("金榜仪轨") && text.includes("张榜") && text.includes("我名") && text.includes("同年") && text.includes("授官"),
       hasSelectedRow: Boolean(selectedRow),
       selectedAnimation: selectedStyle?.animationName || "",
@@ -2241,6 +2274,14 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
   if (snapshot.ceremonyBandMarker !== "s89-33-ranking-golden-board" || !snapshot.hasCeremonyBandCopy) failures.push("missing S89.33 ranking ceremony band copy");
   if (snapshot.hasPlayerRow && snapshot.ceremonyBandState !== "posted") failures.push(`unexpected S89.33 ranking ceremony state: ${snapshot.ceremonyBandState}`);
   if (snapshot.hasPlayerRow && !snapshot.hasSelectedRow) failures.push("missing S89.33 selected ranking row state");
+  if (snapshot.shellMotion !== "reduced" && !snapshot.reducedMotion) {
+    if (!snapshot.heroGlowAnimation.includes("rankingHeroGoldSheen")) failures.push(`S89.59 ranking hero animation was ${snapshot.heroGlowAnimation}`);
+    if (!snapshot.ceremonyBandAnimation.includes("examRankingCeremonyPaperUnfurl")) failures.push(`S89.59 ranking ceremony band animation was ${snapshot.ceremonyBandAnimation}`);
+    if (snapshot.hasPlayerRow && !snapshot.selectedAnimation.includes("rankingListSelectedRowSettle")) failures.push(`S89.59 selected ranking row animation was ${snapshot.selectedAnimation}`);
+  }
+  if ((snapshot.shellMotion === "reduced" || snapshot.reducedMotion) && (snapshot.heroGlowAnimation !== "none" || snapshot.ceremonyBandAnimation !== "none" || (snapshot.hasPlayerRow && snapshot.selectedAnimation !== "none"))) {
+    failures.push(`S89.59 reduced ranking animations were ${JSON.stringify({ hero: snapshot.heroGlowAnimation, band: snapshot.ceremonyBandAnimation, row: snapshot.selectedAnimation })}`);
+  }
   if (!snapshot.hasTopThree) failures.push("missing top-three ranking seals");
   if (!snapshot.hasBoard) failures.push("missing ranking notice board");
   if (!snapshot.hasCeremonyLedger || !snapshot.hasCeremonyCopy) failures.push("missing S89.18 ranking ceremony ledger");
