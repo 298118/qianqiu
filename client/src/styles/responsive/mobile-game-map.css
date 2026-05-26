@@ -112,7 +112,7 @@
     max-height: min(62vh, 420px);
     overflow: auto;
     transform: translateX(-50%);
-    animation-name: s8931MapNoteSheetIn;
+    animation-name: inkMapTooltipSheetIn;
   }
 
   .inkMapTooltip::before {

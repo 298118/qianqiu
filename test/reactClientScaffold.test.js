@@ -1732,9 +1732,9 @@ test("S89.31 map tide compass and mobile tooltip stay draft-only and safe", () =
   assert.match(styleSource, /\.mapTideCompassTabs/);
   assert.match(styleSource, /\.mapTideCompassReadout/);
   assert.match(styleSource, /\.inkMapTooltipReading/);
-  assert.match(styleSource, /@keyframes s8931MapTideGlow/);
-  assert.match(styleSource, /@keyframes s8931MapNoteIn/);
-  assert.match(styleSource, /@keyframes s8931MapNoteSheetIn/);
+  assert.match(styleSource, /@keyframes mapTideCompassRailGlow/);
+  assert.match(styleSource, /@keyframes inkMapTooltipNoteIn/);
+  assert.match(styleSource, /@keyframes inkMapTooltipSheetIn/);
   assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*\.mapTideCompass::before/);
   assert.match(styleSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.inkMapTooltip::before/);
   assert.match(appTestSource, /s89-31-map-tide-compass/);
@@ -3375,6 +3375,26 @@ test("S89.30 shared material and motion polish stays visual-only", () => {
     runtimeCombined,
     /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|hiddenNotes|完整提示词|本地路径|密钥|AI read scope|proposal boundary|server adjudication|draftContext|schema|manifest/
   );
+});
+
+test("S89.58 map polish keyframes use semantic names", () => {
+  const keyframesSource = readText("client/src/styles/motion/keyframes.css");
+  const mapRouteSource = readText("client/src/styles/routes/map-archive.css");
+  const mobileMapSource = readText("client/src/styles/responsive/mobile-game-map.css");
+  const styleSource = readText("client/src/styles/global.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(keyframesSource, /@keyframes mapTideCompassRailGlow/);
+  assert.match(keyframesSource, /@keyframes inkMapTooltipNoteIn/);
+  assert.match(keyframesSource, /@keyframes inkMapTooltipSheetIn/);
+  assert.match(mapRouteSource, /\.mapTideCompass::before[\s\S]*animation: mapTideCompassRailGlow 2400ms ease-in-out infinite alternate/);
+  assert.match(mapRouteSource, /\.inkMapTooltip \{[\s\S]*animation: inkMapTooltipNoteIn 180ms ease-out both/);
+  assert.match(mobileMapSource, /\.inkMapTooltip \{[\s\S]*animation-name: inkMapTooltipSheetIn/);
+  assert.match(clientSmokeSource, /mapTideCompassRailGlow/);
+  assert.match(clientSmokeSource, /inkMapTooltipNoteIn/);
+  assert.match(clientSmokeSource, /inkMapTooltipSheetIn/);
+  assert.doesNotMatch(styleSource, /@keyframes s8931(?:MapTideGlow|MapNoteIn|MapNoteSheetIn)|animation(?:-name)?: s8931(?:MapTideGlow|MapNoteIn|MapNoteSheetIn)/);
+  assert.doesNotMatch(clientSmokeSource, /s8931(?:MapTideGlow|MapNoteIn|MapNoteSheetIn)/);
 });
 
 test("S89.32 home and shell entry polish stays visual-only", () => {

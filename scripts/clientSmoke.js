@@ -3491,6 +3491,7 @@ async function runClientSmoke(options = {}) {
       const bridge = document.querySelector(".inkMapRuntimeBridge");
       const canvas = bridge?.querySelector("canvas");
       const labels = [...document.querySelectorAll(".inkMapLabel")];
+      const tideRailStyle = window.getComputedStyle(document.querySelector(".mapTideCompass"), "::before");
       return {
         hasFullScreen: Boolean(document.querySelector(".mapFullScreen")),
         hasLayerControls: document.querySelectorAll(".mapLayerToggle").length >= 3,
@@ -3504,6 +3505,8 @@ async function runClientSmoke(options = {}) {
         tideMarker: document.querySelector("[data-polish-map-tide]")?.getAttribute("data-polish-map-tide") || "",
         tideFocus: document.querySelector("[data-polish-map-tide]")?.getAttribute("data-compass-focus") || "",
         tideText: document.querySelector("[data-polish-map-tide]")?.textContent || "",
+        tideRailAnimation: tideRailStyle?.animationName || "",
+        reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
         tideTabCount: document.querySelectorAll(".mapTideCompassTab[role='tab']").length,
         tideDraftButtonCount: document.querySelectorAll(".mapTideCompass .paperButton").length,
         hasActionDeck: Boolean(document.querySelector(".mapActionDeck")),
@@ -3534,6 +3537,12 @@ async function runClientSmoke(options = {}) {
       mapRuntime.tideDraftButtonCount < 1
     ) {
       throw new Error(`S89.31 map tide compass missing safe player-facing copy: ${JSON.stringify(mapRuntime)}`);
+    }
+    if (mapRuntime.motion !== "reduced" && !mapRuntime.reducedMotion && !mapRuntime.tideRailAnimation.includes("mapTideCompassRailGlow")) {
+      throw new Error(`S89.58 map tide compass animation was ${mapRuntime.tideRailAnimation}`);
+    }
+    if ((mapRuntime.motion === "reduced" || mapRuntime.reducedMotion) && mapRuntime.tideRailAnimation !== "none") {
+      throw new Error(`S89.58 reduced map tide compass animation was ${mapRuntime.tideRailAnimation}`);
     }
     if (!/三层全开|筛选只改卷上显示/.test(mapRuntime.layerSummary)) {
       throw new Error(`S89.7 map layer summary missing safe player-facing copy: ${JSON.stringify(mapRuntime)}`);
@@ -3641,16 +3650,23 @@ async function runClientSmoke(options = {}) {
     await page.locator(".inkMapLabel").first().waitFor({ timeout: 10000 });
     await page.locator(".inkMapLabel").first().click();
     await page.locator(".inkMapTooltip").waitFor({ timeout: 10000 });
-    const tooltipBeforeDraft = await page.evaluate(() => ({
-      marker: document.querySelector(".inkMapTooltip")?.getAttribute("data-polish-tooltip") || "",
-      readingMarker: document.querySelector(".inkMapTooltip")?.getAttribute("data-polish-tooltip-reading") || "",
-      tone: document.querySelector(".inkMapTooltip")?.getAttribute("data-tooltip-tone") || "",
-      note: document.querySelector(".inkMapTooltipNote")?.textContent || "",
-      readingText: document.querySelector(".inkMapTooltipReading")?.textContent || "",
-      boundaryText: document.querySelector(".inkMapTooltip small")?.textContent || "",
-      writtenCount: document.querySelectorAll(".inkMapTooltip .paperButton[data-draft-state='written']").length,
-      unsafeText: (document.querySelector(".inkMapTooltip")?.textContent || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
-    }));
+    const tooltipBeforeDraft = await page.evaluate(() => {
+      const tooltip = document.querySelector(".inkMapTooltip");
+      const tooltipStyle = tooltip ? window.getComputedStyle(tooltip) : null;
+      return {
+        marker: tooltip?.getAttribute("data-polish-tooltip") || "",
+        readingMarker: tooltip?.getAttribute("data-polish-tooltip-reading") || "",
+        tone: tooltip?.getAttribute("data-tooltip-tone") || "",
+        note: document.querySelector(".inkMapTooltipNote")?.textContent || "",
+        readingText: document.querySelector(".inkMapTooltipReading")?.textContent || "",
+        boundaryText: document.querySelector(".inkMapTooltip small")?.textContent || "",
+        shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
+        reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        animationName: tooltipStyle?.animationName || "",
+        writtenCount: document.querySelectorAll(".inkMapTooltip .paperButton[data-draft-state='written']").length,
+        unsafeText: (tooltip?.textContent || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
+      };
+    });
     if (
       tooltipBeforeDraft.marker !== "s89-7-map-note" ||
       tooltipBeforeDraft.readingMarker !== "s89-31-mobile-map-note" ||
@@ -3662,6 +3678,12 @@ async function runClientSmoke(options = {}) {
       tooltipBeforeDraft.unsafeText.length
     ) {
       throw new Error(`S89.31 map tooltip polish missing safe reading: ${JSON.stringify(tooltipBeforeDraft)}`);
+    }
+    if (tooltipBeforeDraft.shellMotion !== "reduced" && !tooltipBeforeDraft.reducedMotion && !tooltipBeforeDraft.animationName.includes("inkMapTooltipNoteIn")) {
+      throw new Error(`S89.58 map tooltip animation was ${tooltipBeforeDraft.animationName}`);
+    }
+    if ((tooltipBeforeDraft.shellMotion === "reduced" || tooltipBeforeDraft.reducedMotion) && tooltipBeforeDraft.animationName !== "none") {
+      throw new Error(`S89.58 reduced map tooltip animation was ${tooltipBeforeDraft.animationName}`);
     }
     const tooltipDraftButton = page.locator(".inkMapTooltip .paperButton").first();
     if (await tooltipDraftButton.count()) {
@@ -4259,6 +4281,9 @@ async function runClientSmoke(options = {}) {
         position: style?.position || "",
         bottom: style?.bottom || "",
         transform: style?.transform || "",
+        shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
+        reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        animationName: style?.animationName || "",
         text: tooltip?.textContent || "",
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
         forbiddenText: (tooltip?.textContent || "").match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
@@ -4274,6 +4299,12 @@ async function runClientSmoke(options = {}) {
       mobileMapTooltip.forbiddenText.length
     ) {
       throw new Error(`S89.31 mobile map tooltip sheet unsafe or overflowing: ${JSON.stringify(mobileMapTooltip)}`);
+    }
+    if (mobileMapTooltip.shellMotion !== "reduced" && !mobileMapTooltip.reducedMotion && !mobileMapTooltip.animationName.includes("inkMapTooltipSheetIn")) {
+      throw new Error(`S89.58 mobile map tooltip sheet animation was ${mobileMapTooltip.animationName}`);
+    }
+    if ((mobileMapTooltip.shellMotion === "reduced" || mobileMapTooltip.reducedMotion) && mobileMapTooltip.animationName !== "none") {
+      throw new Error(`S89.58 reduced mobile map tooltip sheet animation was ${mobileMapTooltip.animationName}`);
     }
     await page.getByRole("button", { name: "收起地图近事" }).click();
     await page.locator(".inkMapTooltip").waitFor({ state: "detached", timeout: 10000 });

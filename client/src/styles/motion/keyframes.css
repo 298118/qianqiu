@@ -74,12 +74,12 @@
   }
 }
 
-@keyframes s8931MapTideGlow {
+@keyframes mapTideCompassRailGlow {
   from { opacity: .42; transform: translateY(-8px); }
   to { opacity: .86; transform: translateY(8px); }
 }
 
-@keyframes s8931MapNoteIn {
+@keyframes inkMapTooltipNoteIn {
   from {
     filter: blur(1px);
     opacity: 0;
@@ -93,7 +93,7 @@
   }
 }
 
-@keyframes s8931MapNoteSheetIn {
+@keyframes inkMapTooltipSheetIn {
   from {
     filter: blur(1px);
     opacity: 0;
