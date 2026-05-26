@@ -3154,6 +3154,60 @@ test("S89.64 home backdrop surfaces use semantic tokens", () => {
   assert.doesNotMatch(reducedMotionSource, /home-static-reduced-motion-v1\.webp|rgb\(32 26 20 \/ \.08\)/);
 });
 
+test("S89.65 home entry desk surfaces use semantic tokens", () => {
+  const tokensSource = readClientStyleModule("tokens/tokens.css");
+  const homeSource = readClientStyleModule("routes/home.css");
+  const readRuleBlock = (selector) => {
+    const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const rulePattern = new RegExp(`(?:^|\\n)${escapedSelector} \\{`, "g");
+    let match;
+    while ((match = rulePattern.exec(homeSource))) {
+      const lineStart = match.index + (match[0].startsWith("\n") ? 1 : 0);
+      const previousLineStart = homeSource.lastIndexOf("\n", Math.max(0, lineStart - 2));
+      const previousLine = homeSource.slice(previousLineStart + 1, lineStart).trim();
+      if (!previousLine.endsWith(",")) {
+        const end = homeSource.indexOf("\n}", lineStart);
+        assert.notEqual(end, -1, `unterminated CSS rule ${selector}`);
+        return homeSource.slice(lineStart, end + 2);
+      }
+    }
+    assert.fail(`missing standalone CSS rule ${selector}`);
+  };
+  const homeDeskBlock = readRuleBlock(".homeDesk");
+  const homeEntryBlock = readRuleBlock('.homeDesk[data-polish-home-entry="s89-32-opening-desk"]');
+  const homeEntryLoadingBlock = readRuleBlock('.homeDesk[data-entry-state="loading"]');
+  const homeEntryErrorBlock = readRuleBlock('.homeDesk[data-entry-state="error"]');
+  const homeDeskSealBlock = readRuleBlock(".homeDesk::before");
+  const homeDeskCasefileBlock = readRuleBlock(".homeDesk::after");
+  const saveShelfBlock = readRuleBlock(".saveShelf");
+
+  assert.match(tokensSource, /--qq-surface-home-entry-desk:[\s\S]*home-register-form-paper-v1\.webp/);
+  assert.match(tokensSource, /--qq-surface-home-entry-seal-mark: url\("\/assets\/ui\/home\/home-cinnabar-start-seal-v1\.webp"\)/);
+  assert.match(tokensSource, /--qq-surface-home-entry-casefile: url\("\/assets\/ui\/home\/home-archive-casefile-v1\.webp"\)/);
+  assert.match(tokensSource, /--qq-surface-home-save-shelf:[\s\S]*home-archive-casefile-v1\.webp/);
+  assert.match(tokensSource, /--qq-filter-home-entry-desk: drop-shadow\(0 24px 42px rgb\(44 30 21 \/ \.22\)\)/);
+  assert.match(tokensSource, /--qq-color-home-entry-border: rgb\(84 60 43 \/ \.18\)/);
+  assert.match(tokensSource, /--qq-color-home-entry-border-loading: rgb\(142 47 39 \/ \.3\)/);
+  assert.match(tokensSource, /--qq-color-home-entry-border-error: rgb\(111 31 26 \/ \.38\)/);
+  assert.match(tokensSource, /--qq-shadow-home-entry-desk:[\s\S]*0 22px 48px rgb\(44 30 21 \/ \.18\)/);
+  assert.match(tokensSource, /--qq-shadow-home-entry-desk-loading:[\s\S]*0 24px 54px rgb\(44 30 21 \/ \.2\)/);
+  assert.match(tokensSource, /--qq-shadow-home-entry-desk-error:[\s\S]*0 20px 44px rgb\(44 30 21 \/ \.17\)/);
+
+  assert.match(homeDeskBlock, /background: var\(--qq-surface-home-entry-desk\)/);
+  assert.match(homeDeskBlock, /filter: var\(--qq-filter-home-entry-desk\)/);
+  assert.match(homeEntryBlock, /border: 1px solid var\(--qq-color-home-entry-border\)/);
+  assert.match(homeEntryBlock, /box-shadow: var\(--qq-shadow-home-entry-desk\)/);
+  assert.match(homeEntryLoadingBlock, /border-color: var\(--qq-color-home-entry-border-loading\)/);
+  assert.match(homeEntryLoadingBlock, /box-shadow: var\(--qq-shadow-home-entry-desk-loading\)/);
+  assert.match(homeEntryErrorBlock, /border-color: var\(--qq-color-home-entry-border-error\)/);
+  assert.match(homeEntryErrorBlock, /box-shadow: var\(--qq-shadow-home-entry-desk-error\)/);
+  assert.match(homeDeskSealBlock, /background: var\(--qq-surface-home-entry-seal-mark\)/);
+  assert.match(homeDeskCasefileBlock, /background: var\(--qq-surface-home-entry-casefile\)/);
+  assert.match(saveShelfBlock, /background: var\(--qq-surface-home-save-shelf\)/);
+  assert.doesNotMatch(homeSource, /home-register-form-paper-v1\.webp|home-cinnabar-start-seal-v1\.webp|home-archive-casefile-v1\.webp/);
+  assert.doesNotMatch(homeSource, /0 22px 48px rgb\(44 30 21 \/ \.18\)|0 24px 54px rgb\(44 30 21 \/ \.2\)|0 20px 44px rgb\(44 30 21 \/ \.17\)/);
+});
+
 test("S89.51 shared paper state surfaces reuse semantic color tokens", () => {
   const tokensSource = readClientStyleModule("tokens/tokens.css");
   const polishSource = readClientStyleModule("utilities/polish-surfaces.css");

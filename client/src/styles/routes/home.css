@@ -152,35 +152,25 @@ h2 {
   width: min(560px, 100%);
   justify-self: center;
   padding: clamp(22px, 4vw, 34px);
-  background:
-    linear-gradient(145deg, rgb(255 249 229 / .74), rgb(231 211 180 / .62)),
-    url("/assets/ui/home/home-register-form-paper-v1.webp") center / 100% 100% no-repeat;
-  filter: drop-shadow(0 24px 42px rgb(44 30 21 / .22));
+  background: var(--qq-surface-home-entry-desk);
+  filter: var(--qq-filter-home-entry-desk);
 }
 
 .homeDesk[data-polish-home-entry="s89-32-opening-desk"] {
   overflow: hidden;
-  border: 1px solid rgb(84 60 43 / .18);
-  box-shadow:
-    0 22px 48px rgb(44 30 21 / .18),
-    inset 0 0 0 1px rgb(255 252 238 / .42);
+  border: 1px solid var(--qq-color-home-entry-border);
+  box-shadow: var(--qq-shadow-home-entry-desk);
   animation: homeOpeningDeskUnfurl 420ms cubic-bezier(0.2, 0.78, 0.2, 1);
 }
 
 .homeDesk[data-entry-state="loading"] {
-  border-color: rgb(142 47 39 / .3);
-  box-shadow:
-    0 24px 54px rgb(44 30 21 / .2),
-    0 0 0 4px rgb(142 47 39 / .08),
-    inset 0 0 0 1px rgb(255 252 238 / .46);
+  border-color: var(--qq-color-home-entry-border-loading);
+  box-shadow: var(--qq-shadow-home-entry-desk-loading);
 }
 
 .homeDesk[data-entry-state="error"] {
-  border-color: rgb(111 31 26 / .38);
-  box-shadow:
-    0 20px 44px rgb(44 30 21 / .17),
-    0 0 0 3px rgb(142 47 39 / .1),
-    inset 0 0 0 1px rgb(255 252 238 / .42);
+  border-color: var(--qq-color-home-entry-border-error);
+  box-shadow: var(--qq-shadow-home-entry-desk-error);
 }
 
 .homeDesk::before,
@@ -195,7 +185,7 @@ h2 {
   bottom: -42px;
   width: min(178px, 30vw);
   aspect-ratio: 1;
-  background: url("/assets/ui/home/home-cinnabar-start-seal-v1.webp") center / contain no-repeat;
+  background: var(--qq-surface-home-entry-seal-mark);
   opacity: 0.28;
   transform: rotate(-10deg);
 }
@@ -205,7 +195,7 @@ h2 {
   bottom: -38px;
   width: min(190px, 34vw);
   aspect-ratio: 4 / 3;
-  background: url("/assets/ui/home/home-archive-casefile-v1.webp") center / contain no-repeat;
+  background: var(--qq-surface-home-entry-casefile);
   opacity: 0.5;
   transform: rotate(4deg);
 }
@@ -435,9 +425,7 @@ h2 {
   margin-top: clamp(0px, 2vh, 12px);
   padding: 16px;
   border: 1px solid rgb(84 60 43 / .22);
-  background:
-    linear-gradient(135deg, rgb(255 248 230 / .72), rgb(222 205 174 / .56)),
-    url("/assets/ui/home/home-archive-casefile-v1.webp") right bottom / 180px auto no-repeat;
+  background: var(--qq-surface-home-save-shelf);
   box-shadow: 0 14px 36px rgb(42 29 20 / .12);
 }
 
