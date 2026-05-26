@@ -16,9 +16,7 @@
   position: absolute;
   inset: 0;
   z-index: -4;
-  background:
-    linear-gradient(180deg, rgb(32 26 20 / .04), rgb(238 224 197 / .2) 56%, rgb(31 26 21 / .36)),
-    url("/assets/ui/home/home-scroll-landscape-v1.webp") center / cover no-repeat;
+  background: var(--qq-surface-home-backdrop);
 }
 
 .homeBackdrop::before,
@@ -30,15 +28,11 @@
 }
 
 .homeBackdrop::before {
-  background:
-    linear-gradient(90deg, rgb(37 27 21 / .5), transparent 18%, transparent 82%, rgb(37 27 21 / .46)),
-    radial-gradient(ellipse at center, transparent 44%, rgb(50 37 28 / .36) 100%);
+  background: var(--qq-surface-home-backdrop-vignette);
 }
 
 .homeBackdrop::after {
-  background:
-    linear-gradient(90deg, rgb(231 211 178 / .62), transparent 10%, transparent 90%, rgb(231 211 178 / .62)),
-    url("/assets/ui/home/home-static-reduced-motion-v1.webp") center / cover no-repeat;
+  background: var(--qq-surface-home-static-wash);
   mix-blend-mode: soft-light;
   opacity: 0.18;
 }

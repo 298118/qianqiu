@@ -3136,6 +3136,24 @@ test("S89.63 motion keyframe shadows use semantic channel tokens", () => {
   assert.doesNotMatch(keyframesSource, /rgb\(142 47 39 \/|rgb\(91 54 24 \/|rgb\(83 42 31 \/|rgb\(86 40 31 \/ \.1\)|rgb\(255 238 215 \//);
 });
 
+test("S89.64 home backdrop surfaces use semantic tokens", () => {
+  const tokensSource = readClientStyleModule("tokens/tokens.css");
+  const homeSource = readClientStyleModule("routes/home.css");
+  const reducedMotionSource = readClientStyleModule("motion/reduced-motion.css");
+
+  assert.match(tokensSource, /--qq-surface-home-backdrop:[\s\S]*home-scroll-landscape-v1\.webp/);
+  assert.match(tokensSource, /--qq-surface-home-backdrop-reduced:[\s\S]*home-static-reduced-motion-v1\.webp/);
+  assert.match(tokensSource, /--qq-surface-home-backdrop-vignette:[\s\S]*radial-gradient\(ellipse at center/);
+  assert.match(tokensSource, /--qq-surface-home-static-wash:[\s\S]*home-static-reduced-motion-v1\.webp/);
+
+  assert.match(homeSource, /\.homeBackdrop \{[\s\S]*background: var\(--qq-surface-home-backdrop\)/);
+  assert.match(homeSource, /\.homeBackdrop::before \{[\s\S]*background: var\(--qq-surface-home-backdrop-vignette\)/);
+  assert.match(homeSource, /\.homeBackdrop::after \{[\s\S]*background: var\(--qq-surface-home-static-wash\)/);
+  assert.match(reducedMotionSource, /\.homeBackdrop \{[\s\S]*background: var\(--qq-surface-home-backdrop-reduced\)/);
+  assert.doesNotMatch(homeSource, /home-scroll-landscape-v1\.webp|home-static-reduced-motion-v1\.webp/);
+  assert.doesNotMatch(reducedMotionSource, /home-static-reduced-motion-v1\.webp|rgb\(32 26 20 \/ \.08\)/);
+});
+
 test("S89.51 shared paper state surfaces reuse semantic color tokens", () => {
   const tokensSource = readClientStyleModule("tokens/tokens.css");
   const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
