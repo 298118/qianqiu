@@ -3118,6 +3118,24 @@ test("S89.50 shared paper motion keyframes use semantic names and tokens", () =>
   assert.doesNotMatch(clientSmokeSource, /s8930PaperRise|s8930StateWash|s8930SealBloom/);
 });
 
+test("S89.63 motion keyframe shadows use semantic channel tokens", () => {
+  const tokensSource = readClientStyleModule("tokens/tokens.css");
+  const keyframesSource = readClientStyleModule("motion/keyframes.css");
+
+  assert.match(tokensSource, /--qq-color-motion-vermilion-rgb: 142 47 39/);
+  assert.match(tokensSource, /--qq-color-motion-ranking-shadow-rgb: 91 54 24/);
+  assert.match(tokensSource, /--qq-color-motion-desk-shadow-rgb: 83 42 31/);
+  assert.match(tokensSource, /--qq-color-motion-warm-shadow-rgb: 86 40 31/);
+  assert.match(tokensSource, /--qq-color-motion-seal-paper-rgb: 255 238 215/);
+
+  assert.match(keyframesSource, /rankingListSelectedRowSettle[\s\S]*rgb\(var\(--qq-color-motion-vermilion-rgb\) \/ \.64\)/);
+  assert.match(keyframesSource, /rankingListSelectedRowSettle[\s\S]*rgb\(var\(--qq-color-motion-ranking-shadow-rgb\) \/ \.12\)/);
+  assert.match(keyframesSource, /mainLedgerDraftGlow[\s\S]*rgb\(var\(--qq-color-motion-desk-shadow-rgb\) \/ \.1\)/);
+  assert.match(keyframesSource, /inkboxTabSelectedSealBloom[\s\S]*rgb\(var\(--qq-color-motion-warm-shadow-rgb\) \/ \.1\)/);
+  assert.match(keyframesSource, /homeSealFlash[\s\S]*rgb\(var\(--qq-color-motion-seal-paper-rgb\) \/ \.42\)/);
+  assert.doesNotMatch(keyframesSource, /rgb\(142 47 39 \/|rgb\(91 54 24 \/|rgb\(83 42 31 \/|rgb\(86 40 31 \/ \.1\)|rgb\(255 238 215 \//);
+});
+
 test("S89.51 shared paper state surfaces reuse semantic color tokens", () => {
   const tokensSource = readClientStyleModule("tokens/tokens.css");
   const polishSource = readClientStyleModule("utilities/polish-surfaces.css");

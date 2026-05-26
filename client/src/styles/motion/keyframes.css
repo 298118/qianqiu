@@ -152,15 +152,15 @@
 @keyframes rankingListSelectedRowSettle {
   from {
     box-shadow:
-      inset 0 0 0 rgb(142 47 39 / 0),
-      0 4px 10px rgb(91 54 24 / .04);
+      inset 0 0 0 rgb(var(--qq-color-motion-vermilion-rgb) / 0),
+      0 4px 10px rgb(var(--qq-color-motion-ranking-shadow-rgb) / .04);
     transform: translateX(-3px);
   }
 
   to {
     box-shadow:
-      inset 5px 0 0 rgb(142 47 39 / .64),
-      0 10px 24px rgb(91 54 24 / .12);
+      inset 5px 0 0 rgb(var(--qq-color-motion-vermilion-rgb) / .64),
+      0 10px 24px rgb(var(--qq-color-motion-ranking-shadow-rgb) / .12);
     transform: translateX(0);
   }
 }
@@ -234,14 +234,14 @@
 @keyframes mainLedgerDraftGlow {
   from {
     box-shadow:
-      inset 0 0 0 rgb(142 47 39 / 0),
-      0 6px 14px rgb(83 42 31 / .04);
+      inset 0 0 0 rgb(var(--qq-color-motion-vermilion-rgb) / 0),
+      0 6px 14px rgb(var(--qq-color-motion-desk-shadow-rgb) / .04);
   }
 
   to {
     box-shadow:
-      inset 5px 0 0 rgb(142 47 39 / .34),
-      0 14px 30px rgb(83 42 31 / .1);
+      inset 5px 0 0 rgb(var(--qq-color-motion-vermilion-rgb) / .34),
+      0 14px 30px rgb(var(--qq-color-motion-desk-shadow-rgb) / .1);
   }
 }
 
@@ -398,20 +398,20 @@
 @keyframes inkboxTabSelectedSealBloom {
   0% {
     box-shadow:
-      inset 0 -2px 0 rgb(142 47 39 / .16),
-      0 0 0 0 rgb(142 47 39 / .12);
+      inset 0 -2px 0 rgb(var(--qq-color-motion-vermilion-rgb) / .16),
+      0 0 0 0 rgb(var(--qq-color-motion-vermilion-rgb) / .12);
   }
 
   56% {
     box-shadow:
-      inset 0 -2px 0 rgb(142 47 39 / .3),
-      0 0 0 8px rgb(142 47 39 / .08);
+      inset 0 -2px 0 rgb(var(--qq-color-motion-vermilion-rgb) / .3),
+      0 0 0 8px rgb(var(--qq-color-motion-vermilion-rgb) / .08);
   }
 
   100% {
     box-shadow:
-      inset 0 -2px 0 rgb(142 47 39 / .28),
-      0 8px 18px rgb(86 40 31 / .1);
+      inset 0 -2px 0 rgb(var(--qq-color-motion-vermilion-rgb) / .28),
+      0 8px 18px rgb(var(--qq-color-motion-warm-shadow-rgb) / .1);
   }
 }
 
@@ -432,19 +432,19 @@
 
 @keyframes homeSealFlash {
   0% {
-    box-shadow: inset 0 0 0 1px rgb(255 238 215 / .42);
+    box-shadow: inset 0 0 0 1px rgb(var(--qq-color-motion-seal-paper-rgb) / .42);
     opacity: 0.86;
   }
 
   52% {
     box-shadow:
-      inset 0 0 0 1px rgb(255 238 215 / .5),
-      0 0 0 10px rgb(142 47 39 / .18);
+      inset 0 0 0 1px rgb(var(--qq-color-motion-seal-paper-rgb) / .5),
+      0 0 0 10px rgb(var(--qq-color-motion-vermilion-rgb) / .18);
     opacity: 1;
   }
 
   100% {
-    box-shadow: inset 0 0 0 1px rgb(255 238 215 / .42);
+    box-shadow: inset 0 0 0 1px rgb(var(--qq-color-motion-seal-paper-rgb) / .42);
     opacity: 0.86;
   }
 }
