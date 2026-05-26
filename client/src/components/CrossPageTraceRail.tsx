@@ -26,7 +26,7 @@ export function CrossPageTraceRail({
 }) {
   return (
     <section
-      className="crossPageTraceRail scholarPanelCard"
+      className="crossPageTraceRail scholarPanelCard paperSurface"
       aria-label="跨页追索笺"
       data-polish-cross-trace="s89-36-cross-page-trace"
       data-cross-trace-page={page}
@@ -42,7 +42,7 @@ export function CrossPageTraceRail({
       </div>
       <div className="crossPageTraceGrid" aria-label="跨页追索路径">
         {items.map((item) => (
-          <article key={`${page}-${item.target}`} data-cross-trace-target={item.target}>
+          <article key={`${page}-${item.target}`} className="ledgerCard" data-cross-trace-target={item.target}>
             <div className="peopleMeta">
               <span>{item.label}</span>
               <span>{item.value}</span>

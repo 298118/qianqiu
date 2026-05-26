@@ -2549,6 +2549,35 @@ test("S89.24 CSS duplicate guard keeps polish budget buffer", () => {
   );
 });
 
+test("S89.37 CSS token and accessibility refactor stays visual-only", () => {
+  const styleSource = readText("client/src/styles/global.css");
+  const crossTraceSource = readText("client/src/components/CrossPageTraceRail.tsx");
+  const runtimeCombined = `${styleSource}\n${crossTraceSource}`;
+
+  assert.ok(styleSource.length < 200_000);
+  assert.match(styleSource, /--qq-color-ink: #241b16/);
+  assert.match(styleSource, /--qq-color-vermilion: #8e2f27/);
+  assert.match(styleSource, /--qq-color-border-soft: rgb\(84 60 43 \/ \.24\)/);
+  assert.match(styleSource, /--qq-surface-paper-soft:/);
+  assert.match(styleSource, /--qq-motion-instant: 0\.01ms/);
+  assert.match(styleSource, /a \{\s*color: var\(--qq-color-link\);[\s\S]*text-decoration-line: underline/);
+  assert.match(styleSource, /a\[class\] \{\s*color: inherit;\s*text-decoration: none/);
+  assert.match(styleSource, /\.scholarPanelActions a \{[\s\S]*text-decoration: none/);
+  assert.doesNotMatch(styleSource, /a \{\s*color: inherit;\s*text-decoration: none;\s*\}/);
+  assert.match(styleSource, /:where\(\.paperSurface, \.rolePanel, \.statusSurface, \.ledgerCard\)/);
+  assert.match(styleSource, /\.appShell\[data-contrast="high"\][\s\S]*--qq-color-border-soft/);
+  assert.match(styleSource, /\.appShell\[data-contrast="high"\] :is\(\.paperSurface, \.rolePanel, \.statusSurface, \.ledgerCard/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*--qq-motion-fast: var\(--qq-motion-instant\)/);
+  assert.match(styleSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*--qq-motion-fast: var\(--qq-motion-instant\)/);
+  assert.match(styleSource, /transition-duration: var\(--qq-motion-instant\) !important/);
+  assert.match(crossTraceSource, /className="crossPageTraceRail scholarPanelCard paperSurface"/);
+  assert.match(crossTraceSource, /className="ledgerCard"/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|hiddenNotes|完整提示词|本地路径|密钥|AI read scope|proposal boundary|server adjudication|draftContext|schema|manifest/
+  );
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");

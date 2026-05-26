@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.37 | DONE | CSS token 与可访问性渐进重构 | 承接 S89.36 后开启小批量 CSS 架构专项第一阶段，已在 `global.css` 补齐颜色、纸面、边框、间距和动效 token，正文链接恢复默认可识别下划线并用 `a[class]` 保持按钮/导航型链接 reset；新增 `.paperSurface`、`.rolePanel`、`.statusSurface`、`.ledgerCard` 基础 surface utility，并先接入 `CrossPageTraceRail`；`data-contrast="high"` 系统性提高纸面、边框、focus 对比，`data-motion="reduced"` 与 `prefers-reduced-motion` 共用动效变量。范围限全局 CSS、`CrossPageTraceRail` class 接线、source canary、brief 与交接文档；不做物理拆 CSS 文件，不新增依赖或素材，不改 React 数据流、后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view 和本地草稿，不新增裁决权。实现提交：待回填。 |
 | S89.36 | DONE | 朝议 / 人物 / 史册跨页追踪读法 polish | 承接 S89.35 后继续做产品级前端 polish，已新增共享 `CrossPageTraceRail`，在 `/game/:sessionId/court`、`/game/:sessionId/people` 和 `/game/:sessionId/archive` 放入“跨页追索笺”，把朝议、人物、史册和主卷候复之间的自然读卷路径整理成只读卡片；rail 使用折纸材质、错落进入、hover/focus 抬升和低动效关闭守门，移动端单列。范围限 React `CrossPageTraceRail` / `CourtPage` / `PeoplePage` / `ArchivePage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费当前 route session 的安全 view、既有页面已清洗计数和本地草稿有无，不请求诊断接口，不读取 raw 存档、本地路径、source manifest 或完整 manifest，不裁决资源、身份、交易、委派、NPC 行动、经济、考试、官职、地图行动、关系或 hidden 信息。实现提交：`9748b336`。 |
 | S89.35 | DONE | 人物页与高清立绘查看器二轮高级展示 polish | 承接 S89.34 后继续做产品级前端 polish，已在 `/game/:sessionId/people` 新增“人物画屏 / 入谱照面”、画屏案读、人物名册选中态、人物谱牒卡选中/高清状态和 S89.35 可检测 marker；高清立绘查看器新增“画屏案读”只读栏、viewer 状态和画像卡 zoomable/ready/fallback 状态。范围限 React `PeoplePage` / `Portrait` / `SurfaceHost`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费 `worldPeopleView`、`npcRosterView`、`npcDetailView.publicProfile`、既有 follow-up/economy/relationship 安全 view、route/local 状态和已审核 runtime 画像字段，不读取 raw 存档、本地路径、source manifest 或完整 manifest，不裁决资源、身份、交易、委派、NPC 行动、经济、考试、官职、地图行动、关系或 hidden 信息。实现提交：`d6ad9af4`。 |
 | S89.34 | DONE | 主卷与朝议案头中枢二轮材质动效 polish | 承接 S89.33 后继续做产品级前端 polish，已在 `/game/:sessionId` 新增“案头中枢 / 本卷案桌”、主卷命令栏/场景带 marker、场景/卷宗/草稿/去处读法和行旅/人物/账解/科举复核分组计数；在 `/game/:sessionId/court` 新增“官署议程 / 御案传签”、章奏/谕旨/朝议/堂审军议读法、议程状态和六个既有专题入口状态。范围限 React `GamePage` / `CourtPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/local 状态和本地草稿状态，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、地图行动、关系或 hidden 信息。实现提交：`0bae6c8f`。 |
@@ -191,7 +192,8 @@
 - 2026-05-25：S89.34 完成主卷与朝议案头中枢二轮材质动效 polish。当前范围限 React `GamePage` / `CourtPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增主卷案头中枢、官署议程、草稿状态 marker、朝议入口状态、材质动效和低动效关闭守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.35 完成人物页与高清立绘查看器二轮高级展示 polish。当前范围限 React `PeoplePage` / `Portrait` / `SurfaceHost`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增人物画屏、入谱照面、名册/谱牒选中态、画像卡状态、高清标记和查看器案读栏，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-26：S89.36 完成朝议 / 人物 / 史册跨页追踪读法 polish。当前范围限 React `CrossPageTraceRail` / `CourtPage` / `PeoplePage` / `ArchivePage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增跨页追索笺、朝议/人物/史册/主卷候复路径、折纸材质动效和低动效关闭守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.36 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-26：S89.37 完成 CSS token 与可访问性渐进重构。当前范围限 `global.css`、`CrossPageTraceRail` utility class 接线、source canary、brief 和开发文档；新增样式 token、正文链接可识别默认、基础 surface utility、高对比增强和统一低动效变量，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.37 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -273,6 +275,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-26：S89.37 CSS token 与可访问性渐进重构
+
+- 范围：全局 CSS 新增 `--qq-color-*`、`--qq-surface-*`、`--qq-space-*` 与 `--qq-motion-*` token，`CrossPageTraceRail` 先接入 `.paperSurface` / `.ledgerCard` 作为基础 utility 的首个小范围使用点；不做 CSS 物理拆文件，避免一次性改动入口、测试读取和 cascade 顺序。
+- 可访问性：全局 `a` 不再粗暴取消下划线，正文链接默认使用朱色下划线；按钮、导航、显式 class 链接和 `.scholarPanelActions a` 通过局部 reset 与既有 `.paperLink` / `.paperButton` 保持原视觉。`data-contrast="high"` 现在同步提高纸面、边框、focus 与按钮/卡片对比，不只改根文字色。
+- 动效与架构：本地低动效和系统 `prefers-reduced-motion` 共用 `--qq-motion-instant` 等变量；`.paperSurface`、`.rolePanel`、`.statusSurface`、`.ledgerCard` 作为后续替代长 `:is(...)` 与重复 panel/card 规则的稳定语义层，当前只做无行为重构和小范围接线。
+- 边界：本步不新增依赖或素材，不改 React 数据流、后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 或素材 manifest；浏览器仍只消费安全 view、route/surface 状态和本地草稿，不请求诊断接口、不读取 raw 存档、本地路径、source manifest 或完整 manifest，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、关系、婚姻、弹劾、定罪、背叛或 hidden 信息。
+- Smoke/canary：`test/reactClientScaffold.test.js` 新增 S89.37 source canary，守住 token、链接 reset 收敛、基础 surface utility、高对比、低动效变量、`CrossPageTraceRail` utility class 接线、CSS 体积和无 API/存储/工程污染。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（70 tests）、完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）、`npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、直接 browser smoke `node scripts/clientSmoke.js`、截图矩阵 `npm run smoke:browser:visual` 和 `git diff --check`。预算输出为 `JS 658.5 KiB / CSS 142.6 KiB / fonts 26288.4 KiB / client-assets 27089.5 KiB`，截图输出到 `artifacts/browser-visual-matrix`；截图矩阵首次因本地 Rolldown Windows optional native binding 缺失失败，运行 `npm install` 修复 `node_modules` 后通过且未改变 tracked files；构建仍输出既有 `/assets/ui/...` runtime asset resolution warning。
+- 复审：提交前只读复审 Bohr 首轮指出无 class 的 `.scholarPanelActions a` 会继承正文链接下划线；本轮已补局部 reset 和 source canary，并重跑脚手架、类型检查、构建、预算与 diff check。Bohr 二轮复核通过，未发现阻断问题；非阻断建议为后续可把该 canary 正则再收窄到 block 内匹配。
+- 提交：实现提交待回填；提交哈希回填仅修改本文件与 [SHARED_CONTEXT.md](SHARED_CONTEXT.md)，可按低风险纯文档规则跳过子代理复审。
 
 ### 2026-05-26：S89.36 朝议 / 人物 / 史册跨页追踪读法 polish
 
