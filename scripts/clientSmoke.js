@@ -807,6 +807,8 @@ async function assertHomeSaveShelfPolish(page, label) {
       hasCards: Boolean(shelf?.querySelector(".saveCaseList")),
       hasEmpty: Boolean(shelf?.querySelector(".saveCaseEmpty")),
       hasSkeleton: Boolean(shelf?.querySelector(".saveCaseSkeletonList")),
+      homeSurfaceCount: document.querySelectorAll(".homeDesk.paperMotionSurface, .saveShelf.paperMotionSurface").length,
+      continueSurfaceMissing: Boolean(document.querySelector(".continueShelf:not(.paperMotionSurface)")),
       badLinks: links.filter((path) => /\/api\/game\/state|\/api\/dev\/session-diagnostics|data\/sessions|raw|provider|hidden|key|secret/i.test(path)),
       forbiddenText: text.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|\/api\/game\/state|\/api\/dev\/session-diagnostics|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
       text
@@ -821,6 +823,8 @@ async function assertHomeSaveShelfPolish(page, label) {
   if (snapshot.state === "empty" && !snapshot.hasEmpty) failures.push("empty shelf lacked empty block");
   if (snapshot.state === "ready" && !snapshot.hasCards) failures.push("ready shelf lacked save cards");
   if (snapshot.state === "error" && !snapshot.text.includes("旧案架暂不可取")) failures.push("error shelf lacked safe error copy");
+  if (snapshot.homeSurfaceCount !== 2) failures.push(`S89.46 home static surfaces were incomplete: ${snapshot.homeSurfaceCount}`);
+  if (snapshot.continueSurfaceMissing) failures.push("S89.46 continue shelf missed static surface hook");
   if (snapshot.badLinks.length) failures.push(`unsafe save shelf links: ${snapshot.badLinks.join(", ")}`);
   if (snapshot.forbiddenText.length) failures.push(`forbidden save shelf text: ${snapshot.forbiddenText.join(", ")}`);
   if (failures.length) {
@@ -2685,6 +2689,7 @@ async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) 
     return {
       continueHref: continueLink ? new URL(continueLink.href).pathname : null,
       continueText: document.querySelector("[aria-label='当前本局']")?.textContent || "",
+      continueSurfaceCount: document.querySelectorAll(".continueShelf.paperMotionSurface").length,
       emptyActionForm: Boolean(document.querySelector("form.actionPanel")),
       forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider\b|prompt\b|hidden\b|key\b|path\b|[a-z]:[\\/]|file:\/{2}|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions/gi) || [],
       expected: gamePathFor(id)
@@ -2699,6 +2704,9 @@ async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) 
   }
   if (!homeState.continueText.includes("当前本局") || !homeState.continueText.includes("案 ")) {
     throw new Error(`Home continue shelf did not render a safe current-session summary: ${JSON.stringify(homeState)}`);
+  }
+  if (homeState.continueSurfaceCount !== 1) {
+    throw new Error(`S89.46 return-home continue shelf missed static surface hook: ${JSON.stringify(homeState)}`);
   }
   if (homeState.emptyActionForm) {
     throw new Error("Return home kept the game action form mounted.");

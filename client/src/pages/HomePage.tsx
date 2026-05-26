@@ -248,7 +248,7 @@ export function HomePage() {
           <p className="lede">一卷入世，万事由心。朝堂、贡院、边关与市井皆在纸上起伏。</p>
         </div>
         <div
-          className="homeDesk"
+          className="homeDesk paperMotionSurface"
           data-polish-home-entry="s89-32-opening-desk"
           data-entry-state={startError || formError ? "error" : isStarting ? "loading" : "ready"}
         >
@@ -392,7 +392,7 @@ export function HomePage() {
           {startError ? <p className="statusLine" role="alert">{startError}</p> : null}
         </div>
         {canContinueCurrentSession && currentSessionId && currentPlayerPayload ? (
-          <section className="continueShelf" aria-label="当前本局" data-polish-home-current="s89-32-current-case">
+          <section className="continueShelf paperMotionSurface" aria-label="当前本局" data-polish-home-current="s89-32-current-case">
             <div>
               <p className="eyebrow">当前本局</p>
               <h2>{safeHomeSummaryText(currentPlayerPayload.player?.name, "无名")}</h2>
@@ -413,7 +413,7 @@ export function HomePage() {
             </Link>
           </section>
         ) : null}
-        <section className="saveShelf" aria-labelledby="home-save-title" data-save-state={saveShelfState} data-polish-home-saves="s89-32-save-shelf">
+        <section className="saveShelf paperMotionSurface" aria-labelledby="home-save-title" data-save-state={saveShelfState} data-polish-home-saves="s89-32-save-shelf">
           <div className="saveShelfHeader">
             <div>
               <p className="eyebrow">案架</p>

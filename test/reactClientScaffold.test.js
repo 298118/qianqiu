@@ -2916,6 +2916,25 @@ test("S89.45 inventory and economy ledgers use paper surface utilities", () => {
   assert.match(clientSmokeSource, /S89\.45 mobile inventory static surfaces/);
 });
 
+test("S89.46 home route static surfaces use paper surface utilities", () => {
+  const homeSource = readText("client/src/pages/HomePage.tsx");
+  const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(homeSource, /className="homeDesk paperMotionSurface"/);
+  assert.match(homeSource, /className="continueShelf paperMotionSurface"/);
+  assert.match(homeSource, /className="saveShelf paperMotionSurface"/);
+
+  assert.match(polishSource, /\.paperMotionSurface/);
+  assert.doesNotMatch(polishSource, /\.homeDesk|\.saveShelf|\.continueShelf/);
+  assert.doesNotMatch(homeSource, /className="(?=[^"]*(?:homeDesk|saveShelf|continueShelf))(?=[^"]*paperMotion(?:Card|Panel))[^"]*"/);
+  assert.doesNotMatch(homeSource, /\/api\/game\/turn|submitTurn|dangerouslySetInnerHTML/);
+
+  assert.match(clientSmokeSource, /homeSurfaceCount: document\.querySelectorAll\("\.homeDesk\.paperMotionSurface, \.saveShelf\.paperMotionSurface"\)\.length/);
+  assert.match(clientSmokeSource, /continueSurfaceMissing: Boolean\(document\.querySelector\("\.continueShelf:not\(\.paperMotionSurface\)"\)\)/);
+  assert.match(clientSmokeSource, /S89\.46 return-home continue shelf missed static surface hook/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");
