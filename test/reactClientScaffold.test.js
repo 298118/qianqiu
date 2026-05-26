@@ -2894,6 +2894,28 @@ test("S89.44 map and archive static ledgers use paper surface utilities", () => 
   assert.match(clientSmokeSource, /archiveSurfaceCount: document\.querySelectorAll\("\.archiveDigestBand\.paperMotionSurface, \.archiveDigestIntro\.paperMotionSurface"\)\.length/);
 });
 
+test("S89.45 inventory and economy ledgers use paper surface utilities", () => {
+  const inventorySource = readText("client/src/pages/InventoryPage.tsx");
+  const economySource = readText("client/src/components/EconomyTraceSection.tsx");
+  const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(inventorySource, /className="inventoryContainerList paperMotionSurface"/);
+  assert.match(inventorySource, /className="inventoryItemList paperMotionSurface"/);
+  assert.match(inventorySource, /className="inventoryLedgerBlock paperMotionSurface"/);
+  assert.ok((inventorySource.match(/className="inventoryTransferPanel paperMotionSurface"/g) || []).length >= 2);
+  assert.match(economySource, /className="economyTraceSection paperMotionSurface"/);
+
+  assert.match(polishSource, /\.paperMotionSurface/);
+  assert.doesNotMatch(polishSource, /\.inventoryContainerList|\.inventoryItemList|\.inventoryLedgerBlock|\.inventoryTransferPanel|\.economyTraceSection/);
+  assert.doesNotMatch(`${inventorySource}\n${economySource}`, /className="(?=[^"]*(?:inventoryContainerList|inventoryItemList|inventoryLedgerBlock|inventoryTransferPanel|economyTraceSection))(?=[^"]*paperMotion(?:Card|Panel))[^"]*"/);
+  assert.doesNotMatch(economySource, /submitTurn|transferInventoryItem|\/api\/game\/turn|dangerouslySetInnerHTML/);
+
+  assert.match(clientSmokeSource, /inventorySurfaceCount: document\.querySelectorAll\("\.inventoryContainerList\.paperMotionSurface, \.inventoryItemList\.paperMotionSurface, \.inventoryLedgerBlock\.paperMotionSurface, \.inventoryTransferPanel\.paperMotionSurface, \.economyTraceSection\.paperMotionSurface"\)\.length/);
+  assert.match(clientSmokeSource, /S89\.45 desktop inventory static surfaces/);
+  assert.match(clientSmokeSource, /S89\.45 mobile inventory static surfaces/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");

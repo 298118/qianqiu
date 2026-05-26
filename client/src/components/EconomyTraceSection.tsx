@@ -240,7 +240,7 @@ export function EconomyTraceSection({
   const titleId = `${idPrefix}-title`;
 
   return (
-    <section className="economyTraceSection" aria-labelledby={titleId} data-polish-evidence="s89-15-economy-reader">
+    <section className="economyTraceSection paperMotionSurface" aria-labelledby={titleId} data-polish-evidence="s89-15-economy-reader">
       <div className="economyTraceHeader">
         <div>
           <p className="eyebrow">账本解释</p>

@@ -297,7 +297,7 @@ export function InventoryPage() {
       </section>
 
       <section className="inventoryWorkbench" aria-label="背包仓库工作台">
-        <aside className="inventoryContainerList" aria-label="容器">
+        <aside className="inventoryContainerList paperMotionSurface" aria-label="容器">
           <h2>仓储</h2>
           {containers.length ? containers.map((container) => (
             <button
@@ -316,7 +316,7 @@ export function InventoryPage() {
             </button>
           )) : <p className="statusLine">{routeSessionSupported ? "等待囊箧卷宗。" : unsupportedRouteMessage}</p>}
         </aside>
-        <div className="inventoryItemList" aria-label="物品">
+        <div className="inventoryItemList paperMotionSurface" aria-label="物品">
           <h2>{containerLabel(containersById.get(selectedContainer))}</h2>
           {visibleItems.length ? visibleItems.map((item) => (
             <article className="inventoryItemCard paperMotionCard paperMotionInteractive" key={item.itemId}>
@@ -336,7 +336,7 @@ export function InventoryPage() {
         </div>
       </section>
 
-      <section className="inventoryTransferPanel" aria-label="物品转移">
+      <section className="inventoryTransferPanel paperMotionSurface" aria-label="物品转移">
         <div>
           <p className="eyebrow">案卷复核</p>
           <h2>移置物件</h2>
@@ -374,7 +374,7 @@ export function InventoryPage() {
       </section>
 
       <section
-        className="inventoryTransferPanel"
+        className="inventoryTransferPanel paperMotionSurface"
         aria-label="囊箧流转候批笺"
         data-polish-inventory="s89-23-inventory-ledger-reader"
       >
@@ -431,7 +431,7 @@ function LedgerBlock({
   readonly children: ReactNode;
 }) {
   return (
-    <section className="inventoryLedgerBlock">
+    <section className="inventoryLedgerBlock paperMotionSurface">
       <h2>{icon}<span>{title}</span></h2>
       <div>{children}</div>
     </section>

@@ -3879,6 +3879,7 @@ async function runClientSmoke(options = {}) {
         hasWorkbench: Boolean(document.querySelector(".inventoryWorkbench")),
         hasTransferPanel: Boolean(document.querySelector(".inventoryTransferPanel")),
         hasEconomyTrace: Boolean(document.querySelector(".economyTraceSection")),
+        inventorySurfaceCount: document.querySelectorAll(".inventoryContainerList.paperMotionSurface, .inventoryItemList.paperMotionSurface, .inventoryLedgerBlock.paperMotionSurface, .inventoryTransferPanel.paperMotionSurface, .economyTraceSection.paperMotionSurface").length,
         economyTraceMarker: document.querySelector(".economyTraceSection")?.getAttribute("data-polish-evidence") || "",
         economyBoundaryMarker: document.querySelector(".economyTraceSection [data-polish-evidence-boundary]")?.getAttribute("data-polish-evidence-boundary") || "",
         transferLedgerMarker: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.getAttribute("data-polish-inventory") || "",
@@ -3890,6 +3891,9 @@ async function runClientSmoke(options = {}) {
     }, inventoryPlayerFacingLeakPattern.source);
     if (!inventorySnapshot.hasSummary || !inventorySnapshot.hasWorkbench || !inventorySnapshot.hasTransferPanel || !inventorySnapshot.hasEconomyTrace) {
       throw new Error(`S89.2 desktop inventory is missing product matrix sections: ${JSON.stringify(inventorySnapshot)}`);
+    }
+    if (inventorySnapshot.inventorySurfaceCount !== 8) {
+      throw new Error(`S89.45 desktop inventory static surfaces were incomplete: ${JSON.stringify(inventorySnapshot)}`);
     }
     if (inventorySnapshot.economyTraceMarker !== "s89-15-economy-reader" || inventorySnapshot.economyBoundaryMarker !== "s89-15-economy-boundary") {
       throw new Error(`S89.15 desktop inventory economy reader marker missing: ${JSON.stringify(inventorySnapshot)}`);
@@ -4095,6 +4099,7 @@ async function runClientSmoke(options = {}) {
         hasWorkbench: Boolean(document.querySelector(".inventoryWorkbench")),
         hasTransferPanel: Boolean(document.querySelector(".inventoryTransferPanel")),
         hasEconomyTrace: Boolean(document.querySelector(".economyTraceSection")),
+        inventorySurfaceCount: document.querySelectorAll(".inventoryContainerList.paperMotionSurface, .inventoryItemList.paperMotionSurface, .inventoryLedgerBlock.paperMotionSurface, .inventoryTransferPanel.paperMotionSurface, .economyTraceSection.paperMotionSurface").length,
         economyTraceMarker: document.querySelector(".economyTraceSection")?.getAttribute("data-polish-evidence") || "",
         economyBoundaryMarker: document.querySelector(".economyTraceSection [data-polish-evidence-boundary]")?.getAttribute("data-polish-evidence-boundary") || "",
         transferLedgerMarker: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.getAttribute("data-polish-inventory") || "",
@@ -4106,6 +4111,9 @@ async function runClientSmoke(options = {}) {
     }, inventoryPlayerFacingLeakPattern.source);
     if (!mobileInventory.hasSummary || !mobileInventory.hasWorkbench || !mobileInventory.hasTransferPanel || !mobileInventory.hasEconomyTrace) {
       throw new Error(`S89.2 mobile inventory is missing product matrix sections: ${JSON.stringify(mobileInventory)}`);
+    }
+    if (mobileInventory.inventorySurfaceCount !== 8) {
+      throw new Error(`S89.45 mobile inventory static surfaces were incomplete: ${JSON.stringify(mobileInventory)}`);
     }
     if (mobileInventory.economyTraceMarker !== "s89-15-economy-reader" || mobileInventory.economyBoundaryMarker !== "s89-15-economy-boundary") {
       throw new Error(`S89.15 mobile inventory economy reader marker missing: ${JSON.stringify(mobileInventory)}`);
