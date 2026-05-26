@@ -277,7 +277,7 @@ export function InventoryPage() {
         <LedgerBlock icon={<Landmark size={18} aria-hidden="true" />} title="资产">
           {(assetLedgerView?.assets ?? []).length ? (
             assetLedgerView?.assets.slice(0, 6).map((asset) => (
-              <article className="inventoryMiniCard" key={asset.assetId}>
+              <article className="inventoryMiniCard paperMotionCard paperMotionInteractive" key={asset.assetId}>
                 <strong>{safeLabel(asset.name, "资产", 40)}</strong>
                 <span>{safeLabel(asset.typeLabel || asset.assetType, "资产", 32)} · {safeLabel(asset.condition, "可用", 32)}</span>
               </article>
@@ -287,7 +287,7 @@ export function InventoryPage() {
         <LedgerBlock icon={<ScrollText size={18} aria-hidden="true" />} title="凭证">
           {(inventoryView?.importantCredentials ?? []).length ? (
             inventoryView?.importantCredentials.map((credential) => (
-              <article className="inventoryMiniCard" key={credential.itemId}>
+              <article className="inventoryMiniCard paperMotionCard paperMotionInteractive" key={credential.itemId}>
                 <strong>{safeLabel(credential.name, "凭证", 40)}</strong>
                 <span>{safeLabel(credential.authorityBoundary, "以案卷回批为准", 64)}</span>
               </article>
@@ -319,7 +319,7 @@ export function InventoryPage() {
         <div className="inventoryItemList" aria-label="物品">
           <h2>{containerLabel(containersById.get(selectedContainer))}</h2>
           {visibleItems.length ? visibleItems.map((item) => (
-            <article className="inventoryItemCard" key={item.itemId}>
+            <article className="inventoryItemCard paperMotionCard paperMotionInteractive" key={item.itemId}>
               <div>
                 <p className="eyebrow">{safeLabel(item.category || item.subtype, "物件", 32)}</p>
                 <h3>{safeLabel(item.name, "无名物件", 48)}</h3>

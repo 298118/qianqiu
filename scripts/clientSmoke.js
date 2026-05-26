@@ -965,7 +965,8 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
       },
       s8930: {
         saveShelf: styleOf(".saveShelf"),
-        sharedCard: styleOf(".saveCaseItem, .scholarPanelCard, .mapActionList li, .archiveItemList li, .peopleCard, .inventoryItemCard, .rankingTopSeal, .settingsDirectoryCard, .topicSurfaceItem"),
+        sharedCard: styleOf(".paperMotionCard, .scholarPanelCard, .mapActionList li, .archiveItemList li, .peopleCard, .inventoryItemCard, .rankingTopSeal, .settingsDirectoryCard, .topicSurfaceItem"),
+        semanticCardCount: document.querySelectorAll(".paperMotionCard.paperMotionInteractive").length,
         statusLine: styleOf(".statusLine"),
         statusAccent: styleOf(".statusLine", "::before"),
         selectedControl: styleOf(".npcListButton[aria-pressed='true'], .inventoryContainerButton[aria-pressed='true'], .topicDraftSlot[aria-pressed='true'], .inkboxTab[aria-selected='true'], .mapLayerToggle:has(input:checked)"),
@@ -978,6 +979,7 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
       mapLayerCount: document.querySelectorAll("[data-polish-action='s89-5-map-layer']").length,
       mapWrittenCount: writtenRows.length,
       mapWrittenAnimation: writtenRows.map((row) => window.getComputedStyle(row).animationName),
+      mapWrittenSemanticCount: writtenRows.filter((row) => row.classList.contains("paperMotionDraft")).length,
       portraitFrameCount: document.querySelectorAll("[data-polish-card='s89-5-portrait-frame']").length,
       portraitZoomCount: document.querySelectorAll("[data-polish-action='s89-5-portrait-zoom']").length,
       portraitViewer: styleOf("[data-polish-overlay='s89-5-portrait-gallery']"),
@@ -1027,6 +1029,9 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
   if (snapshot.s8930.saveShelf && (!snapshot.s8930.saveShelf.boxShadow || snapshot.s8930.saveShelf.boxShadow === "none")) {
     failures.push("S89.30 shared material did not lift the home save shelf");
   }
+  if ((expected.map || expected.settings) && snapshot.s8930.semanticCardCount < 1) {
+    failures.push(`semantic paper motion utilities were absent: ${snapshot.s8930.semanticCardCount}`);
+  }
   if (snapshot.s8930.sharedCard && snapshot.shellMotion !== "reduced" && !snapshot.s8930.sharedCard.animationName.includes("s8930PaperRise")) {
     failures.push(`S89.30 shared card animation was ${snapshot.s8930.sharedCard.animationName}`);
   }
@@ -1054,6 +1059,7 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
     failures.push(`map polish hooks incomplete: ${JSON.stringify({ mapSurface: snapshot.mapSurface, mapLedger: Boolean(snapshot.mapLedger), mapLayerCount: snapshot.mapLayerCount })}`);
   }
   if (expected.mapWritten && snapshot.mapWrittenCount < 1) failures.push("map draft feedback row was not marked written");
+  if (expected.mapWritten && snapshot.mapWrittenSemanticCount < 1) failures.push("map written draft row lacked semantic paper motion class");
   if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !snapshot.mapWrittenAnimation.some((name) => name.includes("draftWrittenPulse"))) {
     failures.push(`map written animation missing: ${snapshot.mapWrittenAnimation.join(", ")}`);
   }

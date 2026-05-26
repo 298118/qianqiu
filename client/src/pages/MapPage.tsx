@@ -880,7 +880,7 @@ export function MapPage() {
             {visibleMapActionEntries.length ? (
               <ol className="mapActionList">
                 {visibleMapActionEntries.map((entry) => (
-                  <li key={entry.id} data-draft-state={lastWrittenMapDraftId === entry.id ? "written" : "idle"}>
+                  <li className="paperMotionCard paperMotionInteractive paperMotionDraft" key={entry.id} data-draft-state={lastWrittenMapDraftId === entry.id ? "written" : "idle"}>
                     <span>{entry.kindLabel} · 待主卷复核</span>
                     <strong>{entry.label}</strong>
                     <p>{entry.summary}</p>
@@ -897,7 +897,7 @@ export function MapPage() {
           {visibleMapEvents.length ? (
             <ol className="mapEventList">
               {visibleMapEvents.map((eventItem) => (
-                <li key={eventItem.id} data-draft-state={lastWrittenMapDraftId === eventItem.id ? "written" : "idle"}>
+                <li className="paperMotionCard paperMotionInteractive paperMotionDraft" key={eventItem.id} data-draft-state={lastWrittenMapDraftId === eventItem.id ? "written" : "idle"}>
                   <strong>{eventItem.label}</strong>
                   <span>{eventItem.targetLabel} · 警势 {eventItem.severity}</span>
                   <p>{eventItem.summary}</p>
@@ -918,7 +918,7 @@ export function MapPage() {
               </div>
               <ol className="mapNpcActivityList">
                 {visibleNpcActivityAnchors.map((anchor) => (
-                  <li key={anchor.id}>
+                  <li className="paperMotionCard paperMotionInteractive" key={anchor.id}>
                     <strong>{anchor.label}</strong>
                     <span>{anchor.targetLabel} · 可见度 {anchor.severity}</span>
                     <p>{anchor.summary}</p>

@@ -380,7 +380,7 @@ export function ArchivePage() {
         {leadItems.length ? (
           <ol className="archiveLeadList" aria-label="史册近次线索">
             {leadItems.map((item) => (
-              <li key={`lead-${item.id}`}>
+              <li className="paperMotionCard paperMotionInteractive" key={`lead-${item.id}`}>
                 <span>{item.sourceLabel}</span>
                 <strong>{item.title}</strong>
                 <em>{item.statusLabel}</em>
@@ -430,7 +430,7 @@ export function ArchivePage() {
           {archiveItems.length ? (
             <ol className="archiveItemList">
               {archiveItems.map((item) => (
-                <li key={item.id} data-source-type={item.sourceType}>
+                <li className="paperMotionCard paperMotionInteractive" key={item.id} data-source-type={item.sourceType}>
                   <div>
                     <strong>{item.title}</strong>
                     <span>{item.sourceLabel} · {item.dateLabel} · {item.statusLabel}</span>

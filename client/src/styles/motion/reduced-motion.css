@@ -69,7 +69,7 @@
   .mapTideCompass::before,
   .inkMapTooltip,
   .inkMapTooltip::before,
-  .appShell[data-material-motion="shared-paper"] :is(.saveCaseItem, .scholarPanelCard, .mapActionList li, .mapEventList li, .mapNpcActivityList li, .archiveLeadList li, .archiveItemList li, .peopleCard, .npcRelationshipSignalCard, .npcRelationshipAgendaCard, .inventoryMiniCard, .inventoryItemCard, .rankingTopSeal, .settingsDirectoryCard, .topicSurfaceItem, .npcListButton[aria-pressed="true"], .inventoryContainerButton[aria-pressed="true"], .topicDraftSlot[aria-pressed="true"], .inkboxTab[aria-selected="true"], li[data-draft-state="written"], .quickActionSlip[data-draft-state="written"], .inkMapTooltip .paperButton[data-draft-state="written"]) {
+  .appShell[data-material-motion="shared-paper"] :is(.paperMotionCard, .paperMotionInteractive, .paperMotionDraft[data-draft-state="written"], .scholarPanelCard, .npcRelationshipAgendaCard, .npcListButton[aria-pressed="true"], .inventoryContainerButton[aria-pressed="true"], .topicDraftSlot[aria-pressed="true"], .inkboxTab[aria-selected="true"], .quickActionSlip[data-draft-state="written"], .inkMapTooltip .paperButton[data-draft-state="written"]) {
     animation: none !important;
     transition: none;
   }

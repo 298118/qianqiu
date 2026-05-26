@@ -98,7 +98,7 @@ export function SettingsPage() {
       <div className="settingsDirectoryGrid" aria-label="印匣分栏入口">
         {settingsCards.map((card) => (
           <section
-            className="settingsDirectoryCard"
+            className="settingsDirectoryCard paperMotionCard paperMotionInteractive"
             key={card.tab}
             data-polish-card="s89-5-settings-card"
             data-polish-settings-state="s89-19-settings-card-state"

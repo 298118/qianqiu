@@ -38,7 +38,6 @@ function readText(relativePath) {
 }
 
 const clientStyleEntryImports = Object.freeze([
-  "global.css",
   "tokens/tokens.css",
   "base/base.css",
   "utilities/surfaces.css",
@@ -58,18 +57,57 @@ const clientStyleEntryImports = Object.freeze([
   "motion/keyframes.css"
 ]);
 
-const clientStyleModules = Object.freeze([
-  ...clientStyleEntryImports,
+const clientStyleExpectedModules = Object.freeze([
+  "global.css",
+  "tokens/tokens.css",
+  "base/base.css",
+  "utilities/surfaces.css",
+  "components/shell.css",
+  "base/preferences.css",
+  "base/intrinsics.css",
+  "routes/home.css",
+  "components/controls.css",
+  "routes/game.css",
+  "utilities/polish-surfaces.css",
+  "routes/map-archive.css",
+  "routes/people-inventory.css",
+  "routes/exam-ranking.css",
+  "components/overlays-surfaces.css",
+  "responsive/global-responsive.css",
   "responsive/mobile-layout.css",
   "responsive/mobile-home.css",
   "responsive/mobile-game-map.css",
   "responsive/mobile-people-inventory.css",
-  "responsive/mobile-exam-ranking.css"
+  "responsive/mobile-exam-ranking.css",
+  "motion/reduced-motion.css",
+  "motion/keyframes.css"
 ]);
+
+function readClientStyleModule(modulePath) {
+  return fs.readFileSync(path.join(rootDir, "client", "src", "styles", modulePath), "utf8");
+}
+
+function resolveClientStyleImportGraph(modulePath, visited = new Set()) {
+  const normalizedModulePath = modulePath.replaceAll("\\", "/");
+  if (visited.has(normalizedModulePath)) return [];
+  visited.add(normalizedModulePath);
+  const moduleSource = readClientStyleModule(normalizedModulePath);
+  const moduleDir = path.posix.dirname(normalizedModulePath);
+  const resolvedModules = [normalizedModulePath];
+  const importPattern = /@import\s+"\.\/([^"]+)";/g;
+  let match;
+  while ((match = importPattern.exec(moduleSource))) {
+    const childModulePath = path.posix.normalize(path.posix.join(moduleDir === "." ? "" : moduleDir, match[1]));
+    resolvedModules.push(...resolveClientStyleImportGraph(childModulePath, visited));
+  }
+  return resolvedModules;
+}
+
+const clientStyleModules = Object.freeze(resolveClientStyleImportGraph("global.css"));
 
 function readClientStyleSource() {
   return clientStyleModules
-    .map((modulePath) => fs.readFileSync(path.join(rootDir, "client", "src", "styles", modulePath), "utf8"))
+    .map((modulePath) => readClientStyleModule(modulePath))
     .join("\n");
 }
 
@@ -1568,13 +1606,13 @@ test("S89.5 material polish stays frontend-only and reduced-motion aware", () =>
   assert.match(styleSource, /\.inkboxButton::after/);
   assert.match(styleSource, /\.inkboxButton:active/);
   assert.match(styleSource, /\.paperLink:hover:not\(:disabled\):not\(\[aria-disabled="true"\]\)/);
-  assert.match(styleSource, /li\[data-draft-state="written"\]/);
+  assert.match(styleSource, /\.paperMotionDraft\[data-draft-state="written"\]/);
   assert.match(styleSource, /@keyframes drawerPanelFade[\s\S]*opacity: \.9/);
   assert.match(styleSource, /@keyframes draftWrittenPulse[\s\S]*outline: 2px solid #8e2f2738/);
   assert.doesNotMatch(styleSource, /@keyframes drawerPanelFade\s*\{\s*\}/);
   assert.doesNotMatch(styleSource, /@keyframes draftWrittenPulse\s*\{\s*\}/);
   assert.doesNotMatch(styleSource, /s895D|s895S|s895OverlayFade|s895PanelEnter|settingsDirectoryCard:hover::after|portraitViewerFigure::after/);
-  assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*li\[data-draft-state="written"\]/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*\.paperMotionDraft\[data-draft-state="written"\]/);
   assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*\.drawerHost/);
   assert.match(clientSmokeSource, /assertS895MaterialFeedbackPolish/);
   assert.match(clientSmokeSource, /s89-16-shell-controls/);
@@ -2603,7 +2641,7 @@ test("S89.37 CSS token and accessibility refactor stays visual-only", () => {
   assert.match(styleSource, /a\[class\] \{\s*color: inherit;\s*text-decoration: none/);
   assert.match(styleSource, /\.scholarPanelActions a \{[\s\S]*text-decoration: none/);
   assert.doesNotMatch(styleSource, /a \{\s*color: inherit;\s*text-decoration: none;\s*\}/);
-  assert.match(styleSource, /:where\(\.paperSurface, \.rolePanel, \.statusSurface, \.ledgerCard\)/);
+  assert.match(styleSource, /:where\(\.paperSurface, \.rolePanel, \.statusSurface, \.ledgerCard, \.paperMotionCard/);
   assert.match(styleSource, /\.appShell\[data-contrast="high"\][\s\S]*--qq-color-border-soft/);
   assert.match(styleSource, /\.appShell\[data-contrast="high"\] :is\(\.paperSurface, \.rolePanel, \.statusSurface, \.ledgerCard/);
   assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*--qq-motion-fast: var\(--qq-motion-instant\)/);
@@ -2620,13 +2658,13 @@ test("S89.37 CSS token and accessibility refactor stays visual-only", () => {
 test("S89.38 CSS module entry keeps stable Vite import order", () => {
   const globalEntrySource = fs.readFileSync(path.join(rootDir, "client", "src", "styles", "global.css"), "utf8");
   const expectedImports = clientStyleEntryImports
-    .filter((modulePath) => modulePath !== "global.css")
     .map((modulePath) => `@import "./${modulePath}";`);
 
   assert.deepEqual(
     globalEntrySource.trim().split(/\r?\n/),
     expectedImports
   );
+  assert.deepEqual(clientStyleModules, clientStyleExpectedModules);
   assert.match(
     fs.readFileSync(path.join(rootDir, "client", "src", "styles", "responsive", "global-responsive.css"), "utf8"),
     /@import "\.\/mobile-layout\.css";[\s\S]*@import "\.\/mobile-exam-ranking\.css";/
@@ -2634,6 +2672,37 @@ test("S89.38 CSS module entry keeps stable Vite import order", () => {
   assert.match(readClientStyleSource(), /--qq-color-ink: #241b16/);
   assert.match(readClientStyleSource(), /@media \(max-width: 760px\)/);
   assert.match(readClientStyleSource(), /@keyframes s8930PaperRise/);
+});
+
+test("S89.39 semantic paper motion utilities reduce route-specific selector coupling", () => {
+  const saveCaseSource = readText("client/src/components/SaveCaseList.tsx");
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
+  const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
+  const inventoryPageSource = readText("client/src/pages/InventoryPage.tsx");
+  const rankingPageSource = readText("client/src/pages/RankingPage.tsx");
+  const settingsPageSource = readText("client/src/pages/SettingsPage.tsx");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+
+  assert.match(saveCaseSource, /className="saveCaseItem paperMotionCard paperMotionInteractive"/);
+  assert.match(mapPageSource, /className="paperMotionCard paperMotionInteractive paperMotionDraft"/);
+  assert.match(archivePageSource, /className="paperMotionCard paperMotionInteractive" key=\{`lead-/);
+  assert.match(peoplePageSource, /className="peopleCard paperMotionCard paperMotionInteractive"/);
+  assert.match(peoplePageSource, /className="npcRelationshipAgendaCard paperMotionCard paperMotionInteractive"/);
+  assert.match(inventoryPageSource, /className="inventoryItemCard paperMotionCard paperMotionInteractive"/);
+  assert.match(rankingPageSource, /className="rankingTopSeal paperMotionCard paperMotionInteractive"/);
+  assert.match(rankingPageSource, /className="paperMotionInteractive"[\s\S]*aria-pressed=\{isSelected\}/);
+  assert.match(settingsPageSource, /className="settingsDirectoryCard paperMotionCard paperMotionInteractive"/);
+  assert.match(surfaceHostSource, /className="topicSurfaceItem paperMotionCard paperMotionInteractive"/);
+  assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard/);
+  assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.paperMotionInteractive/);
+  assert.match(styleSource, /\.paperMotionDraft\[data-draft-state="written"\]/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\]\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard, \.paperMotionInteractive/);
+  assert.doesNotMatch(
+    styleSource,
+    /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|hiddenNotes|完整提示词|本地路径|密钥|AI read scope|proposal boundary|server adjudication/
+  );
 });
 
 test("S89.25 overlay glass polish stays shared and safe", () => {
@@ -2696,7 +2765,7 @@ test("S89.30 shared material and motion polish stays visual-only", () => {
   assert.match(styleSource, /@keyframes s8930PaperRise/);
   assert.match(styleSource, /@keyframes s8930StateWash/);
   assert.match(styleSource, /@keyframes s8930SealBloom/);
-  assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.homeDesk/);
+  assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard/);
   assert.match(styleSource, /\.quickActionSlip\[data-draft-state="written"\]/);
   assert.match(styleSource, /\.topicDraftSlot\[aria-pressed="true"\]/);
   assert.match(styleSource, /\.appShell\[data-motion="reduced"\]\[data-material-motion="shared-paper"\]/);

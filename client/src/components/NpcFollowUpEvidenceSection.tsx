@@ -240,7 +240,7 @@ export function NpcFollowUpEvidenceSection({
       <p>{cleanNpcEvidenceText(summaryFallback, "主动来函后续证据只读展示。", 172)}</p>
       <div className="npcFollowUpEvidenceGrid">
         {items.map((item) => (
-          <article className="inventoryMiniCard" key={item.id}>
+          <article className="inventoryMiniCard paperMotionCard paperMotionInteractive" key={item.id}>
             <strong>{item.title}</strong>
             <span>{item.summary}</span>
             <small>{item.groupLabel} · {item.kindLabel} · {item.statusLabel}</small>

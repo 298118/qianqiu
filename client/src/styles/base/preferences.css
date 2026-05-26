@@ -36,7 +36,7 @@
   color: var(--qq-color-ink-strong);
 }
 
-.appShell[data-contrast="high"] :is(.paperSurface, .rolePanel, .statusSurface, .ledgerCard, .scholarPanelCard, .paperButton, .paperLink, .topNav a, .sessionNav a, .settingsDirectoryCard, .archiveDigestBand, .crossPageTraceGrid article) {
+.appShell[data-contrast="high"] :is(.paperSurface, .rolePanel, .statusSurface, .ledgerCard, .paperMotionCard, .paperMotionInteractive, .scholarPanelCard, .paperButton, .paperLink, .topNav a, .sessionNav a, .settingsDirectoryCard, .archiveDigestBand, .crossPageTraceGrid article) {
   border-color: var(--qq-color-border-medium);
 }
 
@@ -107,6 +107,6 @@
 .appShell[data-motion="reduced"] .topNav[data-polish-shell-nav="s89-32-main-nav-density"] a::after,
 .appShell[data-motion="reduced"] .inkboxPanel[data-polish-inkbox-panel="s89-32-inkbox-glass-ledger"],
 .appShell[data-motion="reduced"] .inkboxTabs[data-polish-inkbox-tabs="s89-32-inkbox-glass-ledger"] .inkboxTab[aria-selected="true"],
-.appShell[data-motion="reduced"][data-material-motion="shared-paper"] :is(.saveCaseItem, .scholarPanelCard, .mapActionList li, .mapEventList li, .mapNpcActivityList li, .archiveLeadList li, .archiveItemList li, .peopleCard, .npcRelationshipSignalCard, .npcRelationshipAgendaCard, .inventoryMiniCard, .inventoryItemCard, .rankingTopSeal, .settingsDirectoryCard, .topicSurfaceItem, .npcListButton[aria-pressed="true"], .inventoryContainerButton[aria-pressed="true"], .topicDraftSlot[aria-pressed="true"], .inkboxTab[aria-selected="true"], li[data-draft-state="written"], .quickActionSlip[data-draft-state="written"], .inkMapTooltip .paperButton[data-draft-state="written"]) {
+.appShell[data-motion="reduced"][data-material-motion="shared-paper"] :is(.paperMotionCard, .paperMotionInteractive, .paperMotionDraft[data-draft-state="written"], .scholarPanelCard, .npcRelationshipAgendaCard, .npcListButton[aria-pressed="true"], .inventoryContainerButton[aria-pressed="true"], .topicDraftSlot[aria-pressed="true"], .inkboxTab[aria-selected="true"], .quickActionSlip[data-draft-state="written"], .inkMapTooltip .paperButton[data-draft-state="written"]) {
   animation: none !important;
 }

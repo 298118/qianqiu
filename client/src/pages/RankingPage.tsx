@@ -398,7 +398,7 @@ export function RankingPage() {
           {[1, 2, 3].map((place) => {
             const entry = topEntries.find((item) => item.place === place);
             return (
-              <div className="rankingTopSeal" key={place} data-empty={entry ? "false" : "true"}>
+              <div className="rankingTopSeal paperMotionCard paperMotionInteractive" key={place} data-empty={entry ? "false" : "true"}>
                 <span>{readTopSealLabel(place, entry, examName)}</span>
                 <strong>{entry?.name ?? "未张挂"}</strong>
                 <em>{entry?.rankLabel ?? "待定榜"}</em>
@@ -420,6 +420,7 @@ export function RankingPage() {
                   return (
                     <li key={entry.id} className={entry.isPlayer ? "isPlayer" : ""}>
                       <button
+                        className="paperMotionInteractive"
                         type="button"
                         aria-pressed={isSelected}
                         data-selected={isSelected ? "true" : "false"}

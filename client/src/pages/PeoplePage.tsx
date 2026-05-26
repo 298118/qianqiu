@@ -1334,7 +1334,7 @@ export function PeoplePage() {
           >
             {visiblePeople.map((person) => (
               <article
-                className="peopleCard"
+                className="peopleCard paperMotionCard paperMotionInteractive"
                 key={`${person.kind}-${person.id}`}
                 data-person-kind={person.kind}
                 data-polish-people-card="s89-9-portrait-material"
@@ -1431,7 +1431,7 @@ function NpcRelationshipEntitySignals({
       {signals.length ? (
         <div className="npcRelationshipSignalGrid">
           {signals.map((signal) => (
-            <article className="npcRelationshipSignalCard" key={signal.id}>
+            <article className="npcRelationshipSignalCard paperMotionCard paperMotionInteractive" key={signal.id}>
               <div>
                 <p className="eyebrow">{signal.categoryLabel} · {signal.statusLabel}</p>
                 <h3>{signal.name}</h3>
@@ -1476,7 +1476,7 @@ function NpcRelationshipAgenda({
       {threads.length ? (
         <div className="npcRelationshipAgendaGrid">
           {threads.map((thread) => (
-            <article className="npcRelationshipAgendaCard" key={thread.id}>
+            <article className="npcRelationshipAgendaCard paperMotionCard paperMotionInteractive" key={thread.id}>
               <div>
                 <p className="eyebrow">{thread.sourceLabel} · {thread.statusLabel}</p>
                 <h3>{thread.title}</h3>
@@ -1704,7 +1704,7 @@ function NpcSocialTab({
           const available = action.available === true;
           const blockers = (action.blockers ?? []).map((item) => safePeopleText(item, "", 42)).filter(Boolean);
           return (
-            <article className="inventoryMiniCard" key={actionType || action.label}>
+            <article className="inventoryMiniCard paperMotionCard paperMotionInteractive" key={actionType || action.label}>
               <strong>{safePeopleText(action.label, actionLabel(actionType), 32)}</strong>
               <span>{available ? "可呈请复核" : blockers.join("；") || "暂不可用"}</span>
               <button className="paperButton" type="button" disabled={!available || busy} onClick={() => onSubmit(actionType)}>
@@ -1740,7 +1740,7 @@ function NpcActiveRequestInbox({
         const options = canRespond ? (request.responseOptions ?? []).slice(0, 3) : [];
         const followUp = request.outcome?.followUpView;
         return (
-          <article className="inventoryMiniCard" key={request.requestId || request.title}>
+          <article className="inventoryMiniCard paperMotionCard paperMotionInteractive" key={request.requestId || request.title}>
             <strong>{safePeopleText(request.title, "来函", 48)}</strong>
             <span>{safePeopleText(request.ask, "请先查证来意。", 130)}</span>
             {followUp ? (
@@ -1784,7 +1784,7 @@ function NpcActiveRequestFollowUpDocket({
           ? task.latestResolution as Record<string, unknown>
           : null;
         return (
-          <article className="inventoryMiniCard" key={task.taskId || task.requestId || task.title}>
+          <article className="inventoryMiniCard paperMotionCard paperMotionInteractive" key={task.taskId || task.requestId || task.title}>
             <strong>{safePeopleText(task.title, "来函后续", 48)}</strong>
             <span>
               {safePeopleText(
@@ -1858,7 +1858,7 @@ function RecordList({
     <section className="npcRecordList">
       <h3>{title}</h3>
       {items.length ? items.map((item) => (
-        <article className="inventoryMiniCard" key={item.id}>
+        <article className="inventoryMiniCard paperMotionCard paperMotionInteractive" key={item.id}>
           <strong>{item.title}</strong>
           <span>{item.body}</span>
         </article>

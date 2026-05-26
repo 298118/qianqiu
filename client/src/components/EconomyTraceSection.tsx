@@ -251,7 +251,7 @@ export function EconomyTraceSection({
       <p>{cleanTraceText(traceView?.summary, summaryFallback, 160)}</p>
       <div className="economyTraceGrid">
         {items.map((item) => (
-          <article className="inventoryMiniCard economyTraceCard" key={item.id}>
+          <article className="inventoryMiniCard economyTraceCard paperMotionCard paperMotionInteractive" key={item.id}>
             <strong>{item.title}</strong>
             <span>{item.summary}</span>
             <small>{item.groupLabel} · {item.statusLabel}</small>

@@ -1352,7 +1352,7 @@ function MapFilterSurfaceGuide({ summary, onClose }: { readonly summary: MapFilt
         </div>
         <div className="topicSurfaceItems">
           {summary.layers.map((layer) => (
-            <article className="topicSurfaceItem" key={layer.id}>
+            <article className="topicSurfaceItem paperMotionCard paperMotionInteractive" key={layer.id}>
               <div>
                 <strong>{layer.label}</strong>
                 <span>{layer.countLabel}</span>
@@ -1532,7 +1532,7 @@ function TopicSurfaceWorkbench({
         {topicView?.items.length ? (
           <div className="topicSurfaceItems">
             {topicView.items.map((item) => (
-              <article className="topicSurfaceItem" key={item.id}>
+              <article className="topicSurfaceItem paperMotionCard paperMotionInteractive" key={item.id}>
                 <div>
                   <strong>{safeSurfaceText(item.title, "公开材料", 48)}</strong>
                   <span>{safeSurfaceText(item.statusLabel, "可阅", 24)}</span>

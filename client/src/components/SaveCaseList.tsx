@@ -99,7 +99,7 @@ export function SaveCaseList({ saves, maxItems, className = "", actionLabel = "è
   return (
     <div className={`saveCaseList${className ? ` ${className}` : ""}`}>
       {saves.slice(0, maxItems).map((save) => (
-        <article className="saveCaseItem" key={save.sessionId}>
+        <article className="saveCaseItem paperMotionCard paperMotionInteractive" key={save.sessionId}>
           <div className="saveCaseTopline">
             <span className="saveCaseCode">æ¡ˆ {getSaveShortCode(save)}</span>
             <span>{getSaveUpdatedLabel(save)}</span>
