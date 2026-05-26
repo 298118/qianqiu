@@ -2959,6 +2959,30 @@ test("S89.47 main route static surfaces use paper surface utilities", () => {
   assert.match(clientSmokeSource, /S89\.47 main static surfaces were incomplete/);
 });
 
+test("S89.48 people static surfaces use paper surface utilities", () => {
+  const peopleSource = readText("client/src/pages/PeoplePage.tsx");
+  const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(peopleSource, /className="npcGroupList paperMotionSurface"/);
+  assert.match(peopleSource, /className="npcDetailWorkbench paperMotionSurface"/);
+  assert.match(peopleSource, /className="portraitLedger paperMotionSurface"/);
+  assert.match(peopleSource, /className="npcListButton paperMotionSelected"/);
+  assert.match(peopleSource, /data-gallery-selected=\{selectedNpc\?\.npcId === npc\.npcId \? "true" : "false"\}/);
+  assert.match(peopleSource, /onSubmit=\{handleDialogueSubmit\}/);
+  assert.match(peopleSource, /onSubmit=\{handleTradeSubmit\}/);
+  assert.match(peopleSource, /onSubmit=\{handleCommandSubmit\}/);
+  assert.match(peopleSource, /onSubmit=\{handleSocialSubmit\}/);
+
+  assert.match(polishSource, /\.paperMotionSurface/);
+  assert.doesNotMatch(polishSource, /\.portraitLedger|\.npcGroupList|\.npcDetailWorkbench/);
+  assert.doesNotMatch(peopleSource, /className="(?=[^"]*(?:portraitLedger|npcGroupList|npcDetailWorkbench))(?=[^"]*paperMotion(?:Card|Panel))[^"]*"/);
+
+  assert.match(clientSmokeSource, /peopleStaticSurfaceCount: document\.querySelectorAll\("\.portraitLedger\.paperMotionSurface, \.npcGroupList\.paperMotionSurface, \.npcDetailWorkbench\.paperMotionSurface"\)\.length/);
+  assert.match(clientSmokeSource, /peopleStaticSurfaceMissing: Boolean\(document\.querySelector\("\.portraitLedger:not\(\.paperMotionSurface\), \.npcGroupList:not\(\.paperMotionSurface\), \.npcDetailWorkbench:not\(\.paperMotionSurface\)"\)\)/);
+  assert.match(clientSmokeSource, /S89\.48 people static surfaces were incomplete/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");

@@ -1134,7 +1134,7 @@ export function PeoplePage() {
         })}
       />
       <section className="npcWorkbench" aria-label="人物名册" data-polish-people-workbench="s89-9-portrait-material" data-polish-people-gallery-workbench={peoplePortraitGalleryPolishId}>
-        <aside className="npcGroupList" aria-label="人物分组">
+        <aside className="npcGroupList paperMotionSurface" aria-label="人物分组">
           {npcGroups.length ? npcGroups.map((group) => (
             <section key={group.label}>
               <h2>{group.label}</h2>
@@ -1176,7 +1176,7 @@ export function PeoplePage() {
             </section>
           )) : <p className="statusLine">{routeSessionSupported ? "等待人物名册。" : unsupportedRouteMessage}</p>}
         </aside>
-        <section className="npcDetailWorkbench" aria-label="人物详情" data-polish-people-detail="s89-9-portrait-material" data-polish-people-gallery-detail={peoplePortraitGalleryPolishId}>
+        <section className="npcDetailWorkbench paperMotionSurface" aria-label="人物详情" data-polish-people-detail="s89-9-portrait-material" data-polish-people-gallery-detail={peoplePortraitGalleryPolishId}>
           {selectedNpc ? (
             <>
               <div className="npcDetailHeader">
@@ -1307,7 +1307,7 @@ export function PeoplePage() {
         </section>
       </section>
       <section
-        className="portraitLedger"
+        className="portraitLedger paperMotionSurface"
         aria-label="本局人物谱牒"
         data-polish-people-ledger="s89-9-portrait-material"
         data-polish-people-gallery-ledger={peoplePortraitGalleryPolishId}

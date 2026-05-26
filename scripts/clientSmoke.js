@@ -3724,6 +3724,8 @@ async function runClientSmoke(options = {}) {
         gallerySelectedCards: document.querySelectorAll("[data-polish-people-gallery-card='s89-35-people-portrait-gallery'][data-selected='true']").length,
         galleryCardCount: document.querySelectorAll("[data-polish-people-gallery-card='s89-35-people-portrait-gallery']").length,
         galleryPortraitCards: document.querySelectorAll("[data-polish-portrait-card='s89-35-people-portrait-gallery']").length,
+        peopleStaticSurfaceCount: document.querySelectorAll(".portraitLedger.paperMotionSurface, .npcGroupList.paperMotionSurface, .npcDetailWorkbench.paperMotionSurface").length,
+        peopleStaticSurfaceMissing: Boolean(document.querySelector(".portraitLedger:not(.paperMotionSurface), .npcGroupList:not(.paperMotionSurface), .npcDetailWorkbench:not(.paperMotionSurface)")),
         hasCrossTrace: Boolean(crossTrace),
         crossTraceState: crossTrace?.getAttribute("data-cross-trace-state") || "",
         crossTraceTargets: [...(crossTrace?.querySelectorAll("[data-cross-trace-target]") || [])].map((entry) => entry.getAttribute("data-cross-trace-target") || "").sort(),
@@ -3747,6 +3749,9 @@ async function runClientSmoke(options = {}) {
     }
     if (!portraitLedger.polishShell || !portraitLedger.polishLedger || !portraitLedger.polishWorkbench || portraitLedger.polishCardCount < 1 || !portraitLedger.cardBackground.includes("linear-gradient") || !/transform|box-shadow|border-color/i.test(portraitLedger.cardTransition)) {
       throw new Error(`S89.9 people portrait material polish hooks were incomplete: ${JSON.stringify(portraitLedger)}`);
+    }
+    if (portraitLedger.peopleStaticSurfaceCount !== 3 || portraitLedger.peopleStaticSurfaceMissing) {
+      throw new Error(`S89.48 people static surfaces were incomplete: ${JSON.stringify({ peopleStaticSurfaceCount: portraitLedger.peopleStaticSurfaceCount, peopleStaticSurfaceMissing: portraitLedger.peopleStaticSurfaceMissing })}`);
     }
     if (!portraitLedger.galleryShell || !portraitLedger.galleryBand || portraitLedger.galleryState !== "ready" || portraitLedger.galleryLedgerState !== "ready" || portraitLedger.galleryCardCount < 1 || portraitLedger.galleryPortraitCards < 1 || portraitLedger.gallerySelectedButtons !== 1 || !/人物画屏|入谱照面|画屏|公开小传|草稿|候复线索/.test(portraitLedger.galleryReadoutText) || portraitLedger.galleryReadoutRows < 5 || portraitLedger.galleryReadoutGrid !== "grid" || !portraitLedger.galleryReadoutColumns || (portraitLedger.galleryAnimation !== "s8935GalleryUnroll" && portraitLedger.galleryAnimation !== "none")) {
       throw new Error(`S89.35 people portrait gallery readout missing or unsafe: ${JSON.stringify(portraitLedger)}`);
