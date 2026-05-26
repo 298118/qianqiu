@@ -1,0 +1,24 @@
+:where(.paperSurface, .rolePanel, .statusSurface, .ledgerCard) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+:where(.paperSurface, .rolePanel) {
+  border: 1px solid var(--qq-color-border-soft);
+  background: var(--qq-surface-paper-strong);
+  box-shadow: var(--qq-shadow-paper-lift);
+}
+
+:where(.ledgerCard) {
+  border: 1px solid var(--qq-color-border-soft);
+  background: var(--qq-surface-paper-soft);
+  box-shadow:
+    0 10px 22px rgb(80 50 35 / .08),
+    inset 0 1px 0 rgb(255 255 255 / .28);
+}
+
+:where(.statusSurface) {
+  border: 1px solid rgb(142 47 39 / .18);
+  background: rgb(255 252 238 / .64);
+  color: var(--qq-color-state-red);
+}

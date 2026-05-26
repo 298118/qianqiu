@@ -1,0 +1,43 @@
+@media (max-width: 760px) {
+  .portraitChoiceGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .peopleCard {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .peoplePortrait {
+    min-height: 108px;
+  }
+
+  .npcWorkbench,
+  .inventoryWorkbench {
+    gap: 12px;
+  }
+
+  .npcGroupList,
+  .npcDetailWorkbench,
+  .inventoryContainerList,
+  .inventoryItemList,
+  .inventoryLedgerBlock,
+  .inventoryTransferPanel {
+    padding: 10px;
+  }
+
+  .npcListButton {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .inventoryContainerButton {
+    grid-template-columns: 20px minmax(0, 1fr);
+  }
+
+  .npcTradeForm .paperButton,
+  .npcCommandForm .paperButton,
+  .inventoryTransferPanel .paperButton {
+    justify-self: stretch;
+    min-height: 44px;
+  }
+
+}

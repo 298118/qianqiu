@@ -25,6 +25,7 @@ export function AppShell() {
       data-shell-version="s75-9"
       data-polish-surface="s89-5-material-feedback"
       data-polish-atmosphere="s89-30-shared-material-motion"
+      data-material-motion="shared-paper"
       data-polish-entry="s89-32-shell-entry-glass"
       data-motion={displayPreferences.motion}
       data-text-size={displayPreferences.textSize}

@@ -1,0 +1,155 @@
+@media (max-width: 760px) {
+  .topBar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .topTools {
+    margin-left: 0;
+  }
+
+  .inkboxOverview,
+  .displayPreferenceLedger,
+  .aiTaskRouteControls,
+  .portraitViewerPanel,
+  .portraitViewerMeta,
+  .portraitViewerCueGrid,
+  .portraitViewerDossierRail,
+  .courtSurfaceGrid,
+  .topicSurfaceLayout,
+  .settingsDirectoryHeader,
+  .settingsDirectoryGrid,
+  .settingsDirectoryCard,
+  .homeOpeningPath ol,
+  .saveShelfHeader,
+  .saveShelfStatus,
+  .saveCaseSkeletonList,
+  .continueShelf,
+  .gameCommandBar,
+  .gameDeskCompass,
+  .gameDeskMaterialGrid,
+  .crossPageTraceGrid,
+  .gameMainDeck,
+  .openingClaimPanel,
+  .openingClaimList,
+  .gameStatusRail,
+  .courtAgendaSteps,
+  .mapHero,
+  .mapImmersiveLayout,
+  .archiveDigestBand,
+  .archiveRouteHeader,
+  .archiveTraceGrid,
+  .archiveDigestStats,
+  .archiveLeadList li,
+  .scholarPanelGrid,
+  .scholarPanelStatus,
+  .scholarPanelMetrics,
+  .scholarPanelCompactDl,
+  .scholarPlanSummary,
+  .roleCycleMatrix ul,
+  .roleCycleFocusStrip,
+  .roleCycleMetrics,
+  .roleCycleColumns,
+  .scholarPlanTimeline li,
+  .memorialComposerShell,
+  .quickActionSlip,
+  .startDesk,
+  .inlineForm,
+  .npcWorkbench,
+  .peopleGalleryReadout,
+  .peopleGalleryReadout dl,
+  .inventoryWorkbench,
+  .npcDetailHeader,
+  .npcTradeForm,
+  .npcCommandForm,
+  .inventoryTransferPanel,
+  .npcRecordsGrid,
+  .inventorySummaryGrid,
+  .npcFactGrid,
+  .inventoryItemStats,
+  .examStageRail,
+  .examCeremonyBand,
+  .examCeremonyBand ol,
+  .examImmersiveLayout,
+  .examQuestionPanel,
+  .examPaperHeader,
+  .rankingCeremonyBand,
+  .rankingCeremonyBand ol,
+  .rankingTopThree,
+  .rankingBoardGrid,
+  .rankingDetailRail,
+  .rankingScoreGrid,
+  .segmentedChoices {
+    grid-template-columns: 1fr;
+  }
+
+  .inkboxTabs,
+  .gameFeatureTabs,
+  .mapHeroStats,
+  .archiveStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aiSettingsToolbar,
+  .aiTaskRouteHeader,
+  .aiSettingsActions,
+  .aiSettingsSummary,
+  .mapCommandDeck,
+  .rankingActionItem {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .aiSettingsActions .paperButton,
+  .aiSettingsSummary .paperButton {
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .aiSettingsSummary label {
+    width: 100%;
+  }
+
+  .drawerScrim {
+    justify-items: stretch;
+  }
+
+  .drawerHost {
+    width: 100%;
+    padding: 54px 16px 18px;
+    border-left: 0;
+  }
+
+  .portraitViewerPanel {
+    max-height: calc(100vh - 24px);
+  }
+
+  .portraitViewerFigure {
+    width: min(360px, 100%);
+    max-height: 62vh;
+  }
+
+  .topicSurfaceColumn {
+    padding: 12px;
+  }
+
+  .settingsDirectorySeal {
+    width: 54px;
+    height: 54px;
+  }
+
+  .statePage {
+    width: min(100% - 28px, 760px);
+    margin-top: 16px;
+    margin-bottom: 16px;
+    padding: 24px 18px;
+  }
+
+  .topNav a,
+  .sessionNav a,
+  .paperLink {
+    padding: 7px 10px;
+  }
+
+}

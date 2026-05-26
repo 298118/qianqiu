@@ -1,0 +1,252 @@
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--qq-space-lg);
+  padding: 14px clamp(16px, 4vw, 48px);
+  border-bottom: 1px solid var(--qq-color-border-soft);
+  background:
+    linear-gradient(180deg, rgb(255 250 234 / .88), rgb(229 211 178 / .78)),
+    var(--qq-material-silk) center / 620px repeat;
+  backdrop-filter: blur(14px) saturate(1.08);
+  box-shadow: 0 10px 28px rgb(42 29 20 / .09);
+  isolation: isolate;
+}
+
+.topBar[data-polish-shell="s89-32-shell-entry-glass"]::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 82% 18%, rgb(255 255 255 / .34), transparent 24%),
+    linear-gradient(110deg, rgb(255 255 255 / .18), transparent 32%, rgb(142 47 39 / .08) 72%, transparent);
+  content: "";
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.topBar[data-polish-shell="s89-32-shell-entry-glass"] > * {
+  position: relative;
+  z-index: 1;
+}
+
+.topBar::after {
+  position: absolute;
+  inset: auto clamp(16px, 4vw, 48px) 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(142 47 39 / .38), rgb(204 156 72 / .36), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+.brandMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 132px;
+}
+
+.brandMark strong {
+  display: block;
+  font-size: 1.18rem;
+  font-weight: 800;
+}
+
+.brandMark small {
+  display: block;
+  color: var(--qq-color-muted);
+  font-size: 0.72rem;
+}
+
+.brandSeal {
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--qq-color-vermilion);
+  background: var(--qq-color-seal);
+  box-shadow: inset 0 0 0 4px rgb(255 236 211 / .28);
+}
+
+.topNav,
+.sessionNav,
+.homeActions,
+.topTools,
+.buttonRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--qq-space-sm);
+}
+
+.topNav a,
+.sessionNav a,
+.paperLink {
+  position: relative;
+  border: 1px solid var(--qq-color-border-medium);
+  background: var(--qq-surface-paper-soft);
+  padding: 8px 12px;
+  color: var(--qq-color-ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    border-color var(--qq-motion-fast) ease,
+    background var(--qq-motion-fast) ease,
+    color var(--qq-motion-fast) ease,
+    transform var(--qq-motion-fast) ease,
+    box-shadow var(--qq-motion-fast) ease;
+}
+
+.topNav[data-polish-shell-nav="s89-32-main-nav-density"] a {
+  overflow: hidden;
+}
+
+.topNav[data-polish-shell-nav="s89-32-main-nav-density"] a::after {
+  position: absolute;
+  inset: auto 10px 5px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgb(142 47 39 / .54), rgb(204 156 72 / .38), transparent);
+  content: "";
+  opacity: 0;
+  transform: scaleX(0.42);
+  transform-origin: center;
+  transition: opacity 160ms ease, transform 180ms ease;
+  pointer-events: none;
+}
+
+.topNav[data-polish-shell-nav="s89-32-main-nav-density"] a:hover::after,
+.topNav[data-polish-shell-nav="s89-32-main-nav-density"] a:focus-visible::after,
+.topNav[data-polish-shell-nav="s89-32-main-nav-density"] a.active::after,
+.topNav[data-polish-shell-nav="s89-32-main-nav-density"] a[aria-current="page"]::after {
+  animation: s8932NavInkGlow 420ms ease-out;
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.topNav a.active,
+.topNav a[aria-current="page"],
+.sessionNav a.active {
+  border-color: var(--qq-color-vermilion);
+  background:
+    linear-gradient(180deg, rgb(255 250 232 / .9), rgb(238 214 177 / .76)),
+    var(--qq-material-xuan) center / 420px repeat;
+  box-shadow:
+    inset 0 -2px 0 rgb(142 47 39 / .42),
+    0 8px 18px rgb(54 37 24 / .1);
+  color: var(--qq-color-vermilion);
+}
+
+.topTools {
+  margin-left: auto;
+}
+
+.topTools[data-polish-shell-tools="s89-32-inkbox-entry"] {
+  padding: 3px;
+  border: 1px solid rgb(255 252 238 / .28);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .2), rgb(142 47 39 / .06)),
+    var(--qq-material-silk) center / 420px repeat;
+  box-shadow:
+    inset 0 0 0 1px rgb(84 60 43 / .06),
+    0 10px 26px rgb(42 29 20 / .08);
+  backdrop-filter: blur(10px) saturate(1.04);
+}
+
+.iconButton {
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid rgb(142 47 39 / .48);
+  background:
+    linear-gradient(180deg, rgb(255 252 238 / .84), rgb(231 211 180 / .64)),
+    var(--qq-material-xuan) center / 420px repeat;
+  color: #7b241f;
+  box-shadow: 0 8px 18px rgb(54 37 24 / .1);
+}
+
+.inkboxButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  isolation: isolate;
+  min-width: 82px;
+  min-height: 40px;
+  overflow: hidden;
+  border: 1px solid rgb(142 47 39 / .54);
+  background:
+    linear-gradient(135deg, rgb(255 248 230 / .86), rgb(225 202 166 / .72)),
+    var(--qq-material-seal-box) center / cover no-repeat;
+  color: #7b241f;
+  font: inherit;
+  font-weight: 800;
+  padding: 8px 12px;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 248 230 / .34),
+    0 10px 26px rgb(86 40 31 / .14);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, filter 160ms ease;
+}
+
+.inkboxButton::before {
+  position: absolute;
+  inset: -28% auto -28% -44%;
+  z-index: -1;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, rgb(255 245 224 / .48), transparent);
+  content: "";
+  opacity: 0;
+  transform: translateX(0);
+  transition: opacity 180ms ease, transform 260ms ease;
+}
+
+.inkboxButton::after {
+  position: absolute;
+  right: 5px;
+  bottom: 4px;
+  z-index: -1;
+  width: 28px;
+  aspect-ratio: 1;
+  background: var(--qq-material-red-smudge) center / contain no-repeat;
+  content: "";
+  opacity: 0.14;
+  transform: rotate(-12deg) scale(0.84);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.iconButton:hover,
+.iconButton:focus-visible,
+.inkboxButton:hover,
+.inkboxButton:focus-visible {
+  border-color: #7b241f;
+  box-shadow:
+    var(--qq-shadow-ink-focus),
+    0 14px 30px rgb(86 40 31 / .18);
+  transform: translateY(-1px);
+  outline: 2px solid rgb(123 36 31 / .24);
+  outline-offset: 2px;
+}
+
+.inkboxButton:hover::before,
+.inkboxButton:focus-visible::before {
+  opacity: 0.82;
+  transform: translateX(330%);
+}
+
+.inkboxButton:hover::after,
+.inkboxButton:focus-visible::after {
+  opacity: 0.28;
+  transform: rotate(-8deg) scale(1);
+}
+
+.inkboxButton:active {
+  box-shadow:
+    inset 0 2px 8px rgb(75 43 28 / .18),
+    0 5px 14px rgb(86 40 31 / .12);
+  filter: saturate(0.95);
+  transform: translateY(1px);
+}

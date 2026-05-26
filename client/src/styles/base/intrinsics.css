@@ -1,0 +1,20 @@
+button,
+a,
+input,
+select,
+textarea {
+  min-width: 0;
+}
+
+button,
+.paperButton,
+.paperLink,
+.inkboxButton {
+  overflow-wrap: anywhere;
+}
+
+button > span,
+a > span {
+  min-width: 0;
+}
+

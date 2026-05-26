@@ -1,0 +1,117 @@
+@media (max-width: 760px) {
+  .examHero {
+    min-height: 360px;
+  }
+
+  .examHeroCopy {
+    align-self: start;
+    width: 100%;
+    padding: 18px 16px;
+  }
+
+  .examStageRail {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    align-self: end;
+    width: auto;
+    margin: 0 14px 14px;
+  }
+
+  .examCeremonyBand,
+  .rankingCeremonyBand {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .examSideColumn {
+    position: static;
+  }
+
+  .examDesk {
+    min-height: auto;
+  }
+
+  .examSubmit textarea {
+    min-height: 46vh;
+  }
+
+  .examSealSubmitButton {
+    justify-self: stretch;
+  }
+
+  .rankingHero {
+    min-height: 360px;
+    padding: 16px;
+  }
+
+  .rankingHeroCopy {
+    align-self: start;
+    width: 100%;
+    padding: 18px 16px;
+    background: rgb(255 248 230 / .86);
+  }
+
+  .rankingJumpLink {
+    position: static;
+    align-self: end;
+    justify-self: start;
+    margin-top: 18px;
+  }
+
+  .rankingNoticeBoard {
+    margin-top: 0;
+    padding: 14px;
+  }
+
+  .rankingGoldenNotice {
+    min-height: 0;
+    padding: 18px 16px 94px;
+  }
+
+  .rankingGoldenTitle {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .rankingGoldenNotice::after {
+    top: auto;
+    right: 18px;
+    bottom: 18px;
+    width: 72px;
+    transform: rotate(-12deg);
+  }
+
+  .rankingVermilionCircle {
+    top: auto;
+    right: 30px;
+    bottom: 31px;
+    width: 42px;
+    transform: rotate(-12deg);
+  }
+
+  .rankingList button {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rankingMeta,
+  .rankingScore {
+    grid-column: auto;
+  }
+
+  .rankingActionRow .paperLink {
+    align-self: start;
+  }
+
+  .archiveActionRow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  }
+
+  .archiveActionRow .paperButton,
+  .archiveActionRow .paperLink {
+    justify-content: center;
+    min-height: 44px;
+  }
+
+}

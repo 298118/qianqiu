@@ -1,0 +1,1967 @@
+.gameSurface,
+.plainPage {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0 64px;
+}
+
+.plainPage {
+  min-height: calc(100vh - 66px);
+  align-content: center;
+  display: grid;
+  gap: 16px;
+}
+
+.plainPage p {
+  max-width: 620px;
+}
+
+.routeRecoveryPage,
+.plainPage {
+  background:
+    radial-gradient(circle at 12% 16%, rgb(142 47 39 / .1), transparent 24%),
+    radial-gradient(circle at 86% 26%, rgb(31 67 65 / .1), transparent 26%);
+}
+
+.statePage {
+  position: relative;
+  isolation: isolate;
+  justify-items: start;
+  width: min(760px, calc(100% - 32px));
+  min-height: min(680px, calc(100vh - 66px));
+  margin-top: clamp(18px, 7vh, 72px);
+  margin-bottom: clamp(18px, 7vh, 72px);
+  padding: clamp(26px, 5vw, 46px);
+  overflow: hidden;
+  border: 1px solid rgb(84 60 43 / .24);
+  background:
+    var(--qq-material-red-smudge) right -38px top -34px / 160px 160px no-repeat,
+    var(--qq-material-ink-corner) left -16px bottom -18px / 132px 132px no-repeat,
+    linear-gradient(135deg, rgb(255 252 238 / .9), rgb(230 211 178 / .78)),
+    var(--qq-material-folded) center / cover no-repeat;
+  box-shadow:
+    var(--qq-shadow-paper-lift),
+    inset 0 0 0 1px rgb(255 252 238 / .42);
+  animation: statePageArrive 420ms cubic-bezier(0.2, 0.82, 0.22, 1) both;
+}
+
+.statePage::before {
+  position: absolute;
+  inset: 16px;
+  border: 1px solid rgb(142 47 39 / .16);
+  content: "";
+  pointer-events: none;
+}
+
+.statePage::after {
+  position: absolute;
+  right: clamp(18px, 6vw, 56px);
+  bottom: clamp(16px, 5vw, 42px);
+  width: clamp(92px, 18vw, 142px);
+  aspect-ratio: 1;
+  border: 2px solid rgb(142 47 39 / .18);
+  background: rgb(165 58 47 / .06);
+  content: "";
+  filter: blur(0.2px);
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.statePageSeal {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 1px solid rgb(142 47 39 / .44);
+  background:
+    linear-gradient(135deg, rgb(255 248 230 / .82), rgb(218 190 148 / .62)),
+    var(--qq-material-seal-box) center / cover no-repeat;
+  color: #7b241f;
+  box-shadow:
+    0 12px 24px rgb(42 29 20 / .12),
+    inset 0 0 0 4px rgb(255 236 211 / .18);
+}
+
+.statePageCopy {
+  display: grid;
+  gap: 8px;
+  max-width: 640px;
+}
+
+.statePageCopy h1,
+.statePageCopy p {
+  margin: 0;
+}
+
+.statePageActions {
+  margin-top: 6px;
+}
+
+.gameSurface.hasMemorialComposer {
+  padding-bottom: clamp(230px, 28vh, 300px);
+}
+
+.sessionRouteShell {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  min-height: calc(100vh - 66px);
+  padding: 18px 0 44px;
+  overflow: clip;
+  background:
+    radial-gradient(circle at 16% 10%, rgb(142 47 39 / .1), transparent 26%),
+    radial-gradient(circle at 84% 18%, rgb(31 67 65 / .12), transparent 28%),
+    linear-gradient(180deg, rgb(246 235 212 / .44), rgb(220 199 164 / .2)),
+    var(--qq-material-xuan) center / 720px repeat;
+}
+
+.sessionRouteShell::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 156px;
+  background:
+    linear-gradient(180deg, rgb(255 248 230 / .52), transparent),
+    var(--qq-material-edge) center top / 100% 156px no-repeat;
+  content: "";
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.sessionRouteShell > .sessionNav {
+  position: sticky;
+  top: 74px;
+  z-index: 5;
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 10px;
+  border: 1px solid rgb(84 60 43 / .18);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .78), rgb(228 208 174 / .58)),
+    var(--qq-material-xuan) center / 520px repeat;
+  box-shadow:
+    0 14px 34px rgb(42 29 20 / .1),
+    inset 0 0 0 1px rgb(255 252 238 / .36);
+  backdrop-filter: blur(10px);
+}
+
+.sessionRouteShell > .examFullScreen,
+.sessionRouteShell > .courtSurfacePage,
+.sessionRouteShell > .surfacePanel {
+  position: relative;
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  animation: routePanelRise 420ms cubic-bezier(0.2, 0.82, 0.22, 1) both;
+}
+
+.surfaceHeader,
+.gameCommandBar {
+  margin-bottom: 24px;
+}
+
+.surfaceHeader h1,
+.plainPage h1 {
+  font-size: 2.5rem;
+}
+
+.gameCommandBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
+  align-items: end;
+  gap: 20px;
+}
+
+.gameCommandBar[data-polish-game-command="s89-34-main-court-desk"] {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(84 60 43 / .24);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .74), rgb(224 210 181 / .48)),
+    var(--qq-material-folded) center / cover no-repeat;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .34),
+    0 18px 38px rgb(48 33 21 / .1);
+  padding: 18px;
+  backdrop-filter: blur(12px) saturate(1.04);
+}
+
+.gameCommandBar[data-polish-game-command="s89-34-main-court-desk"]::before {
+  content: "";
+  position: absolute;
+  inset: -42% -8% auto;
+  height: 110px;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 50%, rgb(142 47 39 / .16), transparent 34%),
+    linear-gradient(90deg, transparent, rgb(210 154 57 / .16), transparent);
+  opacity: .7;
+  transform: translateX(-18%);
+  animation: s8934InkPulse 4600ms ease-in-out infinite alternate;
+}
+
+.gameCommandBar[data-polish-game-command="s89-34-main-court-desk"] > * {
+  position: relative;
+  z-index: 1;
+}
+
+.gameCommandBar h1 {
+  margin-bottom: 0;
+  font-size: clamp(2.8rem, 4vw, 4.8rem);
+}
+
+.gameStatusRail,
+.openingClaimCounts,
+.scholarPlanSummary,
+.scholarPanelCompactDl,
+.archiveDigestStats,
+.rankingDetailRail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.gameStatusRail div {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .24);
+  background: rgb(255 248 230 / .58);
+  padding: 9px 10px;
+}
+
+.gameStatusRail dt {
+  color: #7a6048;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.gameStatusRail dd {
+  margin: 2px 0 0;
+  color: #2d251d;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.gameSceneBand {
+  position: relative;
+  display: grid;
+  min-height: clamp(190px, 25vw, 300px);
+  margin-bottom: 18px;
+  overflow: hidden;
+  border: 1px solid rgb(84 60 43 / .28);
+  background:
+    linear-gradient(90deg, rgb(32 26 20 / .68), rgb(32 26 20 / .18) 52%, rgb(238 224 197 / .14)),
+    var(--scene-image) center / cover no-repeat,
+    #e7d7bb;
+  box-shadow: inset 0 0 0 1px rgb(255 248 230 / .36);
+}
+
+.gameSceneBand[data-polish-game-scene="s89-34-main-court-desk"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(105deg, transparent 18%, rgb(255 248 230 / .18) 44%, transparent 68%),
+    radial-gradient(circle at 78% 18%, rgb(210 154 57 / .16), transparent 32%);
+  mix-blend-mode: screen;
+  opacity: .58;
+  transform: translateX(-10%);
+  animation: s8934SceneSheen 5200ms ease-in-out infinite alternate;
+}
+
+.gameSceneImage {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(35 27 21 / .66), rgb(35 27 21 / .18) 54%, rgb(255 248 230 / .16)),
+    var(--scene-image) center / cover no-repeat;
+  filter: saturate(0.82);
+}
+
+.gameSceneCopy {
+  position: relative;
+  z-index: 1;
+  align-self: end;
+  width: min(560px, 88%);
+  padding: clamp(18px, 3vw, 30px);
+  color: #fff7e8;
+  text-shadow: 0 1px 1px rgb(31 22 16 / .55);
+}
+
+.gameSceneCopy h2 {
+  margin-bottom: 8px;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+}
+
+.gameSceneCopy p {
+  margin-bottom: 0;
+  line-height: 1.7;
+}
+
+.gameSceneCopy .eyebrow {
+  color: #f4d8a8;
+}
+
+.gameMainDeck {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.72fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.narrativeScroll,
+.gameSideLedger {
+  border: 1px solid rgb(84 60 43 / .28);
+  background:
+    linear-gradient(135deg, rgb(255 248 230 / .84), rgb(231 211 180 / .72)),
+    var(--qq-material-folded) center / cover no-repeat;
+  padding: 20px;
+}
+
+.narrativeScroll {
+  min-height: 240px;
+}
+
+.scrollHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgb(84 60 43 / .18);
+}
+
+.scrollHeading h2,
+.gameSideLedger h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.scrollHeading span {
+  flex: 0 0 auto;
+  border: 1px solid rgb(142 47 39 / .4);
+  background: rgb(165 58 47 / .1);
+  color: #7b241f;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 6px 8px;
+}
+
+.narrativeScroll p,
+.gameSideLedger p {
+  margin-bottom: 0;
+  color: #514232;
+  line-height: 1.78;
+}
+
+.gameSideLedger {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  background:
+    linear-gradient(135deg, rgb(255 248 230 / .8), rgb(222 205 174 / .62)),
+    var(--qq-material-torn) center / cover no-repeat;
+}
+
+.gameSideLedger[data-draft-state="written"] {
+  border-color: rgb(142 47 39 / .46);
+  box-shadow:
+    inset 5px 0 0 rgb(142 47 39 / .34),
+    0 14px 30px rgb(83 42 31 / .1);
+  animation: s8934LedgerGlow 360ms ease both;
+}
+
+.gameDeskCenter {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  margin: 0 0 18px;
+  overflow: hidden;
+  border: 1px solid rgb(84 60 43 / .26);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .76), rgb(230 216 185 / .56) 58%, rgb(160 58 47 / .08)),
+    var(--qq-material-aged) center / cover no-repeat;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .34),
+    0 18px 38px rgb(52 37 24 / .1);
+  padding: 18px;
+  animation: s8934DeskUnroll 430ms cubic-bezier(0.2, 0.78, 0.2, 1) both;
+}
+
+.gameDeskCenter::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 8% 18%, rgb(142 47 39 / .14), transparent 24%),
+    linear-gradient(90deg, rgb(255 255 255 / .16), transparent 30%, rgb(210 154 57 / .12));
+  opacity: .72;
+}
+
+.gameDeskCenter[data-desk-state="draft"]::after {
+  content: "候呈";
+  position: absolute;
+  right: 20px;
+  bottom: 16px;
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgb(142 47 39 / .56);
+  color: #8e2f27;
+  font-weight: 900;
+  letter-spacing: 0;
+  transform: rotate(-9deg);
+  background: rgb(142 47 39 / .07);
+  box-shadow: inset 0 0 0 4px rgb(255 248 230 / .36);
+  animation: s8934SealSettle 360ms ease both;
+}
+
+.gameDeskCenter > * {
+  position: relative;
+  z-index: 1;
+}
+
+.gameDeskCenter .sectionTitleRow {
+  margin-bottom: 0;
+}
+
+.gameDeskCenter .sectionTitleRow > span,
+.courtAgendaBand .sectionTitleRow > span {
+  border: 1px solid rgb(142 47 39 / .42);
+  background: rgb(142 47 39 / .1);
+  color: #7b241f;
+  font-size: .82rem;
+  font-weight: 900;
+  padding: 6px 9px;
+}
+
+.gameDeskCompass,
+.courtAgendaSteps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gameDeskCompass li,
+.courtAgendaSteps li {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .22);
+  background: rgb(255 252 238 / .62);
+  padding: 10px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .28);
+}
+
+.gameDeskCompass li {
+  animation: s8934SlipRise 360ms ease both;
+}
+
+.gameDeskCompass li:nth-child(2),
+.courtAgendaSteps li:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.gameDeskCompass li:nth-child(3),
+.courtAgendaSteps li:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.gameDeskCompass li:nth-child(4),
+.courtAgendaSteps li:nth-child(4) {
+  animation-delay: 180ms;
+}
+
+.gameDeskCompass span,
+.courtAgendaSteps span,
+.gameDeskMaterialCard span {
+  display: block;
+  color: #7a6048;
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+.gameDeskCompass strong,
+.courtAgendaSteps strong,
+.gameDeskMaterialCard strong {
+  display: block;
+  margin-top: 3px;
+  color: #2d251d;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.courtAgendaSteps p,
+.gameDeskMaterialCard p {
+  margin: 6px 0 0;
+  color: #5f4d3b;
+  font-size: .86rem;
+  line-height: 1.55;
+}
+
+.gameDeskMaterialGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gameDeskMaterialCard {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .2);
+  background: rgb(248 238 213 / .5);
+  padding: 10px;
+}
+
+.gameDeskMaterialCard[data-ready="true"] {
+  border-color: rgb(142 47 39 / .42);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .74), rgb(142 47 39 / .08));
+}
+
+.safeViewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.safeViewGrid span {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .22);
+  background: rgb(255 252 238 / .56);
+  color: #765b43;
+  font-size: 0.84rem;
+  font-weight: 800;
+  padding: 7px 8px;
+  text-align: center;
+}
+
+.safeViewGrid span[data-ready="true"] {
+  border-color: rgb(142 47 39 / .48);
+  background: rgb(165 58 47 / .1);
+  color: #7b241f;
+}
+
+.openingClaimPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.7fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid rgb(84 60 43 / .22);
+  background: rgb(255 252 238 / .72);
+  box-shadow: 0 18px 40px rgb(53 37 25 / .08);
+}
+
+.openingClaimPanel h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.openingClaimPanel p {
+  margin: 0;
+  color: #514232;
+  line-height: 1.7;
+}
+
+.openingClaimCounts div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 248 230 / .66);
+}
+
+.openingClaimCounts dt {
+  font-size: 0.75rem;
+  color: #765b43;
+}
+
+.openingClaimCounts dd {
+  margin: 2px 0 0;
+  color: #7b241f;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.openingClaimList {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.openingClaimItem {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(251 246 232 / .74);
+}
+
+.openingClaimItem strong,
+.openingClaimItem span {
+  display: block;
+}
+
+.openingClaimItem strong {
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+
+.openingClaimItem span {
+  color: #66513c;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.gameFeatureTabs {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  margin: 6px 0 18px;
+}
+
+.gameFeatureTabs a {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgb(84 60 43 / .28);
+  background:
+    linear-gradient(180deg, rgb(255 248 230 / .76), rgb(231 211 180 / .56)),
+    var(--qq-material-ink-line) center bottom / 100% 18px no-repeat;
+  color: #443226;
+  font-weight: 800;
+  padding: 8px 10px;
+}
+
+.gameFeatureTabs a.active,
+.gameFeatureTabs a.isSelected {
+  border-color: rgb(142 47 39 / .68);
+  background-color: rgb(165 58 47 / .1);
+  color: #7b241f;
+}
+
+.gameFeatureTabs a:hover,
+.gameFeatureTabs a:focus-visible {
+  border-color: #7b241f;
+  outline: 2px solid rgb(123 36 31 / .2);
+  outline-offset: 2px;
+}
+
+.surfacePanel {
+  border: 1px solid rgb(84 60 43 / .28);
+  background:
+    linear-gradient(135deg, rgb(255 248 230 / .82), rgb(231 211 180 / .72)),
+    var(--qq-material-folded) center / cover no-repeat;
+  padding: 20px;
+}
+
+.surfacePanel p,
+.plainPage p {
+  color: #514232;
+  line-height: 1.75;
+}
+
+.courtSurfacePage {
+  display: grid;
+  gap: 18px;
+}
+
+.courtSurfacePage[data-polish-court-agenda="s89-34-main-court-desk"] {
+  overflow: hidden;
+  border-color: rgb(84 60 43 / .26);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .8), rgb(229 215 184 / .6) 58%, rgb(82 98 72 / .08)),
+    var(--qq-material-folded) center / cover no-repeat;
+}
+
+.courtAgendaBand {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  overflow: hidden;
+  border: 1px solid rgb(84 60 43 / .24);
+  background:
+    linear-gradient(120deg, rgb(255 252 238 / .72), rgb(224 210 181 / .5)),
+    var(--qq-material-aged) center / cover no-repeat;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / .3),
+    0 16px 34px rgb(54 38 24 / .09);
+  padding: 16px;
+  animation: s8934DeskUnroll 400ms cubic-bezier(0.2, 0.78, 0.2, 1) both;
+}
+
+.courtAgendaBand::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 88% 18%, rgb(142 47 39 / .14), transparent 26%),
+    linear-gradient(90deg, transparent, rgb(210 154 57 / .14), transparent);
+  opacity: .72;
+  animation: s8934CourtSealGlow 5000ms ease-in-out infinite alternate;
+}
+
+.courtAgendaBand > * {
+  position: relative;
+  z-index: 1;
+}
+
+.courtAgendaBand .sectionTitleRow {
+  margin-bottom: 0;
+}
+
+.courtAgendaSteps li {
+  animation: s8934SlipRise 360ms ease both;
+}
+
+.courtAgendaBand[data-agenda-state="unsupported"] {
+  filter: saturate(.9);
+}
+
+.courtSurfaceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.courtSurfaceGroup {
+  display: grid;
+  align-content: space-between;
+  gap: 16px;
+  min-height: 240px;
+  border: 1px solid rgb(84 60 43 / .24);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .66), rgb(230 216 185 / .46)),
+    var(--qq-material-torn) center / cover no-repeat;
+  padding: 16px;
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    transform .18s ease;
+}
+
+.courtSurfaceGroup:hover {
+  border-color: rgb(142 47 39 / .36);
+  box-shadow: 0 14px 30px rgb(54 38 24 / .1);
+  transform: translateY(-2px);
+}
+
+.courtSurfaceGroup h3 {
+  margin: 0 0 8px;
+}
+
+.courtSurfaceActions {
+  display: grid;
+  gap: 10px;
+}
+
+.courtSurfaceEntry {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(84 60 43 / .2);
+  background: rgb(255 252 238 / .58);
+  padding: 12px;
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    transform .18s ease;
+}
+
+.courtSurfaceEntry::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: rgb(142 47 39 / .3);
+  opacity: 0;
+  transition: opacity .18s ease;
+}
+
+.courtSurfaceEntry:hover,
+.courtSurfaceEntry:focus-within {
+  border-color: rgb(142 47 39 / .38);
+  box-shadow: 0 12px 26px rgb(54 38 24 / .1);
+  transform: translateY(-1px);
+}
+
+.courtSurfaceEntry:hover::before,
+.courtSurfaceEntry:focus-within::before {
+  opacity: 1;
+}
+
+.courtSurfaceEntry[data-court-state="unsupported"] {
+  opacity: .76;
+}
+
+.courtSurfaceEntry .paperButton {
+  width: 100%;
+  justify-content: center;
+}
+
+.sessionNav {
+  margin: 4px 0 18px;
+}
+
+.scholarPanel {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  margin: 0 0 18px;
+  overflow: hidden;
+  border: 1px solid rgb(78 82 56 / .3);
+  background:
+    linear-gradient(115deg, rgb(255 248 230 / .9), rgb(233 223 193 / .78) 46%, rgb(192 205 180 / .38)),
+    var(--scholar-panel-bg, url("/assets/ui/roles/role-scholar-study-v1.webp")) left center / cover no-repeat,
+    #eadcc4;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 252 238 / .5),
+    0 18px 44px rgb(43 32 22 / .12);
+  padding: clamp(16px, 3vw, 24px);
+}
+
+.magistratePanel {
+  border-color: rgb(112 55 36 / .32);
+  background:
+    linear-gradient(115deg, rgb(255 248 230 / .92), rgb(226 208 174 / .8) 44%, rgb(116 73 48 / .24)),
+    var(--scholar-panel-bg, url("/assets/ui/roles/role-magistrate-yamen-desk-v1.webp")) left center / cover no-repeat,
+    #e8d7b7;
+}
+
+.scholarPanel.magistratePanel::before {
+  background:
+    linear-gradient(90deg, rgb(255 252 238 / .74), rgb(255 252 238 / .88) 42%, rgb(255 252 238 / .78)),
+    radial-gradient(circle at 10% 12%, rgb(122 36 31 / .14), transparent 30%);
+}
+
+.magistratePanel .scholarPanelEyebrow,
+.magistratePanel .scholarPanelMetrics strong {
+  color: #7b241f;
+}
+
+.magistratePanel .scholarPanelMetrics li {
+  display: grid;
+  grid-template-columns: minmax(68px, 1fr) auto;
+}
+
+.magistratePanel .scholarPanelMetrics em {
+  grid-column: 1 / -1;
+  color: #6d5844;
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.magistratePanelBoundary .scholarPanelBoundary {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.officialMinisterPanel {
+  border-color: rgb(60 64 82 / .32);
+  background:
+    linear-gradient(115deg, rgb(255 248 230 / .92), rgb(226 217 190 / .82) 42%, rgb(74 80 99 / .22)),
+    var(--scholar-panel-bg, url("/assets/ui/roles/role-official-bureau-desk-v1.webp")) left center / cover no-repeat,
+    #e7dbc0;
+}
+
+.scholarPanel.officialMinisterPanel::before {
+  background:
+    linear-gradient(90deg, rgb(255 252 238 / .74), rgb(255 252 238 / .88) 42%, rgb(255 252 238 / .78)),
+    radial-gradient(circle at 12% 14%, rgb(60 64 82 / .16), transparent 32%);
+}
+
+.officialMinisterPanel .scholarPanelEyebrow,
+.officialMinisterPanel .scholarPanelMetrics strong {
+  color: #3d4868;
+}
+
+.officialMinisterPanel .scholarPanelMetrics li {
+  display: grid;
+  grid-template-columns: minmax(68px, 1fr) auto;
+}
+
+.officialMinisterPanel .scholarPanelMetrics em {
+  grid-column: 1 / -1;
+  color: #665a47;
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.officialMinisterPanelFirstMonth {
+  border-color: rgb(94 70 35 / .28);
+  background: rgb(255 252 239 / .74);
+}
+
+.generalPanel {
+  border-color: rgb(83 62 45 / .34);
+  background:
+    linear-gradient(115deg, rgb(255 248 230 / .92), rgb(225 214 184 / .82) 40%, rgb(87 76 64 / .26)),
+    var(--scholar-panel-bg, url("/assets/ui/roles/role-general-frontier-tent-v1.webp")) left center / cover no-repeat,
+    #e3d2b1;
+}
+
+.scholarPanel.generalPanel::before {
+  background:
+    linear-gradient(90deg, rgb(255 252 238 / .74), rgb(255 252 238 / .88) 42%, rgb(255 252 238 / .76)),
+    radial-gradient(circle at 12% 16%, rgb(105 40 30 / .14), transparent 30%),
+    radial-gradient(circle at 82% 18%, rgb(39 65 78 / .12), transparent 28%);
+}
+
+.generalPanel .scholarPanelEyebrow,
+.generalPanel .scholarPanelMetrics strong {
+  color: #6b2f24;
+}
+
+.generalPanel .scholarPanelMetrics li {
+  display: grid;
+  grid-template-columns: minmax(62px, 1fr) auto;
+}
+
+.generalPanel .scholarPanelMetrics em {
+  grid-column: 1 / -1;
+  color: #61523f;
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.emperorPanel {
+  border-color: rgb(123 45 38 / .36);
+  background:
+    linear-gradient(115deg, rgb(255 248 230 / .92), rgb(228 214 180 / .82) 41%, rgb(121 52 45 / .22)),
+    var(--scholar-panel-bg, url("/assets/ui/roles/role-emperor-imperial-desk-v1.webp")) left center / cover no-repeat,
+    #e6d6b5;
+}
+
+.scholarPanel.emperorPanel::before {
+  background:
+    linear-gradient(90deg, rgb(255 252 238 / .76), rgb(255 252 238 / .9) 42%, rgb(255 252 238 / .76)),
+    radial-gradient(circle at 13% 14%, rgb(137 42 35 / .15), transparent 30%),
+    radial-gradient(circle at 82% 18%, rgb(72 82 88 / .12), transparent 30%);
+}
+
+.emperorPanel .scholarPanelEyebrow,
+.emperorPanel .scholarPanelMetrics strong {
+  color: #872f28;
+}
+
+.emperorPanel .scholarPanelMetrics li {
+  display: grid;
+  grid-template-columns: minmax(62px, 1fr) auto;
+}
+
+.emperorPanel .scholarPanelMetrics em {
+  grid-column: 1 / -1;
+  color: #67543c;
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.emperorPanelBoundary .scholarPanelBoundary {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.scholarPanel::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(255 252 238 / .7), rgb(255 252 238 / .86) 42%, rgb(255 252 238 / .76)),
+    radial-gradient(circle at 8% 16%, rgb(56 92 73 / .16), transparent 28%);
+  content: "";
+  pointer-events: none;
+}
+
+.scholarPanel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.scholarPanelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.scholarPanelHeader {
+  border-bottom: 1px solid rgb(84 60 43 / .16);
+  padding-bottom: 14px;
+}
+
+.scholarPanelEyebrow {
+  margin: 0 0 10px;
+  color: #5f6b45;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.scholarPanelHeader h2 {
+  margin-bottom: 8px;
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+}
+
+.scholarPanelHeader p {
+  max-width: 720px;
+  margin: 0;
+  color: #473a2e;
+  line-height: 1.75;
+}
+
+.scholarPanelCardHeader span {
+  flex: 0 0 auto;
+  border: 1px solid rgb(78 82 56 / .28);
+  background: rgb(246 251 224 / .66);
+  color: #405640;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 6px 8px;
+}
+
+.scholarPanelStatus {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  min-width: min(460px, 100%);
+  margin: 0;
+}
+
+.scholarPanelStatus div {
+  min-width: 0;
+  border: 1px solid rgb(78 82 56 / .22);
+  background: rgb(246 251 224 / .58);
+  padding: 8px;
+}
+
+.scholarPanelStatus dt,
+.scholarPanelCompactDl dt {
+  color: #697052;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.scholarPanelStatus dd,
+.scholarPanelCompactDl dd {
+  margin: 2px 0 0;
+  color: #2f251d;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.scholarPanelGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.scholarPanelCard {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .24);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .82), rgb(229 215 184 / .66)),
+    var(--qq-material-torn) center / cover no-repeat;
+  padding: 16px;
+}
+
+.scholarPanelCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.roleCycleSection {
+  grid-column: 1 / -1;
+}
+
+.domainConsequenceSection {
+  min-width: 0;
+  border-color: rgb(142 47 39 / .28);
+}
+
+.domainConsequenceList li {
+  border-left-color: rgb(142 47 39 / .42);
+}
+
+.domainConsequenceSection h3,
+.domainConsequenceSection p,
+.domainConsequenceList li,
+.domainConsequenceList strong,
+.domainConsequenceList span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.domainConsequenceBoundary {
+  border-top: 1px solid rgb(84 60 43 / .16);
+  color: #765b43;
+  font-size: 0.88rem;
+  padding-top: 8px;
+}
+
+.domainConsequenceCapLine {
+  margin: 0;
+  color: #765b43;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.npcFollowUpEvidenceSection {
+  min-width: 0;
+  border-color: rgb(106 89 55 / .3);
+}
+
+.npcFollowUpEvidenceHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.npcFollowUpEvidenceHeader > div {
+  min-width: 0;
+}
+
+.npcFollowUpEvidenceHeader h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.npcFollowUpEvidenceHeader > span {
+  flex: 0 1 auto;
+  color: #72583f;
+  font-size: 0.84rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.npcFollowUpEvidenceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.npcFollowUpEvidenceBoundary {
+  border-top: 1px solid rgb(84 60 43 / .16);
+  color: #765b43;
+  font-size: 0.88rem;
+  padding-top: 8px;
+  overflow-wrap: anywhere;
+}
+
+.roleCycleSection .scholarPanelCardHeader span {
+  flex: 0 0 auto;
+  border: 1px solid rgb(64 86 64 / .28);
+  background: rgb(246 251 224 / .64);
+  color: #405640;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 4px 8px;
+}
+
+.roleCycleFocusStrip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.roleCycleFocusStrip span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .16);
+  background: rgb(255 252 238 / .56);
+  color: #6d5844;
+  font-size: 0.76rem;
+  font-weight: 900;
+  line-height: 1.25;
+  padding: 7px 8px;
+  overflow-wrap: anywhere;
+}
+
+.roleCycleFocusStrip strong {
+  flex: 0 0 auto;
+  color: #3f5b43;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.roleCycleCurrentEvidence {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  border: 1px solid rgb(64 86 64 / .18);
+  background: rgb(238 246 224 / .34);
+  padding: 8px;
+}
+
+.roleCycleCurrentEvidence > span {
+  color: #4f603d;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.roleCycleCurrentEvidence > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.roleCycleCurrentEvidence > div span {
+  max-width: 100%;
+  border: 1px solid rgb(64 86 64 / .22);
+  background: rgb(255 255 248 / .58);
+  color: #405640;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.35;
+  padding: 3px 6px;
+  overflow-wrap: anywhere;
+}
+
+.roleCycleBoundary {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid rgb(30 82 98 / .18);
+  background: rgb(230 244 246 / .3);
+  padding: 9px;
+}
+
+.roleCycleBoundarySources {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.roleCycleBoundarySources > span {
+  color: #1f5868;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.roleCycleBoundarySources > div,
+.roleCycleBoundaryChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.roleCycleBoundarySources > div span,
+.roleCycleBoundaryChips span {
+  max-width: 100%;
+  border: 1px solid rgb(30 82 98 / .2);
+  background: rgb(255 255 248 / .6);
+  color: #1f5868;
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1.35;
+  padding: 3px 6px;
+  overflow-wrap: anywhere;
+}
+
+.roleCycleBoundary ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: #4c5a54;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.roleCycleBoundary li {
+  overflow-wrap: anywhere;
+}
+
+.roleCycleMatrix {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.roleCycleMatrix h4 {
+  margin: 0;
+}
+
+.roleCycleMatrix ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roleCycleMatrix li {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 252 238 / .48);
+  padding: 8px;
+}
+
+.roleCycleMatrix li[data-active="true"] {
+  border-color: rgb(142 47 39 / .34);
+  background: rgb(248 235 219 / .58);
+}
+
+.roleCycleMatrixHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.roleCycleMatrix strong,
+.roleCycleMatrix span,
+.roleCycleMatrix em,
+.roleCycleMatrix p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.roleCycleMatrix strong {
+  color: #3e2b1f;
+  font-size: 0.88rem;
+}
+
+.roleCycleMatrix span {
+  color: #6d5844;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.roleCycleMatrixHeading span {
+  flex: none;
+  color: #856348;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.roleCycleMatrix p {
+  margin: 0;
+  color: #5c4939;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.roleCycleMatrixSources,
+.roleCycleMatrixStatus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.roleCycleMatrixSources span,
+.roleCycleMatrixPressure {
+  border: 1px solid rgb(84 60 43 / .16);
+  background: rgb(255 255 248 / .54);
+  color: #604d3d;
+  font-size: 0.7rem;
+  font-weight: 900;
+  line-height: 1.2;
+  padding: 3px 6px;
+}
+
+.roleCycleMatrixPressure {
+  border-color: rgb(142 47 39 / .18);
+  background: rgb(142 47 39 / .08);
+  color: #76372d;
+}
+
+.roleCycleMatrix em {
+  color: #5e382d;
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.roleCycleMetrics,
+.mapHeroStats,
+.archiveStats,
+.npcFactGrid,
+.inventoryItemStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.roleCycleMetrics div {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 252 238 / .52);
+  padding: 8px;
+}
+
+.roleCycleMetrics dt {
+  color: #6d5844;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.roleCycleMetrics dd {
+  margin: 2px 0;
+  color: #405640;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.roleCycleMetrics span {
+  color: #5e382d;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.roleCycleColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.roleCycleColumns section {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.roleCycleEvidenceRefs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.roleCycleEvidenceChip {
+  max-width: 100%;
+  border: 1px solid rgb(64 86 64 / .26);
+  background: rgb(238 246 224 / .54);
+  color: #405640;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.35;
+  padding: 3px 6px;
+  overflow-wrap: anywhere;
+}
+
+.roleCycleEntryPoints {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid rgb(84 60 43 / .18);
+  padding-top: 10px;
+}
+
+.roleCycleEntryPoints > span {
+  color: #5e382d;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.roleCycleEntryPoints > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roleCycleEntryPoints a,
+.roleCycleEntryPoints button,
+.roleCycleEntryPoints [aria-disabled="true"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  max-width: 100%;
+  border: 1px solid rgb(30 82 98 / .34);
+  background: rgb(230 244 246 / .56);
+  color: #1f5868;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 900;
+  line-height: 1.25;
+  padding: 6px 9px;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.roleCycleEntryPoints button {
+  cursor: pointer;
+}
+
+.roleCycleEntryPoints [aria-disabled="true"] {
+  border-color: rgb(104 92 76 / .2);
+  background: rgb(241 236 221 / .62);
+  color: #756957;
+}
+
+.roleCycleActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scholarPanelCard h3 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+.scholarPanelCard h4 {
+  margin: 0;
+  color: #5e382d;
+  font-size: 0.96rem;
+}
+
+.scholarPanelCard p {
+  margin: 0;
+  color: #514232;
+  line-height: 1.68;
+}
+
+.scholarPanelMetrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scholarPanelMetrics li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 252 238 / .52);
+  padding: 8px;
+}
+
+.scholarPanelList strong,
+.scholarPanelMetrics span,
+.scholarPanelPeopleList strong {
+  color: #5e382d;
+  font-weight: 800;
+}
+
+.scholarPanelMetrics strong {
+  color: #405640;
+}
+
+.scholarPanelList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scholarPanelList li {
+  display: grid;
+  gap: 3px;
+  border-left: 3px solid rgb(64 86 64 / .42);
+  background: rgb(255 252 238 / .56);
+  color: #514232;
+  line-height: 1.55;
+  padding: 7px 9px;
+}
+
+.scholarPanelList p {
+  margin: 0;
+}
+
+.scholarPanelList span,
+.scholarPanelPeopleList span {
+  color: #6d5844;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.scholarPanelSubsection {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid rgb(84 60 43 / .16);
+  padding-top: 10px;
+}
+
+.scholarPanelSubsection ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  color: #514232;
+}
+
+.scholarPlanSummary div,
+.scholarPlanTimeline li,
+.scholarPanelCompactDl div {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 252 238 / .52);
+  padding: 7px 8px;
+}
+
+.scholarPlanSummary dt {
+  color: #697052;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.scholarPlanSummary dd {
+  margin: 2px 0 0;
+  color: #2f251d;
+  font-weight: 900;
+}
+
+.scholarPlanTimeline {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scholarPlanTimeline li {
+  display: grid;
+  grid-template-columns: minmax(48px, 0.22fr) minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  color: #514232;
+}
+
+.scholarPlanTimeline strong,
+.scholarPlanTimeline span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.scholarPlanTimeline strong {
+  color: #5e382d;
+  font-weight: 900;
+}
+
+.scholarPlanTimeline span {
+  line-height: 1.55;
+}
+
+.scholarPlanCheckpoints li {
+  border-left: 3px solid rgb(64 86 64 / .42);
+}
+
+.scholarPanelPeopleList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scholarPanelPeopleList li {
+  display: grid;
+  gap: 4px;
+  border-left: 3px solid rgb(64 86 64 / .42);
+  background: rgb(255 252 238 / .54);
+  padding: 8px 9px;
+}
+
+.scholarPanelCard button:hover,
+.scholarPanelCard button:focus-visible {
+  border-color: #405640;
+  outline: 2px solid rgb(64 86 64 / .2);
+  outline-offset: 2px;
+}
+
+.scholarPanelCard button {
+  justify-self: start;
+  min-height: 38px;
+  border: 1px solid rgb(64 86 64 / .42);
+  background: rgb(246 251 224 / .68);
+  color: #405640;
+  font: inherit;
+  font-weight: 800;
+  padding: 7px 11px;
+}
+
+.scholarPanelActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scholarPanelActions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border: 1px solid rgb(142 47 39 / .46);
+  background: rgb(255 248 230 / .68);
+  color: #7b241f;
+  font-weight: 800;
+  padding: 7px 11px;
+  text-decoration: none;
+}
+
+.scholarPanelBoundary {
+  margin: 0;
+  border: 1px dashed rgb(142 47 39 / .32);
+  background: rgb(255 248 230 / .58);
+  color: #6d5844;
+  font-size: 0.86rem;
+  line-height: 1.65;
+  padding: 10px 12px;
+}
+
+.scholarPanelBoundary ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+  color: #514232;
+}
+
+.scholarPanelEmpty {
+  border: 1px dashed rgb(84 60 43 / .2);
+  background: rgb(255 252 238 / .48);
+  padding: 8px 9px;
+}
+
+.memorialComposer {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(10px, 2.5vw, 26px);
+  z-index: 18;
+  display: grid;
+  gap: 8px;
+  width: min(1120px, calc(100% - 20px));
+  transform: translateX(-50%);
+  color: #2d251d;
+}
+
+.memorialComposerShell {
+  display: grid;
+  grid-template-columns: minmax(190px, 230px) minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 12px;
+  min-height: 126px;
+  border: 1px solid rgb(96 59 39 / .32);
+  background:
+    linear-gradient(180deg, rgb(255 250 232 / .88), rgb(222 201 166 / .82)),
+    url("/assets/ui/materials/bamboo-slip-strip-v1.webp") center / cover no-repeat;
+  box-shadow:
+    0 18px 46px rgb(39 27 18 / .24),
+    inset 0 0 0 1px rgb(255 252 238 / .42);
+  padding: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.quickActionDock {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.quickActionToggle,
+.quickActionRefresh,
+.quickActionSlip {
+  border: 1px solid rgb(84 60 43 / .26);
+  background: rgb(255 252 238 / .72);
+  color: #443226;
+  font: inherit;
+}
+
+.quickActionToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 36px;
+  padding: 7px 9px;
+  font-weight: 800;
+}
+
+.quickActionRefresh {
+  display: inline-grid;
+  place-items: center;
+  justify-self: end;
+  width: 32px;
+  min-height: 30px;
+  color: #7b241f;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.quickActionToggle svg {
+  flex: 0 0 auto;
+  color: #8e2f27;
+}
+
+.quickActionList {
+  display: grid;
+  gap: 7px;
+  overflow: hidden;
+  transition:
+    max-height 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.quickActionList[data-state="closed"] {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.quickActionList[data-state="open"] {
+  max-height: 160px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.quickActionSlip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 7px 8px;
+  text-align: left;
+}
+
+.quickActionSlip span,
+.quickActionSlip small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quickActionSlip small {
+  color: #7a6048;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.quickActionSlip[data-state="applied"] {
+  border-color: rgb(142 47 39 / .62);
+  background: rgb(165 58 47 / .12);
+  color: #7b241f;
+}
+
+.quickActionSlip[data-state="failed"],
+.quickActionSlip[data-state="stale"] {
+  border-style: dashed;
+  background: rgb(255 248 230 / .62);
+}
+
+.quickActionSlip[data-source="mock-ai"],
+.quickActionSlip[data-source="provider-ai"] {
+  border-color: rgb(142 47 39 / .42);
+}
+
+.quickActionEmpty {
+  margin: 0;
+  border: 1px dashed rgb(84 60 43 / .24);
+  background: rgb(255 248 230 / .58);
+  color: #735844;
+  font-size: 0.82rem;
+  padding: 8px;
+}
+
+.memorialInputField {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+
+.memorialInputField span {
+  color: #6d372c;
+  font-weight: 800;
+}
+
+.memorialInputField textarea {
+  min-height: 86px;
+  max-height: 190px;
+  resize: vertical;
+  border-color: rgb(96 59 39 / .38);
+  background:
+    linear-gradient(90deg, rgb(96 59 39 / .05) 1px, transparent 1px) 0 0 / 22px 100%,
+    rgb(255 252 238 / .86);
+  box-shadow: inset 0 0 0 1px rgb(255 252 238 / .6);
+  line-height: 1.6;
+}
+
+.memorialInputField textarea::placeholder {
+  color: rgb(86 65 49 / .56);
+}
+
+.memorialActions {
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  min-width: 88px;
+}
+
+.memorialSubmit {
+  gap: 7px;
+  min-height: 54px;
+  min-width: 88px;
+}
+
+.memorialClear {
+  min-height: 36px;
+}
+
+.memorialFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 8px;
+  color: #6d5844;
+  font-size: 0.78rem;
+  text-shadow: 0 1px 0 rgb(255 248 230 / .42);
+}
+
+.memorialFooter p {
+  margin: 0;
+}
+
+.quickActionToggle:hover,
+.quickActionToggle:focus-visible,
+.quickActionRefresh:hover,
+.quickActionRefresh:focus-visible,
+.quickActionSlip:hover,
+.quickActionSlip:focus-visible,
+.memorialInputField textarea:focus,
+.memorialSubmit:focus-visible,
+.memorialClear:focus-visible {
+  border-color: #8e2f27;
+  outline: 2px solid rgb(142 47 39 / .22);
+  outline-offset: 2px;
+}

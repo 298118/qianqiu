@@ -1,0 +1,768 @@
+.portraitLedger {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 252 238 / .7);
+  padding: 14px;
+}
+
+.portraitLedgerHeader {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.portraitLedgerHeader h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.portraitLedgerHeader p {
+  margin: 0;
+}
+
+.portraitLedgerHeader span {
+  min-width: 64px;
+  border: 1px solid rgb(142 47 39 / .38);
+  background: rgb(255 248 230 / .68);
+  color: #7b241f;
+  padding: 6px 8px;
+  text-align: center;
+}
+
+.peopleGalleryBand[data-polish-people-gallery-band="s89-35-people-portrait-gallery"] {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  overflow: hidden;
+  border: 1px solid rgb(84 60 43 / .24);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .82), rgb(229 210 178 / .64)),
+    var(--qq-material-silk) center / 520px repeat;
+  padding: 14px;
+  box-shadow:
+    0 16px 36px rgb(43 32 22 / .11),
+    inset 0 0 0 1px rgb(255 252 238 / .42);
+  animation: s8935GalleryUnroll 520ms ease both;
+}
+
+.peopleGalleryBand[data-polish-people-gallery-band="s89-35-people-portrait-gallery"]::before {
+  position: absolute;
+  inset: 0;
+  background:
+    var(--qq-material-red-smudge) right -38px top -36px / 142px 142px no-repeat,
+    linear-gradient(90deg, transparent, rgb(204 156 72 / .14), transparent);
+  content: "";
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.peopleGalleryBand > * {
+  position: relative;
+  z-index: 1;
+}
+
+.peopleGalleryReadout {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.82fr) minmax(220px, 1.18fr) minmax(180px, 0.9fr);
+  gap: 10px;
+  min-width: 0;
+}
+
+.peopleGalleryReadout > div,
+.peopleGalleryReadout dl {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .2);
+  background: rgb(255 252 238 / .58);
+  padding: 10px;
+  box-shadow: inset 0 0 0 1px rgb(255 252 238 / .34);
+}
+
+.peopleGalleryReadout > div {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.peopleGalleryReadout span,
+.peopleGalleryReadout dt {
+  color: #7b5b42;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.peopleGalleryReadout strong,
+.peopleGalleryReadout p,
+.peopleGalleryReadout small,
+.peopleGalleryReadout dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.peopleGalleryReadout strong {
+  color: #2f251d;
+  font-size: 1.12rem;
+}
+
+.peopleGalleryReadout p,
+.peopleGalleryReadout small {
+  color: #4c3c2e;
+  line-height: 1.58;
+}
+
+.peopleGalleryReadout dl {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  animation: s8935SlipRise 420ms ease both;
+}
+
+.peopleGalleryReadout dl div {
+  min-width: 0;
+  border-left: 2px solid rgb(142 47 39 / .38);
+  padding-left: 8px;
+}
+
+.peopleGalleryReadout dd {
+  color: #30251c;
+  font-weight: 900;
+}
+
+.peopleLedgerList {
+  display: grid;
+  gap: 12px;
+}
+
+.peopleCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(86px, 118px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .22);
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .78), rgb(238 221 190 / .56)),
+    var(--qq-material-torn) center / cover no-repeat;
+  padding: 10px;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.peopleCard::after {
+  position: absolute;
+  inset: auto -22px -28px auto;
+  width: 78px;
+  aspect-ratio: 1;
+  background: var(--qq-material-red-smudge) center / contain no-repeat;
+  content: "";
+  opacity: 0;
+  transform: rotate(-14deg) scale(0.68);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.peopleCard:hover,
+.peopleCard:focus-within {
+  border-color: rgb(142 47 39 / .44);
+  box-shadow: 0 12px 24px rgb(54 37 24 / .12);
+  transform: translateY(-1px);
+}
+
+.peopleCard:hover::after,
+.peopleCard:focus-within::after,
+.peopleCard[data-selected="true"]::after {
+  opacity: 0.18;
+  transform: rotate(-9deg) scale(1);
+}
+
+.peopleCard[data-selected="true"] {
+  border-color: rgb(142 47 39 / .68);
+  box-shadow:
+    var(--qq-shadow-ink-focus),
+    0 14px 28px rgb(54 37 24 / .14);
+}
+
+.peopleCard[data-remastered="true"] .portraitFrame::before,
+.portraitFrame[data-polish-portrait-card="s89-35-people-portrait-gallery"][data-portrait-remastered="true"]::before {
+  position: absolute;
+  inset: 7px;
+  z-index: 1;
+  border: 1px solid rgb(204 156 72 / .44);
+  content: "";
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.peoplePortrait {
+  min-height: 132px;
+}
+
+.peopleInfo {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.peopleInfo h4,
+.peopleInfo p {
+  margin: 0;
+}
+
+.peopleInfo h4 {
+  color: #2f251d;
+  font-size: 1rem;
+}
+
+.peopleIdentity {
+  color: #6d5844;
+  font-weight: 700;
+}
+
+.peopleMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.peopleMeta span,
+.peopleRelationship {
+  border: 1px solid rgb(84 60 43 / .2);
+  background: rgb(255 248 230 / .56);
+  color: #735844;
+  padding: 4px 7px;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.peopleSummary {
+  color: #3f3328;
+  line-height: 1.65;
+}
+
+.peopleRelationship {
+  color: #6d372c;
+}
+
+.peopleWorkbenchPanel {
+  display: grid;
+  gap: 18px;
+}
+
+.npcWorkbench,
+.inventoryWorkbench {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.34fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.inventoryRoutePanel {
+  display: grid;
+  gap: 16px;
+}
+
+.inventoryRoutePanel .routePanelHeader {
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgb(84 60 43 / .18);
+  background:
+    linear-gradient(90deg, rgb(255 248 230 / .46), transparent 72%),
+    var(--qq-material-ink-line) left bottom / 70% 18px no-repeat;
+}
+
+.npcActiveRequestInbox,
+.npcSocialGrid,
+.npcRelationshipSignalGrid,
+.npcRelationshipAgendaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.npcRelationshipEntitySignals,
+.npcRelationshipAgenda,
+.npcGroupList,
+.npcDetailWorkbench,
+.inventoryContainerList,
+.inventoryItemList,
+.inventoryLedgerBlock,
+.inventoryTransferPanel {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgb(84 60 43 / .22);
+  background: rgb(255 248 230 / .62);
+  padding: 12px;
+}
+
+.npcRelationshipEntitySignals,
+.npcRelationshipAgenda {
+  display: grid;
+  gap: 12px;
+}
+
+.npcRelationshipSignalCard,
+.npcRelationshipAgendaCard {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgb(84 60 43 / .2);
+  background: rgb(255 252 238 / .72);
+  padding: 12px;
+  min-height: 138px;
+}
+
+.npcRelationshipSignalCard h3,
+.npcRelationshipSignalCard p,
+.npcRelationshipAgendaCard h3,
+.npcRelationshipAgendaCard p {
+  margin: 0;
+}
+
+.npcRelationshipSignalCard h3,
+.npcRelationshipAgendaCard h3 {
+  color: #33261d;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.npcRelationshipAgendaCard button {
+  justify-self: start;
+}
+
+.npcRelationshipImpactSummary {
+  color: #6d372c;
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.npcGroupList h2,
+.inventoryContainerList h2,
+.inventoryItemList h2,
+.inventoryLedgerBlock h2,
+.npcRecordList h3 {
+  margin: 0;
+  color: #3d2d22;
+  font-size: 0.98rem;
+}
+
+.npcGroupList section {
+  display: grid;
+  gap: 8px;
+}
+
+.npcListButton,
+.inventoryContainerButton {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 58px;
+  border: 1px solid rgb(84 60 43 / .22);
+  background: rgb(255 252 238 / .72);
+  color: inherit;
+  font: inherit;
+  padding: 8px;
+  text-align: left;
+}
+
+.npcListButton {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .76), rgb(235 219 190 / .52)),
+    var(--qq-material-torn) center / cover no-repeat;
+  box-shadow: inset 0 0 0 1px rgb(255 252 238 / .32);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.npcListButton::after {
+  position: absolute;
+  inset: auto -18px -24px auto;
+  width: 58px;
+  aspect-ratio: 1;
+  background: var(--qq-material-red-smudge) center / contain no-repeat;
+  content: "";
+  opacity: 0;
+  transform: rotate(-14deg) scale(0.7);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.inventoryContainerButton {
+  position: relative;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .78), rgb(235 219 190 / .58)),
+    var(--qq-material-torn) center / cover no-repeat;
+  box-shadow: inset 0 0 0 1px rgb(255 252 238 / .42);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.inventoryContainerButton::after {
+  position: absolute;
+  inset: auto -20px -24px auto;
+  width: 64px;
+  aspect-ratio: 1;
+  background: var(--qq-material-red-smudge) center / contain no-repeat;
+  content: "";
+  opacity: 0;
+  transform: rotate(-12deg) scale(0.7);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.npcListButton[aria-pressed="true"],
+.npcListButton[data-gallery-selected="true"],
+.inventoryContainerButton[aria-pressed="true"] {
+  border-color: rgb(142 47 39 / .72);
+  background:
+    linear-gradient(135deg, rgb(248 229 198 / .9), rgb(255 252 238 / .66)),
+    var(--qq-material-seal-button) right center / 92px auto no-repeat,
+    var(--qq-material-torn) center / cover no-repeat;
+  box-shadow:
+    var(--qq-shadow-ink-focus),
+    inset 0 0 0 1px rgb(255 252 238 / .46);
+  color: #6f1f1a;
+  transform: translateY(-1px);
+}
+
+.npcListButton:hover,
+.npcListButton:focus-visible,
+.inventoryContainerButton:hover,
+.inventoryContainerButton:focus-visible,
+.inventoryItemCard:hover,
+.inventoryMiniCard:hover,
+.compactLedgerRow:hover,
+.economyTraceCard:hover {
+  border-color: rgb(142 47 39 / .52);
+  box-shadow:
+    0 10px 22px rgb(54 37 24 / .1),
+    inset 0 0 0 1px rgb(255 252 238 / .42);
+  transform: translateY(-1px);
+}
+
+.npcListButton:hover::after,
+.npcListButton:focus-visible::after,
+.npcListButton[data-gallery-selected="true"]::after,
+.inventoryContainerButton:hover::after,
+.inventoryContainerButton:focus-visible::after,
+.inventoryContainerButton[aria-pressed="true"]::after {
+  opacity: 0.2;
+  transform: rotate(-8deg) scale(1);
+}
+
+.npcListButton strong,
+.npcListButton small,
+.inventoryContainerButton span {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.npcListButton small,
+.inventoryContainerButton small {
+  color: #735844;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.npcListPortrait {
+  min-height: 48px;
+  aspect-ratio: 1;
+}
+
+.npcListPortraitFallback {
+  display: grid;
+  min-height: 42px;
+  place-items: center;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(231 214 184 / .7);
+  color: #7b241f;
+  font-weight: 900;
+}
+
+.npcDetailHeader {
+  display: grid;
+  grid-template-columns: minmax(92px, 132px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.npcDetailHeader h2 {
+  margin: 0;
+}
+
+.npcTabs {
+  margin: 0;
+}
+
+.npcTabPanel,
+.npcRecordList {
+  display: grid;
+  gap: 10px;
+}
+
+.npcTabPanel textarea,
+.npcTabPanel input,
+.npcTabPanel select,
+.inventoryTransferPanel select,
+.inventoryTransferPanel input {
+  width: 100%;
+}
+
+.npcFactGrid div,
+.inventoryItemStats div,
+.compactLedgerRow,
+.inventoryMiniCard,
+.inventoryItemCard,
+.npcResultCard {
+  border: 1px solid rgb(84 60 43 / .2);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .72), rgb(239 224 196 / .5)),
+    var(--qq-material-torn) center / cover no-repeat;
+  padding: 10px;
+  box-shadow: inset 0 0 0 1px rgb(255 252 238 / .36);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.npcFactGrid dt,
+.inventoryItemStats dt,
+.compactLedgerRow dt {
+  color: #80664a;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.npcFactGrid dd,
+.inventoryItemStats dd,
+.compactLedgerRow dd {
+  margin: 4px 0 0;
+  color: #3d2d22;
+  font-weight: 900;
+}
+
+.npcTradeForm,
+.npcCommandForm,
+.inventoryTransferPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.2fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.npcCommandForm {
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.28fr) minmax(90px, 0.18fr) auto;
+}
+
+.npcResultCard,
+.inventoryMiniCard {
+  display: grid;
+  gap: 6px;
+}
+
+.npcResultCard p,
+.inventoryMiniCard span,
+.inventoryItemCard p {
+  margin: 0;
+  color: #5b4937;
+  line-height: 1.65;
+}
+
+.npcRecordsGrid,
+.inventorySummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.economyTraceSection {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgb(84 60 43 / .22);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .78), rgb(244 234 210 / .5)),
+    var(--qq-material-folded) center / cover no-repeat,
+    rgb(255 252 238 / .64);
+  padding: 14px;
+  box-shadow:
+    0 12px 28px rgb(42 29 20 / .09),
+    inset 0 0 0 1px rgb(255 252 238 / .4);
+  backdrop-filter: blur(6px);
+}
+
+.economyTraceSection::after {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  width: 116px;
+  aspect-ratio: 1;
+  background: var(--qq-material-red-smudge) center / contain no-repeat;
+  content: "";
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.economyTraceHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.economyTraceHeader h2 {
+  margin: 0;
+  font-size: 1.02rem;
+  color: #2f251d;
+}
+
+.economyTraceHeader > span {
+  flex: 0 0 auto;
+  border: 1px solid rgb(115 82 54 / .22);
+  background: rgb(255 248 230 / .7);
+  color: #6e5138;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 4px 8px;
+}
+
+.economyTraceSection > p {
+  margin: 0;
+  color: #5b4937;
+  line-height: 1.65;
+}
+
+.economyTraceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.economyTraceCard {
+  min-width: 0;
+}
+
+.economyTraceCard strong,
+.economyTraceCard span,
+.economyTraceCard small {
+  overflow-wrap: anywhere;
+}
+
+.economyTraceCard small {
+  color: #73563e;
+  line-height: 1.5;
+}
+
+.economyTraceCard .paperButton {
+  justify-self: start;
+  margin-top: 2px;
+}
+
+.inventoryLedgerBlock h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compactLedgerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.inventoryItemList,
+.inventoryItemCard {
+  display: grid;
+  gap: 10px;
+}
+
+.inventoryItemCard h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.portraitFrame {
+  position: relative;
+  display: grid;
+  aspect-ratio: 2 / 3;
+  width: 100%;
+  min-height: 144px;
+  margin: 0;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--portrait-fallback-border, rgb(142 47 39 / .38));
+  background-color: var(--portrait-fallback-bg, #e8dcc8);
+  background-position: center;
+  background-size: cover;
+  color: var(--portrait-fallback-text, #241f18);
+}
+
+.portraitFrame[data-polish-portrait-card="s89-35-people-portrait-gallery"] {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 252 238 / .28),
+    0 8px 18px rgb(43 32 22 / .12);
+}
+
+.portraitFrame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.portraitZoomButton {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 2;
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgb(255 248 230 / .76);
+  background: rgb(36 27 22 / .62);
+  color: #fff7e8;
+  padding: 0;
+  box-shadow: 0 4px 12px rgb(28 20 15 / .24);
+}
+
+.portraitZoomButton:hover,
+.portraitZoomButton:focus-visible {
+  border-color: #fff7e8;
+  background: rgb(123 36 31 / .86);
+  outline: 2px solid rgb(255 248 230 / .44);
+  outline-offset: 2px;
+}
+
+.portraitFrameFallback span {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid rgb(142 47 39 / .42);
+  color: #7b241f;
+  font-weight: 800;
+}
+
+.inlineForm {
+  grid-template-columns: minmax(160px, 1fr) auto;
+  align-items: end;
+  margin-top: 14px;
+}

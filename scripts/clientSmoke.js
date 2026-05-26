@@ -945,6 +945,7 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
     return {
       shellPolish: shell?.getAttribute("data-polish-surface") || "",
       shellAtmosphere: shell?.getAttribute("data-polish-atmosphere") || "",
+      shellMaterialMotion: shell?.getAttribute("data-material-motion") || "",
       shellMotion: shell?.getAttribute("data-motion") || "",
       shellControlMarker: document.querySelector(".topBar")?.getAttribute("data-polish-controls") || "",
       topBar: styleOf(".topBar"),
@@ -956,8 +957,8 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
       inkboxButtonSeal: styleOf(".inkboxButton", "::after"),
       drawer: styleOf("[data-polish-overlay='s89-5-drawer-mica']"),
       keyframes: {
-        drawer: keyframesOf("s895D"),
-        draft: keyframesOf("s895S"),
+        drawer: keyframesOf("drawerPanelFade"),
+        draft: keyframesOf("draftWrittenPulse"),
         paperRise: keyframesOf("s8930PaperRise"),
         stateWash: keyframesOf("s8930StateWash"),
         sealBloom: keyframesOf("s8930SealBloom")
@@ -990,6 +991,7 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
   const failures = [];
   if (snapshot.shellPolish !== "s89-5-material-feedback") failures.push(`shell polish marker was ${snapshot.shellPolish}`);
   if (snapshot.shellAtmosphere !== "s89-30-shared-material-motion") failures.push(`shell S89.30 atmosphere marker was ${snapshot.shellAtmosphere}`);
+  if (snapshot.shellMaterialMotion !== "shared-paper") failures.push(`shell material motion hook was ${snapshot.shellMaterialMotion}`);
   if (snapshot.shellControlMarker !== "s89-16-shell-controls") failures.push(`S89.16 shell control marker was ${snapshot.shellControlMarker}`);
   if (!snapshot.topBar?.backgroundImage.includes("linear-gradient")) failures.push("top bar did not use layered material background");
   if (!snapshot.topBarSheen || snapshot.topBarSheen.opacity === "0") failures.push("top bar sheen was absent");
@@ -1005,7 +1007,7 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
     failures.push(`drawer liquid glass marker was ${snapshot.drawer?.polishDepth}`);
   }
   if (expected.drawer && !snapshot.drawer?.backdropFilter.includes("blur")) failures.push("drawer lacked S89.25 glass blur");
-  if (expected.drawer && snapshot.shellMotion !== "reduced" && snapshot.drawer?.animationName !== "s895D") {
+  if (expected.drawer && snapshot.shellMotion !== "reduced" && snapshot.drawer?.animationName !== "drawerPanelFade") {
     failures.push(`drawer animation was ${snapshot.drawer?.animationName}`);
   }
   if (expected.drawer && snapshot.shellMotion !== "reduced" && !/transform|opacity/i.test(snapshot.keyframes.drawer)) {
@@ -1052,7 +1054,7 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
     failures.push(`map polish hooks incomplete: ${JSON.stringify({ mapSurface: snapshot.mapSurface, mapLedger: Boolean(snapshot.mapLedger), mapLayerCount: snapshot.mapLayerCount })}`);
   }
   if (expected.mapWritten && snapshot.mapWrittenCount < 1) failures.push("map draft feedback row was not marked written");
-  if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !snapshot.mapWrittenAnimation.includes("s895S")) {
+  if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !snapshot.mapWrittenAnimation.some((name) => name.includes("draftWrittenPulse"))) {
     failures.push(`map written animation missing: ${snapshot.mapWrittenAnimation.join(", ")}`);
   }
   if (expected.mapWritten && snapshot.shellMotion !== "reduced" && !snapshot.s8930.draftWritten?.animationName.includes("s8930StateWash")) {

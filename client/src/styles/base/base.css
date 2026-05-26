@@ -1,0 +1,50 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    linear-gradient(90deg, rgb(83 42 31 / .08), transparent 18%, transparent 82%, rgb(35 61 58 / .08)),
+    var(--qq-color-paper) var(--qq-material-xuan) center / 720px repeat;
+}
+
+body[data-overlay-open] {
+  overflow: hidden;
+}
+
+a {
+  color: var(--qq-color-link);
+  text-decoration-line: underline;
+  text-decoration-thickness: .08em;
+  text-underline-offset: .18em;
+}
+
+a[class] {
+  color: inherit;
+  text-decoration: none;
+}
+
+.appShell {
+  min-height: 100vh;
+  font-family: var(--qq-font-body);
+}
+
+.appShell[data-body-font="serif-classic"] {
+  --qq-font-body: var(--qq-font-serif-classic);
+}
+
+.appShell[data-body-font="song-xiaowei"] {
+  --qq-font-body: var(--qq-font-song-xiaowei);
+}
+
+.appShell[data-body-font="kai-longcang"] {
+  --qq-font-body: var(--qq-font-kai-longcang);
+}
+
+.appShell[data-body-font="brush-mashan"] {
+  --qq-font-body: var(--qq-font-brush-mashan);
+}
+

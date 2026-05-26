@@ -1,0 +1,76 @@
+:root {
+  color: var(--qq-color-ink);
+  background: var(--qq-color-paper);
+  --qq-color-ink: #241b16;
+  --qq-color-ink-strong: #17100c;
+  --qq-color-ink-soft: #2d251d;
+  --qq-color-muted: #786048;
+  --qq-color-muted-strong: #604b38;
+  --qq-color-vermilion: #8e2f27;
+  --qq-color-vermilion-dark: #7b241f;
+  --qq-color-seal: #a53a2f;
+  --qq-color-gold: #d29a39;
+  --qq-color-state-red: #7b241f;
+  --qq-color-state-green: #405640;
+  --qq-color-state-gold: #8a5d1f;
+  --qq-color-state-red-bg: rgb(165 58 47 / .1);
+  --qq-color-state-green-bg: rgb(246 251 224 / .64);
+  --qq-color-state-gold-bg: rgb(255 248 230 / .7);
+  --qq-color-disabled-text: rgb(92 74 55 / .76);
+  --qq-color-disabled-border: rgb(84 60 43 / .24);
+  --qq-color-paper: #eadcc4;
+  --qq-color-paper-light: rgb(255 252 238 / .72);
+  --qq-color-paper-strong: rgb(255 248 230 / .94);
+  --qq-color-border-soft: rgb(84 60 43 / .24);
+  --qq-color-border-medium: rgb(84 60 43 / .28);
+  --qq-color-link: var(--qq-color-vermilion-dark);
+  --qq-space-xs: 6px;
+  --qq-space-sm: 10px;
+  --qq-space-md: 14px;
+  --qq-space-lg: 24px;
+  --qq-font-serif-classic: "Noto Serif SC", "Songti SC", "Microsoft YaHei", serif;
+  --qq-font-song-xiaowei: "ZCOOL XiaoWei", "Noto Serif SC", "Songti SC", "Microsoft YaHei", serif;
+  --qq-font-kai-longcang: "Long Cang", "Noto Serif SC", "Songti SC", "Microsoft YaHei", serif;
+  --qq-font-brush-mashan: "Ma Shan Zheng", "Noto Serif SC", "Songti SC", "Microsoft YaHei", serif;
+  --qq-font-body: var(--qq-font-serif-classic);
+  --qq-font-art-heading: "ZCOOL XiaoWei", "Noto Serif SC", "Songti SC", serif;
+  --qq-font-art-flow: "Long Cang", "Noto Serif SC", "Songti SC", serif;
+  --qq-font-art-seal: "Ma Shan Zheng", "Noto Serif SC", "Songti SC", serif;
+  --qq-material-xuan: url("/assets/ui/materials/paper-xuan-base-v1.webp");
+  --qq-material-silk: url("/assets/ui/materials/paper-aged-silk-v1.webp");
+  --qq-material-aged: var(--qq-material-silk);
+  --qq-material-folded: url("/assets/ui/materials/memorial-folded-paper-v1.webp");
+  --qq-material-torn: url("/assets/ui/materials/torn-paper-card-v1.webp");
+  --qq-material-edge: url("/assets/ui/materials/paper-edge-shadow-v1.webp");
+  --qq-material-ink-line: url("/assets/ui/materials/ink-divider-line-v1.webp");
+  --qq-material-ink-corner: url("/assets/ui/materials/ink-corner-brush-v1.webp");
+  --qq-material-red-smudge: url("/assets/ui/materials/red-ink-smudge-v1.webp");
+  --qq-material-seal-button: url("/assets/ui/materials/vermilion-seal-button-v1.webp");
+  --qq-material-seal-pressed: url("/assets/ui/materials/vermilion-seal-button-pressed-v1.webp");
+  --qq-material-seal-box: url("/assets/ui/materials/seal-box-texture-v1.webp");
+  --qq-shadow-paper-lift: 0 18px 44px rgb(43 32 22 / .13);
+  --qq-shadow-ink-focus: 0 0 0 3px rgb(142 47 39 / .16);
+  --qq-shadow-card-rest:
+    0 14px 34px rgb(43 32 22 / .08),
+    inset 0 0 0 1px rgb(255 252 238 / .34);
+  --qq-shadow-card-hover:
+    0 18px 42px rgb(43 32 22 / .13),
+    inset 0 0 0 1px rgb(255 252 238 / .5);
+  --qq-surface-paper-soft:
+    linear-gradient(135deg, rgb(255 252 238 / .72), rgb(230 211 178 / .56)),
+    var(--qq-material-xuan) center / 420px repeat;
+  --qq-surface-paper-strong:
+    linear-gradient(135deg, rgb(255 252 238 / .9), rgb(230 211 178 / .78)),
+    var(--qq-material-xuan) center / 420px repeat;
+  --qq-surface-disabled:
+    linear-gradient(180deg, rgb(240 230 210 / .62), rgb(215 199 171 / .48)),
+    var(--qq-material-xuan) center / 420px repeat;
+  --qq-motion-instant: 0.01ms;
+  --qq-motion-fast: 160ms;
+  --qq-motion-medium: 180ms;
+  --qq-motion-panel: 420ms;
+  --qq-motion-surface: 360ms;
+  font-family: var(--qq-font-body);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}

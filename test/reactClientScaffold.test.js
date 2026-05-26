@@ -31,7 +31,46 @@ const {
 const rootDir = path.join(__dirname, "..");
 
 function readText(relativePath) {
+  if (relativePath === "client/src/styles/global.css") {
+    return readClientStyleSource();
+  }
   return fs.readFileSync(path.join(rootDir, relativePath), "utf8");
+}
+
+const clientStyleEntryImports = Object.freeze([
+  "global.css",
+  "tokens/tokens.css",
+  "base/base.css",
+  "utilities/surfaces.css",
+  "components/shell.css",
+  "base/preferences.css",
+  "base/intrinsics.css",
+  "routes/home.css",
+  "components/controls.css",
+  "routes/game.css",
+  "utilities/polish-surfaces.css",
+  "routes/map-archive.css",
+  "routes/people-inventory.css",
+  "routes/exam-ranking.css",
+  "components/overlays-surfaces.css",
+  "responsive/global-responsive.css",
+  "motion/reduced-motion.css",
+  "motion/keyframes.css"
+]);
+
+const clientStyleModules = Object.freeze([
+  ...clientStyleEntryImports,
+  "responsive/mobile-layout.css",
+  "responsive/mobile-home.css",
+  "responsive/mobile-game-map.css",
+  "responsive/mobile-people-inventory.css",
+  "responsive/mobile-exam-ranking.css"
+]);
+
+function readClientStyleSource() {
+  return clientStyleModules
+    .map((modulePath) => fs.readFileSync(path.join(rootDir, "client", "src", "styles", modulePath), "utf8"))
+    .join("\n");
 }
 
 function stripSafeGuardPatterns(source) {
@@ -1520,8 +1559,8 @@ test("S89.5 material polish stays frontend-only and reduced-motion aware", () =>
   assert.match(appShellSource, /data-polish-controls="s89-16-shell-controls"/);
   assert.match(appShellSource, /data-polish-controls="s89-16-inkbox-button"/);
   assert.doesNotMatch(appShellSource, /topBarPolishStyle|inkboxButtonPolishStyle|CSSProperties|style=\{topBarPolishStyle\}|style=\{inkboxButtonPolishStyle\}/);
-  assert.match(styleSource, /@keyframes s895D/);
-  assert.match(styleSource, /@keyframes s895S/);
+  assert.match(styleSource, /@keyframes drawerPanelFade/);
+  assert.match(styleSource, /@keyframes draftWrittenPulse/);
   assert.match(styleSource, /\.topBar::after/);
   assert.match(styleSource, /backdrop-filter: blur\(14px\) saturate\(1\.08\)/);
   assert.match(styleSource, /\.topNav a\[aria-current="page"\]/);
@@ -1530,11 +1569,11 @@ test("S89.5 material polish stays frontend-only and reduced-motion aware", () =>
   assert.match(styleSource, /\.inkboxButton:active/);
   assert.match(styleSource, /\.paperLink:hover:not\(:disabled\):not\(\[aria-disabled="true"\]\)/);
   assert.match(styleSource, /li\[data-draft-state="written"\]/);
-  assert.match(styleSource, /@keyframes s895D[\s\S]*opacity: \.9/);
-  assert.match(styleSource, /@keyframes s895S[\s\S]*outline: 2px solid #8e2f2738/);
-  assert.doesNotMatch(styleSource, /@keyframes s895D\s*\{\s*\}/);
-  assert.doesNotMatch(styleSource, /@keyframes s895S\s*\{\s*\}/);
-  assert.doesNotMatch(styleSource, /s895OverlayFade|s895PanelEnter|settingsDirectoryCard:hover::after|portraitViewerFigure::after/);
+  assert.match(styleSource, /@keyframes drawerPanelFade[\s\S]*opacity: \.9/);
+  assert.match(styleSource, /@keyframes draftWrittenPulse[\s\S]*outline: 2px solid #8e2f2738/);
+  assert.doesNotMatch(styleSource, /@keyframes drawerPanelFade\s*\{\s*\}/);
+  assert.doesNotMatch(styleSource, /@keyframes draftWrittenPulse\s*\{\s*\}/);
+  assert.doesNotMatch(styleSource, /s895D|s895S|s895OverlayFade|s895PanelEnter|settingsDirectoryCard:hover::after|portraitViewerFigure::after/);
   assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*li\[data-draft-state="written"\]/);
   assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*\.drawerHost/);
   assert.match(clientSmokeSource, /assertS895MaterialFeedbackPolish/);
@@ -2578,6 +2617,25 @@ test("S89.37 CSS token and accessibility refactor stays visual-only", () => {
   );
 });
 
+test("S89.38 CSS module entry keeps stable Vite import order", () => {
+  const globalEntrySource = fs.readFileSync(path.join(rootDir, "client", "src", "styles", "global.css"), "utf8");
+  const expectedImports = clientStyleEntryImports
+    .filter((modulePath) => modulePath !== "global.css")
+    .map((modulePath) => `@import "./${modulePath}";`);
+
+  assert.deepEqual(
+    globalEntrySource.trim().split(/\r?\n/),
+    expectedImports
+  );
+  assert.match(
+    fs.readFileSync(path.join(rootDir, "client", "src", "styles", "responsive", "global-responsive.css"), "utf8"),
+    /@import "\.\/mobile-layout\.css";[\s\S]*@import "\.\/mobile-exam-ranking\.css";/
+  );
+  assert.match(readClientStyleSource(), /--qq-color-ink: #241b16/);
+  assert.match(readClientStyleSource(), /@media \(max-width: 760px\)/);
+  assert.match(readClientStyleSource(), /@keyframes s8930PaperRise/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");
@@ -2633,18 +2691,20 @@ test("S89.30 shared material and motion polish stays visual-only", () => {
 
   assert.ok(styleSource.length < 200_000);
   assert.match(appShellSource, /data-polish-atmosphere="s89-30-shared-material-motion"/);
-  assert.match(styleSource, /\.appShell\[data-polish-atmosphere="s89-30-shared-material-motion"\] \.statusLine/);
+  assert.match(appShellSource, /data-material-motion="shared-paper"/);
+  assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] \.statusLine/);
   assert.match(styleSource, /@keyframes s8930PaperRise/);
   assert.match(styleSource, /@keyframes s8930StateWash/);
   assert.match(styleSource, /@keyframes s8930SealBloom/);
-  assert.match(styleSource, /\.appShell\[data-polish-atmosphere="s89-30-shared-material-motion"\] :is\(\.homeDesk/);
+  assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.homeDesk/);
   assert.match(styleSource, /\.quickActionSlip\[data-draft-state="written"\]/);
   assert.match(styleSource, /\.topicDraftSlot\[aria-pressed="true"\]/);
-  assert.match(styleSource, /\.appShell\[data-motion="reduced"\]\[data-polish-atmosphere="s89-30-shared-material-motion"\]/);
-  assert.match(styleSource, /prefers-reduced-motion: reduce[\s\S]*s89-30-shared-material-motion/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\]\[data-material-motion="shared-paper"\]/);
+  assert.match(styleSource, /prefers-reduced-motion: reduce[\s\S]*data-material-motion="shared-paper"/);
   assert.match(budgetSource, /maxCssBytes:\s*220_000/);
   assert.match(budgetSource, /maxSingleCssBytes:\s*200_000/);
   assert.match(clientSmokeSource, /shellAtmosphere/);
+  assert.match(clientSmokeSource, /shellMaterialMotion/);
   assert.match(clientSmokeSource, /s8930PaperRise/);
   assert.match(clientSmokeSource, /S89\.30 shared material/);
   assert.doesNotMatch(

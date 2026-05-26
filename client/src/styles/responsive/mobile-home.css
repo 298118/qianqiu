@@ -1,0 +1,78 @@
+@media (max-width: 760px) {
+  .homeScene {
+    min-height: auto;
+    place-items: start center;
+    padding: 24px 14px 36px;
+  }
+
+  .homeCopy {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 10px 0 0;
+  }
+
+  h1 {
+    font-size: clamp(3.6rem, 22vw, 5.8rem);
+  }
+
+  .homeTitleBlock {
+    max-width: 100%;
+  }
+
+  .homeDesk {
+    padding: 20px 16px 22px;
+  }
+
+  .homeDesk::before {
+    right: -20px;
+    bottom: -28px;
+    width: 112px;
+  }
+
+  .homeDesk::after {
+    display: none;
+  }
+
+  .homeDeskHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .homeActions {
+    width: 100%;
+  }
+
+  .homeActions .paperLink {
+    flex: 1 1 120px;
+    text-align: center;
+  }
+
+  .saveShelf {
+    background-size: 128px auto;
+  }
+
+  .saveShelfHeader {
+    display: grid;
+  }
+
+  .saveShelfStats {
+    flex-basis: auto;
+    width: 100%;
+  }
+
+  .saveShelfStatus > span {
+    width: 100%;
+    height: 4px;
+  }
+
+  .saveShelfRefresh {
+    justify-self: stretch;
+  }
+
+  .continueButton {
+    width: 100%;
+    text-align: center;
+  }
+
+}

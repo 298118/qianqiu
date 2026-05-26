@@ -1,0 +1,112 @@
+.pageFrame {
+  min-height: calc(100vh - 66px);
+  outline: none;
+}
+
+.appShell[data-text-size="large"] {
+  font-size: 1.08rem;
+}
+
+.appShell[data-contrast="high"] {
+  --qq-color-border-soft: rgb(45 30 20 / .58);
+  --qq-color-border-medium: rgb(45 30 20 / .68);
+  --qq-color-link: #5f1815;
+  --qq-color-state-red: #5f1815;
+  --qq-color-state-green: #253f28;
+  --qq-color-state-gold: #624112;
+  --qq-color-disabled-text: rgb(63 51 39 / .86);
+  --qq-color-disabled-border: rgb(45 30 20 / .42);
+  --qq-shadow-paper-lift: 0 18px 44px rgb(24 16 10 / .18);
+  --qq-shadow-ink-focus: 0 0 0 3px rgb(95 24 21 / .28);
+  --qq-shadow-card-rest:
+    0 14px 34px rgb(24 16 10 / .12),
+    inset 0 0 0 1px rgb(255 252 238 / .56);
+  --qq-shadow-card-hover:
+    0 18px 42px rgb(24 16 10 / .18),
+    inset 0 0 0 1px rgb(255 252 238 / .72);
+  --qq-surface-paper-soft:
+    linear-gradient(135deg, rgb(255 252 238 / .92), rgb(238 224 198 / .86)),
+    var(--qq-material-xuan) center / 420px repeat;
+  --qq-surface-paper-strong:
+    linear-gradient(135deg, rgb(255 252 238 / .98), rgb(238 224 198 / .92)),
+    var(--qq-material-xuan) center / 420px repeat;
+  --qq-surface-disabled:
+    linear-gradient(180deg, rgb(247 241 226 / .78), rgb(224 211 188 / .66)),
+    var(--qq-material-xuan) center / 420px repeat;
+  color: var(--qq-color-ink-strong);
+}
+
+.appShell[data-contrast="high"] :is(.paperSurface, .rolePanel, .statusSurface, .ledgerCard, .scholarPanelCard, .paperButton, .paperLink, .topNav a, .sessionNav a, .settingsDirectoryCard, .archiveDigestBand, .crossPageTraceGrid article) {
+  border-color: var(--qq-color-border-medium);
+}
+
+.appShell[data-contrast="high"] :is(.paperButton, .paperLink, .topNav a, .sessionNav a):focus-visible {
+  outline-color: rgb(95 24 21 / .44);
+  box-shadow: var(--qq-shadow-ink-focus);
+}
+
+.appShell[data-motion="reduced"] {
+  --qq-motion-fast: var(--qq-motion-instant);
+  --qq-motion-medium: var(--qq-motion-instant);
+  --qq-motion-panel: var(--qq-motion-instant);
+  --qq-motion-surface: var(--qq-motion-instant);
+}
+
+.appShell[data-motion="reduced"] *,
+.appShell[data-motion="reduced"] *::before,
+.appShell[data-motion="reduced"] *::after {
+  scroll-behavior: auto !important;
+  transition-duration: var(--qq-motion-instant) !important;
+  animation-duration: var(--qq-motion-instant) !important;
+  animation-iteration-count: 1 !important;
+}
+
+.appShell[data-motion="reduced"] .homeStartSeal,
+.appShell[data-motion="reduced"] .homeStartSeal::after,
+.appShell[data-motion="reduced"] .homeStartSeal[data-state="loading"]::before {
+  animation: none !important;
+  transition: none;
+}
+
+.appShell[data-motion="reduced"] .homeMist,
+.appShell[data-motion="reduced"] .sessionRouteShell > .examFullScreen,
+.appShell[data-motion="reduced"] .sessionRouteShell > .courtSurfacePage,
+.appShell[data-motion="reduced"] .sessionRouteShell > .surfacePanel,
+.appShell[data-motion="reduced"] .drawerHost,
+.appShell[data-motion="reduced"] li[data-draft-state="written"],
+.appShell[data-motion="reduced"] .portraitViewerCueGrid span,
+.appShell[data-motion="reduced"] .portraitViewerDossierRail,
+.appShell[data-motion="reduced"] .peopleGalleryBand[data-polish-people-gallery-band="s89-35-people-portrait-gallery"],
+.appShell[data-motion="reduced"] .peopleGalleryReadout dl,
+.appShell[data-motion="reduced"] .peopleCard,
+.appShell[data-motion="reduced"] .rankingGoldenNotice::before,
+.appShell[data-motion="reduced"] .rankingGoldenTitle span,
+.appShell[data-motion="reduced"] .examHero[data-polish-exam-hero="s89-33-exam-ceremony-material"]::after,
+.appShell[data-motion="reduced"] .examCeremonyBand,
+.appShell[data-motion="reduced"] .examCeremonyBand li,
+.appShell[data-motion="reduced"] .examDesk[data-polish-exam-paper="s89-33-exam-ceremony-material"],
+.appShell[data-motion="reduced"] .gameCommandBar[data-polish-game-command="s89-34-main-court-desk"]::before,
+.appShell[data-motion="reduced"] .gameSceneBand[data-polish-game-scene="s89-34-main-court-desk"]::after,
+.appShell[data-motion="reduced"] .gameDeskCenter,
+.appShell[data-motion="reduced"] .gameDeskCenter[data-desk-state="draft"]::after,
+.appShell[data-motion="reduced"] .gameDeskCompass li,
+.appShell[data-motion="reduced"] .gameSideLedger[data-draft-state="written"],
+.appShell[data-motion="reduced"] .courtAgendaBand,
+.appShell[data-motion="reduced"] .courtAgendaBand::before,
+.appShell[data-motion="reduced"] .courtAgendaSteps li,
+.appShell[data-motion="reduced"] .crossPageTraceGrid article,
+.appShell[data-motion="reduced"] .rankingHero[data-polish-ranking-hero="s89-33-ranking-golden-board"]::after,
+.appShell[data-motion="reduced"] .rankingCeremonyBand,
+.appShell[data-motion="reduced"] .rankingCeremonyBand li,
+.appShell[data-motion="reduced"] .rankingList button[aria-pressed="true"],
+.appShell[data-motion="reduced"] .mapTideCompass::before,
+.appShell[data-motion="reduced"] .inkMapTooltip,
+.appShell[data-motion="reduced"] .inkMapTooltip::before,
+.appShell[data-motion="reduced"] .homeDesk[data-polish-home-entry="s89-32-opening-desk"],
+.appShell[data-motion="reduced"] .homeOpeningPath li,
+.appShell[data-motion="reduced"] .topNav[data-polish-shell-nav="s89-32-main-nav-density"] a::after,
+.appShell[data-motion="reduced"] .inkboxPanel[data-polish-inkbox-panel="s89-32-inkbox-glass-ledger"],
+.appShell[data-motion="reduced"] .inkboxTabs[data-polish-inkbox-tabs="s89-32-inkbox-glass-ledger"] .inkboxTab[aria-selected="true"],
+.appShell[data-motion="reduced"][data-material-motion="shared-paper"] :is(.saveCaseItem, .scholarPanelCard, .mapActionList li, .mapEventList li, .mapNpcActivityList li, .archiveLeadList li, .archiveItemList li, .peopleCard, .npcRelationshipSignalCard, .npcRelationshipAgendaCard, .inventoryMiniCard, .inventoryItemCard, .rankingTopSeal, .settingsDirectoryCard, .topicSurfaceItem, .npcListButton[aria-pressed="true"], .inventoryContainerButton[aria-pressed="true"], .topicDraftSlot[aria-pressed="true"], .inkboxTab[aria-selected="true"], li[data-draft-state="written"], .quickActionSlip[data-draft-state="written"], .inkMapTooltip .paperButton[data-draft-state="written"]) {
+  animation: none !important;
+}

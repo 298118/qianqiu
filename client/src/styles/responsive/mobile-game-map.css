@@ -1,0 +1,134 @@
+@media (max-width: 760px) {
+  .gameCommandBar {
+    align-items: start;
+    gap: 12px;
+  }
+
+  .gameSceneBand {
+    min-height: 220px;
+  }
+
+  .gameSceneCopy {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .mapFullScreen {
+    padding: 16px 12px 28px;
+  }
+
+  .mapHero {
+    padding-top: 10px;
+  }
+
+  .mapHero h1 {
+    font-size: clamp(2.4rem, 12vw, 3.4rem);
+    line-height: 1.05;
+  }
+
+  .mapLayerControls,
+  .mapCommandDeck .buttonRow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    width: 100%;
+  }
+
+  .mapLayerToggle,
+  .mapCommandDeck .paperButton,
+  .mapCommandDeck .paperLink {
+    justify-content: center;
+    min-height: 44px;
+    text-align: center;
+  }
+
+  .mapFullScreen .inkMapStage {
+    min-height: 62vh;
+  }
+
+  .scholarPanelHeader,
+  .scholarPanelCardHeader {
+    flex-direction: column;
+  }
+
+  .gameSurface.hasMemorialComposer {
+    padding-bottom: 360px;
+  }
+
+  .memorialComposer {
+    bottom: 8px;
+    width: calc(100% - 16px);
+  }
+
+  .memorialComposerShell {
+    min-height: 0;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .quickActionDock {
+    order: 2;
+  }
+
+  .quickActionList[data-state="open"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-height: 96px;
+  }
+
+  .quickActionSlip {
+    gap: 2px;
+    text-align: center;
+  }
+
+  .memorialInputField textarea {
+    min-height: 78px;
+    max-height: 126px;
+  }
+
+  .memorialActions {
+    grid-template-columns: 1fr auto;
+  }
+
+  .memorialSubmit {
+    min-height: 44px;
+  }
+
+  .memorialFooter {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.72rem;
+  }
+
+  .inkMapStage {
+    min-height: 380px;
+  }
+
+  .inkMapTooltip {
+    position: fixed;
+    left: 50% !important;
+    top: auto !important;
+    bottom: 12px;
+    width: calc(100% - 24px);
+    max-height: min(62vh, 420px);
+    overflow: auto;
+    transform: translateX(-50%);
+    animation-name: s8931MapNoteSheetIn;
+  }
+
+  .inkMapTooltip::before {
+    inset: -10px 8px -4px;
+  }
+
+  .inkMapTooltipHeader,
+  .mapTideCompassHeader,
+  .mapTideCompassFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inkMapTooltipReading,
+  .mapTideCompassTabs {
+    grid-template-columns: 1fr;
+  }
+
+}

@@ -1,0 +1,76 @@
+@media (prefers-reduced-motion: reduce) {
+  .appShell {
+    --qq-motion-fast: var(--qq-motion-instant);
+    --qq-motion-medium: var(--qq-motion-instant);
+    --qq-motion-panel: var(--qq-motion-instant);
+    --qq-motion-surface: var(--qq-motion-instant);
+  }
+
+  .appShell *,
+  .appShell *::before,
+  .appShell *::after {
+    scroll-behavior: auto !important;
+    transition-duration: var(--qq-motion-instant) !important;
+    animation-duration: var(--qq-motion-instant) !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .homeBackdrop {
+    background:
+      linear-gradient(180deg, rgb(32 26 20 / .08), rgb(238 224 197 / .24) 56%, rgb(31 26 21 / .28)),
+      url("/assets/ui/home/home-static-reduced-motion-v1.webp") center / cover no-repeat;
+  }
+
+  .homeMist {
+    animation: none;
+    opacity: 0.16;
+  }
+
+  .homeStartSeal,
+  .homeStartSeal::after,
+  .homeStartSeal[data-state="loading"]::before,
+  .homeDesk[data-polish-home-entry="s89-32-opening-desk"],
+  .homeOpeningPath li,
+  .topNav[data-polish-shell-nav="s89-32-main-nav-density"] a::after,
+  .inkboxPanel[data-polish-inkbox-panel="s89-32-inkbox-glass-ledger"],
+  .inkboxTabs[data-polish-inkbox-tabs="s89-32-inkbox-glass-ledger"] .inkboxTab[aria-selected="true"],
+  .saveShelfStatus[data-tone="loading"] > span,
+  .saveCaseSkeleton,
+  .statePage,
+  .sessionRouteShell > .examFullScreen,
+  .sessionRouteShell > .courtSurfacePage,
+  .sessionRouteShell > .surfacePanel,
+  li[data-draft-state="written"],
+  .portraitViewerCueGrid span,
+  .portraitViewerDossierRail,
+  .peopleGalleryBand[data-polish-people-gallery-band="s89-35-people-portrait-gallery"],
+  .peopleGalleryReadout dl,
+  .peopleCard,
+  .rankingGoldenNotice::before,
+  .rankingGoldenTitle span,
+  .examHero[data-polish-exam-hero="s89-33-exam-ceremony-material"]::after,
+  .examCeremonyBand,
+  .examCeremonyBand li,
+  .examDesk[data-polish-exam-paper="s89-33-exam-ceremony-material"],
+  .gameCommandBar[data-polish-game-command="s89-34-main-court-desk"]::before,
+  .gameSceneBand[data-polish-game-scene="s89-34-main-court-desk"]::after,
+  .gameDeskCenter,
+  .gameDeskCenter[data-desk-state="draft"]::after,
+  .gameDeskCompass li,
+  .gameSideLedger[data-draft-state="written"],
+  .courtAgendaBand,
+  .courtAgendaBand::before,
+  .courtAgendaSteps li,
+  .crossPageTraceGrid article,
+  .rankingHero[data-polish-ranking-hero="s89-33-ranking-golden-board"]::after,
+  .rankingCeremonyBand,
+  .rankingCeremonyBand li,
+  .rankingList button[aria-pressed="true"],
+  .mapTideCompass::before,
+  .inkMapTooltip,
+  .inkMapTooltip::before,
+  .appShell[data-material-motion="shared-paper"] :is(.saveCaseItem, .scholarPanelCard, .mapActionList li, .mapEventList li, .mapNpcActivityList li, .archiveLeadList li, .archiveItemList li, .peopleCard, .npcRelationshipSignalCard, .npcRelationshipAgendaCard, .inventoryMiniCard, .inventoryItemCard, .rankingTopSeal, .settingsDirectoryCard, .topicSurfaceItem, .npcListButton[aria-pressed="true"], .inventoryContainerButton[aria-pressed="true"], .topicDraftSlot[aria-pressed="true"], .inkboxTab[aria-selected="true"], li[data-draft-state="written"], .quickActionSlip[data-draft-state="written"], .inkMapTooltip .paperButton[data-draft-state="written"]) {
+    animation: none !important;
+    transition: none;
+  }
+}
