@@ -3223,6 +3223,56 @@ test("S89.55 utility surfaces use shared semantic tokens", () => {
   assert.doesNotMatch(surfacesSource, /0 10px 22px rgb\(80 50 35 \/ \.08|rgb\(255 255 255 \/ \.28|rgb\(142 47 39 \/ \.18|rgb\(255 252 238 \/ \.64/);
 });
 
+test("S89.56 shell chrome uses semantic surface tokens", () => {
+  const tokensSource = readClientStyleModule("tokens/tokens.css");
+  const preferencesSource = readClientStyleModule("base/preferences.css");
+  const shellSource = readClientStyleModule("components/shell.css");
+  const highContrastBlock = preferencesSource.match(/\.appShell\[data-contrast="high"\] \{[\s\S]*?\n\}/)?.[0] || "";
+
+  for (const tokenName of [
+    "--qq-surface-shell-topbar",
+    "--qq-shadow-shell-topbar",
+    "--qq-surface-shell-topbar-glass",
+    "--qq-surface-shell-divider",
+    "--qq-surface-shell-nav-underline",
+    "--qq-surface-shell-nav-active",
+    "--qq-shadow-shell-nav-active",
+    "--qq-color-shell-tools-border",
+    "--qq-surface-shell-tools",
+    "--qq-shadow-shell-tools",
+    "--qq-color-shell-action-border",
+    "--qq-color-shell-action-border-strong",
+    "--qq-color-shell-action-text",
+    "--qq-color-shell-action-outline",
+    "--qq-surface-shell-icon-button",
+    "--qq-shadow-shell-icon-button",
+    "--qq-color-shell-inkbox-border",
+    "--qq-surface-shell-inkbox-button",
+    "--qq-shadow-shell-inkbox-button",
+    "--qq-surface-shell-inkbox-shine",
+    "--qq-shadow-shell-action-hover",
+    "--qq-shadow-shell-inkbox-active",
+    "--qq-color-brand-seal-inset"
+  ]) {
+    assert.match(tokensSource, new RegExp(`${tokenName}:`));
+    assert.match(highContrastBlock, new RegExp(`${tokenName}:`));
+  }
+
+  assert.match(shellSource, /\.topBar \{[\s\S]*background: var\(--qq-surface-shell-topbar\)[\s\S]*box-shadow: var\(--qq-shadow-shell-topbar\)/);
+  assert.match(shellSource, /\.topBar\[data-polish-shell="s89-32-shell-entry-glass"\]::before \{[\s\S]*background: var\(--qq-surface-shell-topbar-glass\)/);
+  assert.match(shellSource, /\.topBar::after \{[\s\S]*background: var\(--qq-surface-shell-divider\)/);
+  assert.match(shellSource, /\.brandSeal \{[\s\S]*box-shadow: inset 0 0 0 4px var\(--qq-color-brand-seal-inset\)/);
+  assert.match(shellSource, /\.topNav\[data-polish-shell-nav="s89-32-main-nav-density"\] a::after \{[\s\S]*background: var\(--qq-surface-shell-nav-underline\)/);
+  assert.match(shellSource, /\.topNav a\.active,[\s\S]*background: var\(--qq-surface-shell-nav-active\)[\s\S]*box-shadow: var\(--qq-shadow-shell-nav-active\)/);
+  assert.match(shellSource, /\.topTools\[data-polish-shell-tools="s89-32-inkbox-entry"\] \{[\s\S]*border: 1px solid var\(--qq-color-shell-tools-border\)[\s\S]*background: var\(--qq-surface-shell-tools\)[\s\S]*box-shadow: var\(--qq-shadow-shell-tools\)/);
+  assert.match(shellSource, /\.iconButton \{[\s\S]*border: 1px solid var\(--qq-color-shell-action-border\)[\s\S]*background: var\(--qq-surface-shell-icon-button\)[\s\S]*color: var\(--qq-color-shell-action-text\)[\s\S]*box-shadow: var\(--qq-shadow-shell-icon-button\)/);
+  assert.match(shellSource, /\.inkboxButton \{[\s\S]*border: 1px solid var\(--qq-color-shell-inkbox-border\)[\s\S]*background: var\(--qq-surface-shell-inkbox-button\)[\s\S]*color: var\(--qq-color-shell-action-text\)[\s\S]*box-shadow: var\(--qq-shadow-shell-inkbox-button\)/);
+  assert.match(shellSource, /\.inkboxButton::before \{[\s\S]*background: var\(--qq-surface-shell-inkbox-shine\)/);
+  assert.match(shellSource, /\.iconButton:hover,[\s\S]*border-color: var\(--qq-color-shell-action-border-strong\)[\s\S]*box-shadow: var\(--qq-shadow-shell-action-hover\)[\s\S]*outline: 2px solid var\(--qq-color-shell-action-outline\)/);
+  assert.match(shellSource, /\.inkboxButton:active \{[\s\S]*box-shadow: var\(--qq-shadow-shell-inkbox-active\)/);
+  assert.doesNotMatch(shellSource, /rgb\(255 250 234 \/ \.88|rgb\(229 211 178 \/ \.78|rgb\(142 47 39 \/ \.54|rgb\(204 156 72 \/ \.38|rgb\(255 252 238 \/ \.28|rgb\(142 47 39 \/ \.48|#7b241f|rgb\(86 40 31 \/ \.18|rgb\(123 36 31 \/ \.24|rgb\(75 43 28 \/ \.18/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");
