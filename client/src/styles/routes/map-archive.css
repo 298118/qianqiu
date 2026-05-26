@@ -340,13 +340,13 @@ li[data-draft-state="written"] {
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr);
   gap: 8px;
-  border-left: 3px solid rgb(47 111 94 / .34);
+  border-left: 3px solid var(--qq-color-state-green-border-medium);
   background: rgb(255 252 238 / .5);
   padding: 7px 8px;
 }
 
 .mapSituationIndexList dt {
-  color: #2f6f5e;
+  color: var(--qq-color-state-green-accent);
   font-size: 0.76rem;
   font-weight: 900;
 }
@@ -390,7 +390,7 @@ li[data-draft-state="written"] {
   position: absolute;
   inset: 0 auto 0 0;
   width: 3px;
-  background: linear-gradient(180deg, rgb(214 164 70 / .2), rgb(47 111 94 / .34), rgb(142 47 39 / .22));
+  background: linear-gradient(180deg, var(--qq-color-state-gold-fill-soft), var(--qq-color-state-green-border-medium), var(--qq-color-vermilion-glow-outline));
   content: "";
   opacity: 0.82;
   animation: s8931MapTideGlow 2400ms ease-in-out infinite alternate;
@@ -417,9 +417,9 @@ li[data-draft-state="written"] {
 
 .mapTideCompassHeader > span {
   flex: 0 0 auto;
-  border: 1px solid rgb(214 164 70 / .38);
+  border: 1px solid var(--qq-color-state-gold-border-soft);
   background: rgb(255 252 238 / .62);
-  color: #7b4d1f;
+  color: var(--qq-color-state-gold-accent);
   font-size: 0.78rem;
   font-weight: 900;
   padding: 4px 7px;
@@ -472,15 +472,15 @@ li[data-draft-state="written"] {
 }
 
 .mapTideCompassTab[aria-selected="true"][data-compass-tone="people"] {
-  border-color: rgb(47 111 94 / .5);
+  border-color: var(--qq-color-state-green-border-strong);
 }
 
 .mapTideCompassTab[aria-selected="true"][data-compass-tone="consequence"] {
-  border-color: rgb(112 84 149 / .46);
+  border-color: var(--qq-color-state-purple-border-medium);
 }
 
 .mapTideCompassTab[aria-selected="true"][data-compass-tone="drafts"] {
-  border-color: rgb(214 164 70 / .58);
+  border-color: var(--qq-color-state-gold-border-medium);
 }
 
 .mapTideCompassReadout {
@@ -493,15 +493,15 @@ li[data-draft-state="written"] {
 }
 
 .mapTideCompassReadout[data-compass-tone="people"] {
-  border-left-color: rgb(47 111 94 / .56);
+  border-left-color: var(--qq-color-state-green-border-emphasis);
 }
 
 .mapTideCompassReadout[data-compass-tone="consequence"] {
-  border-left-color: rgb(112 84 149 / .5);
+  border-left-color: var(--qq-color-state-purple-border-strong);
 }
 
 .mapTideCompassReadout[data-compass-tone="drafts"] {
-  border-left-color: rgb(214 164 70 / .62);
+  border-left-color: var(--qq-color-state-gold-border-strong);
 }
 
 .mapTideCompassReadout span,
@@ -549,7 +549,7 @@ li[data-draft-state="written"] {
   display: grid;
   gap: 7px;
   min-width: 0;
-  border: 1px solid rgb(47 111 94 / .24);
+  border: 1px solid var(--qq-color-state-green-border-soft);
   background: rgb(249 252 241 / .62);
   padding: 12px;
 }
@@ -562,7 +562,7 @@ li[data-draft-state="written"] {
 }
 
 .mapNpcActivityList strong {
-  color: #2f6f5e;
+  color: var(--qq-color-state-green-accent);
 }
 
 .mapNpcActivityList span,
@@ -1025,12 +1025,12 @@ li[data-draft-state="written"] {
 }
 
 .inkMapTooltip[data-tooltip-tone="people"] {
-  border-color: rgb(47 111 94 / .5);
+  border-color: var(--qq-color-state-green-border-strong);
 }
 
 .inkMapTooltip[data-tooltip-tone="people"] .inkMapTooltipSeal {
-  border-color: rgb(47 111 94 / .36);
-  color: #2f6f5e;
+  border-color: var(--qq-color-state-green-border-medium);
+  color: var(--qq-color-state-green-accent);
 }
 
 .inkMapTooltip[data-tooltip-tone="route"] {
@@ -1074,7 +1074,7 @@ li[data-draft-state="written"] {
   min-width: 18px;
   max-width: 100%;
   height: 5px;
-  background: linear-gradient(90deg, rgb(47 111 94 / .74), rgb(214 164 70 / .7), rgb(142 47 39 / .78));
+  background: linear-gradient(90deg, var(--qq-color-state-green-fill-strong), var(--qq-color-state-gold-fill-strong), rgb(142 47 39 / .78));
   box-shadow: 0 0 0 1px rgb(84 60 43 / .12);
 }
 

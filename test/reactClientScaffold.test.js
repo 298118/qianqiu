@@ -3110,6 +3110,46 @@ test("S89.52 high contrast mode overrides shared paper state tokens", () => {
   assert.match(runtimeSource, /\.appShell\[data-motion="reduced"\]\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard/);
 });
 
+test("S89.53 map tone colors use semantic state tokens", () => {
+  const tokensSource = readClientStyleModule("tokens/tokens.css");
+  const preferencesSource = readClientStyleModule("base/preferences.css");
+  const mapArchiveSource = readClientStyleModule("routes/map-archive.css");
+  const highContrastBlock = preferencesSource.match(/\.appShell\[data-contrast="high"\] \{[\s\S]*?\n\}/)?.[0] || "";
+
+  for (const tokenName of [
+    "--qq-color-state-green-accent",
+    "--qq-color-state-gold-accent",
+    "--qq-color-state-purple-accent",
+    "--qq-color-state-green-border-soft",
+    "--qq-color-state-green-border-medium",
+    "--qq-color-state-green-border-strong",
+    "--qq-color-state-green-border-emphasis",
+    "--qq-color-state-green-fill-strong",
+    "--qq-color-state-gold-border-soft",
+    "--qq-color-state-gold-border-medium",
+    "--qq-color-state-gold-border-strong",
+    "--qq-color-state-gold-fill-soft",
+    "--qq-color-state-gold-fill-strong",
+    "--qq-color-state-purple-border-medium",
+    "--qq-color-state-purple-border-strong"
+  ]) {
+    assert.match(tokensSource, new RegExp(`${tokenName}:`));
+    assert.match(highContrastBlock, new RegExp(`${tokenName}:`));
+  }
+
+  assert.match(mapArchiveSource, /\.mapSituationIndexList div \{[\s\S]*border-left: 3px solid var\(--qq-color-state-green-border-medium\)/);
+  assert.match(mapArchiveSource, /\.mapSituationIndexList dt \{[\s\S]*color: var\(--qq-color-state-green-accent\)/);
+  assert.match(mapArchiveSource, /\.mapTideCompass::before \{[\s\S]*var\(--qq-color-state-gold-fill-soft\)[\s\S]*var\(--qq-color-state-green-border-medium\)/);
+  assert.match(mapArchiveSource, /\.mapTideCompassHeader > span \{[\s\S]*border: 1px solid var\(--qq-color-state-gold-border-soft\)[\s\S]*color: var\(--qq-color-state-gold-accent\)/);
+  assert.match(mapArchiveSource, /\.mapTideCompassTab\[aria-selected="true"\]\[data-compass-tone="people"\] \{[\s\S]*border-color: var\(--qq-color-state-green-border-strong\)/);
+  assert.match(mapArchiveSource, /\.mapTideCompassTab\[aria-selected="true"\]\[data-compass-tone="consequence"\] \{[\s\S]*border-color: var\(--qq-color-state-purple-border-medium\)/);
+  assert.match(mapArchiveSource, /\.mapTideCompassReadout\[data-compass-tone="drafts"\] \{[\s\S]*border-left-color: var\(--qq-color-state-gold-border-strong\)/);
+  assert.match(mapArchiveSource, /\.mapNpcActivityList li \{[\s\S]*border: 1px solid var\(--qq-color-state-green-border-soft\)/);
+  assert.match(mapArchiveSource, /\.inkMapTooltip\[data-tooltip-tone="people"\] \{[\s\S]*border-color: var\(--qq-color-state-green-border-strong\)/);
+  assert.match(mapArchiveSource, /\.inkMapTooltipReading i \{[\s\S]*var\(--qq-color-state-green-fill-strong\)[\s\S]*var\(--qq-color-state-gold-fill-strong\)/);
+  assert.doesNotMatch(mapArchiveSource, /rgb\(47 111 94|rgb\(214 164 70|rgb\(112 84 149|#2f6f5e|#7b4d1f|#705495/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");
