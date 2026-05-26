@@ -1851,7 +1851,7 @@ test("S89.34 main desk and court agenda material polish stays safe-view-only", (
   assert.match(styleSource, /\.gameDeskCenter/);
   assert.match(styleSource, /data-polish-court-agenda="s89-34-main-court-desk"/);
   assert.match(styleSource, /\.courtAgendaBand/);
-  for (const keyframe of ["s8934DeskUnroll", "s8934SlipRise", "s8934InkPulse", "s8934SceneSheen", "s8934SealSettle", "s8934LedgerGlow", "s8934CourtSealGlow"]) {
+  for (const keyframe of ["mainCourtDeskPaperUnroll", "mainCourtDeskSlipRise", "mainCommandBarInkPulse", "mainSceneBandSheen", "mainDeskSealSettle", "mainLedgerDraftGlow", "courtAgendaSealGlow"]) {
     assert.match(styleSource, new RegExp(`@keyframes ${keyframe}`));
     assert.match(styleSource, new RegExp(keyframe));
   }
@@ -1862,6 +1862,42 @@ test("S89.34 main desk and court agenda material polish stays safe-view-only", (
     runtimeCombined,
     /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
   );
+});
+
+test("S89.60 main and court desk keyframes use semantic names", () => {
+  const keyframesSource = readText("client/src/styles/motion/keyframes.css");
+  const gameStyleSource = readText("client/src/styles/routes/game.css");
+  const styleSource = readText("client/src/styles/global.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const semanticNames = [
+    "mainCourtDeskPaperUnroll",
+    "mainCourtDeskSlipRise",
+    "mainCommandBarInkPulse",
+    "mainSceneBandSheen",
+    "mainDeskSealSettle",
+    "mainLedgerDraftGlow",
+    "courtAgendaSealGlow"
+  ];
+
+  for (const keyframe of semanticNames) {
+    assert.match(keyframesSource, new RegExp(`@keyframes ${keyframe}`));
+    assert.match(gameStyleSource, new RegExp(`animation: ${keyframe}`));
+    assert.match(clientSmokeSource, new RegExp(keyframe));
+  }
+  assert.match(gameStyleSource, /\.gameCommandBar\[data-polish-game-command="s89-34-main-court-desk"\]::before[\s\S]*animation: mainCommandBarInkPulse 4600ms ease-in-out infinite alternate/);
+  assert.match(gameStyleSource, /\.gameSceneBand\[data-polish-game-scene="s89-34-main-court-desk"\]::after[\s\S]*animation: mainSceneBandSheen 5200ms ease-in-out infinite alternate/);
+  assert.match(gameStyleSource, /\.gameDeskCenter \{[\s\S]*animation: mainCourtDeskPaperUnroll 430ms cubic-bezier\(0\.2, 0\.78, 0\.2, 1\) both/);
+  assert.match(gameStyleSource, /\.gameDeskCenter\[data-desk-state="draft"\]::after[\s\S]*animation: mainDeskSealSettle 360ms ease both/);
+  assert.match(gameStyleSource, /\.gameSideLedger\[data-draft-state="written"\] \{[\s\S]*animation: mainLedgerDraftGlow 360ms ease both/);
+  assert.match(gameStyleSource, /\.courtAgendaBand \{[\s\S]*animation: mainCourtDeskPaperUnroll 400ms cubic-bezier\(0\.2, 0\.78, 0\.2, 1\) both/);
+  assert.match(gameStyleSource, /\.courtAgendaBand::before \{[\s\S]*animation: courtAgendaSealGlow 5000ms ease-in-out infinite alternate/);
+  assert.match(gameStyleSource, /\.courtAgendaSteps li \{[\s\S]*animation: mainCourtDeskSlipRise 360ms ease both/);
+  assert.match(clientSmokeSource, /mainCommandBarInkPulse/);
+  assert.match(clientSmokeSource, /mainSceneBandSheen/);
+  assert.match(clientSmokeSource, /mainLedgerDraftGlow/);
+  assert.match(clientSmokeSource, /courtAgendaSealGlow/);
+  assert.doesNotMatch(styleSource, /@keyframes s8934(?:DeskUnroll|SlipRise|InkPulse|SceneSheen|SealSettle|LedgerGlow|CourtSealGlow)|animation(?:-name)?: s8934(?:DeskUnroll|SlipRise|InkPulse|SceneSheen|SealSettle|LedgerGlow|CourtSealGlow)/);
+  assert.doesNotMatch(clientSmokeSource, /s8934(?:DeskUnroll|SlipRise|InkPulse|SceneSheen|SealSettle|LedgerGlow|CourtSealGlow)/);
 });
 
 test("S89.36 cross-page trace rail stays frontend-only and safe-view-only", () => {

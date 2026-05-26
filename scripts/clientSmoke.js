@@ -1833,8 +1833,14 @@ async function startMockGameThroughHome(page, screenshotsDir) {
     const byText = new Map(allLinks.map((link) => [link.text, link.path]));
     const mainLedger = document.querySelector('[data-polish-game="s89-22-main-ledger-reader"]');
     const mainLedgerText = mainLedger?.textContent || "";
+    const commandBar = document.querySelector(".gameCommandBar");
+    const sceneBand = document.querySelector(".gameSceneBand");
     const deskCenter = document.querySelector('[data-polish-game-center-band="s89-34-main-court-desk"]');
+    const compassSlip = document.querySelector(".gameDeskCompass li");
+    const commandGlowStyle = commandBar ? window.getComputedStyle(commandBar, "::before") : null;
+    const sceneSheenStyle = sceneBand ? window.getComputedStyle(sceneBand, "::after") : null;
     const deskStyle = deskCenter ? window.getComputedStyle(deskCenter) : null;
+    const compassSlipStyle = compassSlip ? window.getComputedStyle(compassSlip) : null;
     const deskText = deskCenter?.textContent || "";
     return {
       topMap: byText.get("舆图"),
@@ -1853,12 +1859,17 @@ async function startMockGameThroughHome(page, screenshotsDir) {
       mainStaticSurfaceMissing: Boolean(document.querySelector(".narrativeScroll:not(.paperMotionSurface), .gameSideLedger:not(.paperMotionSurface), .openingClaimPanel:not(.paperMotionSurface)")),
       mainLedgerText,
       deskRootMarker: document.querySelector(".gameSurface")?.getAttribute("data-polish-game-center") || "",
-      deskCommandMarker: document.querySelector(".gameCommandBar")?.getAttribute("data-polish-game-command") || "",
-      deskSceneMarker: document.querySelector(".gameSceneBand")?.getAttribute("data-polish-game-scene") || "",
+      shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
+      reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      deskCommandMarker: commandBar?.getAttribute("data-polish-game-command") || "",
+      deskSceneMarker: sceneBand?.getAttribute("data-polish-game-scene") || "",
       deskBandMarker: deskCenter?.getAttribute("data-polish-game-center-band") || "",
       deskState: deskCenter?.getAttribute("data-desk-state") || "",
       deskText,
+      commandGlowAnimation: commandGlowStyle?.animationName || "",
+      sceneSheenAnimation: sceneSheenStyle?.animationName || "",
       deskAnimation: deskStyle?.animationName || "",
+      compassSlipAnimation: compassSlipStyle?.animationName || "",
       deskBackground: deskStyle?.backgroundImage || "",
       deskUnsafeText: deskText.match(/manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|ledger|\/api\/game\/state|\/api\/dev\/session-diagnostics|OPENAI_API_KEY|本地路径|密钥|sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
       mainLedgerUnsafeText: mainLedgerText.match(/manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|ledger|\/api\/game\/state|\/api\/dev\/session-diagnostics|OPENAI_API_KEY|本地路径|密钥|sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || [],
@@ -1902,7 +1913,15 @@ async function startMockGameThroughHome(page, screenshotsDir) {
     }
   }
   if (!entrypoints.deskBackground.includes("linear-gradient")) failures.push("S89.34 main desk material background missing");
-  if (!entrypoints.deskAnimation.includes("s8934DeskUnroll")) failures.push(`S89.34 main desk animation was ${entrypoints.deskAnimation}`);
+  if (entrypoints.shellMotion !== "reduced" && !entrypoints.reducedMotion) {
+    if (!entrypoints.commandGlowAnimation.includes("mainCommandBarInkPulse")) failures.push(`S89.60 main command animation was ${entrypoints.commandGlowAnimation}`);
+    if (!entrypoints.sceneSheenAnimation.includes("mainSceneBandSheen")) failures.push(`S89.60 main scene animation was ${entrypoints.sceneSheenAnimation}`);
+    if (!entrypoints.deskAnimation.includes("mainCourtDeskPaperUnroll")) failures.push(`S89.60 main desk animation was ${entrypoints.deskAnimation}`);
+    if (!entrypoints.compassSlipAnimation.includes("mainCourtDeskSlipRise")) failures.push(`S89.60 main desk slip animation was ${entrypoints.compassSlipAnimation}`);
+  }
+  if ((entrypoints.shellMotion === "reduced" || entrypoints.reducedMotion) && (entrypoints.commandGlowAnimation !== "none" || entrypoints.sceneSheenAnimation !== "none" || entrypoints.deskAnimation !== "none" || entrypoints.compassSlipAnimation !== "none")) {
+    failures.push(`S89.60 reduced main desk animations were ${JSON.stringify({ command: entrypoints.commandGlowAnimation, scene: entrypoints.sceneSheenAnimation, desk: entrypoints.deskAnimation, slip: entrypoints.compassSlipAnimation })}`);
+  }
   for (const requiredCopy of ["本旬行止笺", "本卷取材", "暂无草稿", "未起稿", "主卷回批", "公开卷宗", "未载卷宗不补造"]) {
     if (!entrypoints.mainLedgerText.includes(requiredCopy)) {
       failures.push(`S89.22 main ledger lacked ${requiredCopy}: ${entrypoints.mainLedgerText.slice(0, 160)}`);
@@ -2004,11 +2023,17 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
   const mainLedgerDraftState = await page.evaluate(() => {
     const ledger = document.querySelector('[data-polish-game="s89-22-main-ledger-reader"]');
     const desk = document.querySelector('[data-polish-game-center-band="s89-34-main-court-desk"]');
+    const ledgerStyle = ledger ? getComputedStyle(ledger) : null;
+    const deskSealStyle = desk ? getComputedStyle(desk, "::after") : null;
     return {
       ledgerText: ledger?.textContent || "",
       ledgerDraftState: ledger?.getAttribute("data-draft-state") || "",
       ledgerSurfaceWritten: Boolean(document.querySelector(".gameSideLedger.paperMotionSurface[data-draft-state='written']")),
+      shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
+      reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      ledgerAnimation: ledgerStyle?.animationName || "",
       deskState: desk?.getAttribute("data-desk-state") || "",
+      deskSealAnimation: deskSealStyle?.animationName || "",
       deskText: desk?.textContent || ""
     };
   });
@@ -2022,6 +2047,14 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
     /manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs/i.test(`${mainLedgerDraftState.ledgerText} ${mainLedgerDraftState.deskText}`)
   ) {
     throw new Error(`S89.22/S89.34 main draft state was unsafe or unreadable: ${JSON.stringify(mainLedgerDraftState).slice(0, 280)}`);
+  }
+  if (mainLedgerDraftState.shellMotion !== "reduced" && !mainLedgerDraftState.reducedMotion) {
+    if (!mainLedgerDraftState.ledgerAnimation.includes("mainLedgerDraftGlow") || !mainLedgerDraftState.deskSealAnimation.includes("mainDeskSealSettle")) {
+      throw new Error(`S89.60 main draft animations were missing: ${JSON.stringify({ ledger: mainLedgerDraftState.ledgerAnimation, seal: mainLedgerDraftState.deskSealAnimation })}`);
+    }
+  }
+  if ((mainLedgerDraftState.shellMotion === "reduced" || mainLedgerDraftState.reducedMotion) && (mainLedgerDraftState.ledgerAnimation !== "none" || mainLedgerDraftState.deskSealAnimation !== "none")) {
+    throw new Error(`S89.60 reduced main draft animations were ${JSON.stringify({ ledger: mainLedgerDraftState.ledgerAnimation, seal: mainLedgerDraftState.deskSealAnimation })}`);
   }
   await page.getByLabel("本回合行动").fill("");
 
@@ -3267,6 +3300,9 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     const agendaBand = document.querySelector('[data-polish-court-agenda-band="s89-34-main-court-desk"]');
     const crossTrace = document.querySelector('[data-polish-cross-trace="s89-36-cross-page-trace"][data-cross-trace-page="court"]');
     const agendaStyle = agendaBand ? window.getComputedStyle(agendaBand) : null;
+    const agendaSealStyle = agendaBand ? window.getComputedStyle(agendaBand, "::before") : null;
+    const agendaStep = document.querySelector(".courtAgendaSteps li");
+    const agendaStepStyle = agendaStep ? window.getComputedStyle(agendaStep) : null;
     const surfaceEntries = [...document.querySelectorAll(".courtSurfacePage [data-court-surface]")];
     const surfaceIds = surfaceEntries.map((entry) => entry.getAttribute("data-court-surface") || "").sort();
     const crossTraceLinks = [...(crossTrace?.querySelectorAll("a[href]") || [])].map((link) => new URL(link.href).pathname);
@@ -3277,6 +3313,7 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     return {
       path: window.location.pathname,
       shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
+      reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       hasSurfacePage: Boolean(document.querySelector(".courtSurfacePage")),
       polishMarker: document.querySelector(".courtSurfacePage")?.getAttribute("data-polish-court") || "",
       agendaMarker: document.querySelector(".courtSurfacePage")?.getAttribute("data-polish-court-agenda") || "",
@@ -3284,6 +3321,8 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
       agendaState: agendaBand?.getAttribute("data-agenda-state") || "",
       agendaText: agendaBand?.textContent || "",
       agendaAnimation: agendaStyle?.animationName || "",
+      agendaSealAnimation: agendaSealStyle?.animationName || "",
+      agendaStepAnimation: agendaStepStyle?.animationName || "",
       hasCrossTrace: Boolean(crossTrace),
       crossTraceState: crossTrace?.getAttribute("data-cross-trace-state") || "",
       crossTraceTargets: [...(crossTrace?.querySelectorAll("[data-cross-trace-target]") || [])].map((entry) => entry.getAttribute("data-cross-trace-target") || "").sort(),
@@ -3317,11 +3356,13 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
   for (const requiredCopy of ["官署议程", "御案传签", "章奏", "谕旨", "朝议", "堂审军议", "六署可查"]) {
     if (!initialSnapshot.agendaText.includes(requiredCopy)) failures.push(`S89.34 court agenda lacked ${requiredCopy}`);
   }
-  if (initialSnapshot.shellMotion !== "reduced" && !initialSnapshot.agendaAnimation.includes("s8934DeskUnroll")) {
-    failures.push(`S89.34 court agenda animation was ${initialSnapshot.agendaAnimation}`);
+  if (initialSnapshot.shellMotion !== "reduced" && !initialSnapshot.reducedMotion) {
+    if (!initialSnapshot.agendaAnimation.includes("mainCourtDeskPaperUnroll")) failures.push(`S89.60 court agenda animation was ${initialSnapshot.agendaAnimation}`);
+    if (!initialSnapshot.agendaSealAnimation.includes("courtAgendaSealGlow")) failures.push(`S89.60 court seal animation was ${initialSnapshot.agendaSealAnimation}`);
+    if (!initialSnapshot.agendaStepAnimation.includes("mainCourtDeskSlipRise")) failures.push(`S89.60 court agenda step animation was ${initialSnapshot.agendaStepAnimation}`);
   }
-  if (initialSnapshot.shellMotion === "reduced" && initialSnapshot.agendaAnimation !== "none") {
-    failures.push(`S89.34 reduced court agenda animation was ${initialSnapshot.agendaAnimation}`);
+  if ((initialSnapshot.shellMotion === "reduced" || initialSnapshot.reducedMotion) && (initialSnapshot.agendaAnimation !== "none" || initialSnapshot.agendaSealAnimation !== "none" || initialSnapshot.agendaStepAnimation !== "none")) {
+    failures.push(`S89.60 reduced court agenda animations were ${JSON.stringify({ agenda: initialSnapshot.agendaAnimation, seal: initialSnapshot.agendaSealAnimation, step: initialSnapshot.agendaStepAnimation })}`);
   }
   if (!initialSnapshot.hasCrossTrace || initialSnapshot.crossTraceState !== "ready") {
     failures.push(`missing S89.36 court cross trace: ${JSON.stringify({ hasCrossTrace: initialSnapshot.hasCrossTrace, crossTraceState: initialSnapshot.crossTraceState })}`);
