@@ -26,7 +26,7 @@ export function CrossPageTraceRail({
 }) {
   return (
     <section
-      className="crossPageTraceRail scholarPanelCard paperSurface"
+      className="crossPageTraceRail scholarPanelCard paperMotionPanel paperSurface"
       aria-label="跨页追索笺"
       data-polish-cross-trace="s89-36-cross-page-trace"
       data-cross-trace-page={page}

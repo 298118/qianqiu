@@ -354,7 +354,7 @@ export function MagistratePanel({
           onOpenSurface={onOpenRoleCycleSurface}
           onDraft={onDraft}
         />
-        <article className="scholarPanelCard magistratePanelDocket" aria-labelledby="magistrate-ledger-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel magistratePanelDocket" aria-labelledby="magistrate-ledger-title">
           <h3 id="magistrate-ledger-title">案牍总览</h3>
           <ul className="scholarPanelMetrics" aria-label="地方事务压力">
             {metrics.map((item) => (
@@ -372,14 +372,14 @@ export function MagistratePanel({
           {draftButtonText("查阅案牍", "查阅县衙案牍，先列刑名、钱粮、水利、盗匪与士绅关系的轻重缓急。", canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard magistratePanelTrial" aria-labelledby="magistrate-trial-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel magistratePanelTrial" aria-labelledby="magistrate-trial-title">
           <h3 id="magistrate-trial-title">公堂词讼</h3>
           <p>堂审只能形成行动意图；证据采信、成案、刑名处分和长期影响继续候案卷回批。</p>
           <MagistratePanelList items={judicialDockets} emptyText="暂无刑名急件，可先核对旧案口供与案卷。" />
           {draftButtonText("升堂核案", "升堂核问积案，核对公开证词、案卷日期与里甲呈报，不自行结案。", canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard magistratePanelFiscal" aria-labelledby="magistrate-fiscal-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel magistratePanelFiscal" aria-labelledby="magistrate-fiscal-title">
           <h3 id="magistrate-fiscal-title">钱粮仓储</h3>
           <dl className="scholarPanelCompactDl">
             <div>
@@ -417,7 +417,7 @@ export function MagistratePanel({
           {draftButtonText("清厘钱粮", "会同典吏清厘钱粮、仓储与赈济簿册，具明疑点候案卷回批。", canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard magistratePanelPatrol" aria-labelledby="magistrate-patrol-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel magistratePanelPatrol" aria-labelledby="magistrate-patrol-title">
           <h3 id="magistrate-patrol-title">水利盗警</h3>
           <MagistratePanelList items={waterBanditDockets} emptyText="暂无水利或盗警急件，可先巡堤察市。" />
           <div className="scholarPanelActions">
@@ -426,7 +426,7 @@ export function MagistratePanel({
           </div>
         </article>
 
-        <article className="scholarPanelCard magistratePanelGentry" aria-labelledby="magistrate-gentry-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel magistratePanelGentry" aria-labelledby="magistrate-gentry-title">
           <h3 id="magistrate-gentry-title">士绅乡约</h3>
           <p>士绅、里甲、胥吏与民情只作公开关系线索；捐输、施压、弹劾和声望变化仍候案卷写定。</p>
           <MagistratePanelList items={gentryDockets} emptyText="暂无士绅急件，可先召集乡约听取公议。" />
@@ -454,7 +454,7 @@ export function MagistratePanel({
           onDraft={onDraft}
         />
 
-        <article className="scholarPanelCard magistratePanelBoundary" aria-labelledby="magistrate-boundary-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel magistratePanelBoundary" aria-labelledby="magistrate-boundary-title">
           <h3 id="magistrate-boundary-title">裁决边界</h3>
           <ul className="scholarPanelBoundary">
             <li>本面板只读地方案牍、官职任所和财赋市场公开卷宗。</li>

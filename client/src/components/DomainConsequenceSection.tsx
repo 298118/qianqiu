@@ -222,7 +222,7 @@ export function DomainConsequenceSection({
   const canDraft = runnable !== false;
 
   return (
-    <article className="scholarPanelCard domainConsequenceSection" aria-labelledby={`${title.replace(/\s+/g, "-")}-title`}>
+    <article className="scholarPanelCard paperMotionPanel domainConsequenceSection" aria-labelledby={`${title.replace(/\s+/g, "-")}-title`}>
       <h3 id={`${title.replace(/\s+/g, "-")}-title`}>{title}</h3>
       <p>{cleanDomainConsequenceText(view.summary, summaryFallback, 164)}</p>
       {capLine ? <p className="domainConsequenceCapLine">{capLine}</p> : null}

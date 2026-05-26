@@ -355,7 +355,7 @@ export function GeneralPanel({
           onOpenSurface={onOpenRoleCycleSurface}
           onDraft={onDraft}
         />
-        <article className="scholarPanelCard generalPanelCommand" aria-labelledby="general-command-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel generalPanelCommand" aria-labelledby="general-command-title">
           <h3 id="general-command-title">军帐总览</h3>
           <ul className="scholarPanelMetrics" aria-label="军务四项">
             <li>
@@ -383,7 +383,7 @@ export function GeneralPanel({
           {draftButtonText("召集军议", `召集军议，先核${command.theater}粮饷、军心、斥候与边患，拟成军令草稿候裁。`, canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard generalPanelSupply" aria-labelledby="general-supply-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel generalPanelSupply" aria-labelledby="general-supply-title">
           <h3 id="general-supply-title">粮饷与军心</h3>
           <GeneralPanelList items={supply.reports} emptyText="暂无粮饷急报，可先点验仓储、军饷簿和粮道关津。" />
           <div className="scholarPanelActions">
@@ -392,14 +392,14 @@ export function GeneralPanel({
           </div>
         </article>
 
-        <article className="scholarPanelCard generalPanelScouts" aria-labelledby="general-scout-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel generalPanelScouts" aria-labelledby="general-scout-title">
           <h3 id="general-scout-title">斥候与情报</h3>
           <p>斥候线索只作公开可见情报；敌情真伪、伏兵、密约和隐藏意图不得由前端写定。</p>
           <GeneralPanelList items={scouts} emptyText="暂无斥候急报，可先遣轻骑查探驿路、关口与敌营动静。" />
           {draftButtonText("遣出斥候", "遣斥候分赴关隘、驿路与敌营外缘，回报公开线索，不自行判定隐藏军情。", canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard generalPanelFrontier" aria-labelledby="general-frontier-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel generalPanelFrontier" aria-labelledby="general-frontier-title">
           <h3 id="general-frontier-title">边患与舆图</h3>
           <GeneralPanelList items={frontier} emptyText="暂无边患材料；若需观势，可入舆图页查看公开舆图。" />
           <div className="scholarPanelActions">
@@ -408,7 +408,7 @@ export function GeneralPanel({
           </div>
         </article>
 
-        <article className="scholarPanelCard generalPanelReports" aria-labelledby="general-reports-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel generalPanelReports" aria-labelledby="general-reports-title">
           <h3 id="general-reports-title">战报与边议</h3>
           <p>战报、边议和外交风声只显示已公开摘录；胜负、和战、封赏和处分仍待回批。</p>
           <GeneralPanelList items={reports} emptyText="暂无新战报，可先核对旧牍、塘报与使节来文。" />
@@ -428,7 +428,7 @@ export function GeneralPanel({
           onDraft={onDraft}
         />
 
-        <article className="scholarPanelCard generalPanelBoundary" aria-labelledby="general-boundary-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel generalPanelBoundary" aria-labelledby="general-boundary-title">
           <h3 id="general-boundary-title">军令边界</h3>
           <ul className="scholarPanelBoundary">
             <li>本面板只读已公开军务卷宗，不展示内部推演细节、连接凭据或私密军情。</li>

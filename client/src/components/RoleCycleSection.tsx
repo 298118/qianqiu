@@ -453,7 +453,7 @@ export function RoleCycleSection({
   const boundary = cycleBoundarySummary(view, currentRole);
 
   return (
-    <article className="scholarPanelCard roleCycleSection" aria-labelledby={titleId}>
+    <article className="scholarPanelCard paperMotionPanel rolePanel roleCycleSection" aria-labelledby={titleId}>
       <div className="scholarPanelCardHeader">
         <div>
           <h3 id={titleId}>本旬身份循环</h3>

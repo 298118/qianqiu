@@ -389,7 +389,7 @@ export function EmperorPanel({
           onOpenSurface={onOpenRoleCycleSurface}
           onDraft={onDraft}
         />
-        <article className="scholarPanelCard emperorPanelMemorials" aria-labelledby="emperor-memorials-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel emperorPanelMemorials" aria-labelledby="emperor-memorials-title">
           <h3 id="emperor-memorials-title">奏折队列</h3>
           <p>案头奏折来自公开卷宗，只能帮助组织询问顺序，不写成已经定夺的朝廷事实。</p>
           <EmperorPanelList items={memorials} emptyText="暂无奏折材料，可先命内阁录入钱粮、边防、吏治与民生四项。" />
@@ -399,7 +399,7 @@ export function EmperorPanel({
           </div>
         </article>
 
-        <article className="scholarPanelCard emperorPanelResponses" aria-labelledby="emperor-responses-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel emperorPanelResponses" aria-labelledby="emperor-responses-title">
           <h3 id="emperor-responses-title">奏议回应</h3>
           <p>{responseAgenda.summary}</p>
           <EmperorPanelList
@@ -418,7 +418,7 @@ export function EmperorPanel({
           </div>
         </article>
 
-        <article className="scholarPanelCard emperorPanelVermilion" aria-labelledby="emperor-vermilion-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel emperorPanelVermilion" aria-labelledby="emperor-vermilion-title">
           <h3 id="emperor-vermilion-title">朱批拟稿</h3>
           <ul className="scholarPanelMetrics" aria-label="朱批四项">
             <li>
@@ -446,7 +446,7 @@ export function EmperorPanel({
           {draftButtonText("批问四务", "朱批问政：请中枢分别具奏钱粮、边防、吏治、民生四务，列明证据与可裁事项。", canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard emperorPanelEdict" aria-labelledby="emperor-edict-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel emperorPanelEdict" aria-labelledby="emperor-edict-title">
           <h3 id="emperor-edict-title">圣旨草稿</h3>
           <p>此处只保留拟旨文本、意图和待核证据，不写入已经生效的国策记录。</p>
           <div className="scholarPanelActions">
@@ -469,21 +469,21 @@ export function EmperorPanel({
           </dl>
         </article>
 
-        <article className="scholarPanelCard emperorPanelCourt" aria-labelledby="emperor-court-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel emperorPanelCourt" aria-labelledby="emperor-court-title">
           <h3 id="emperor-court-title">朝议</h3>
           <p>朝臣发言只显示公开摘要；立场、私议和未公开动机不会在前端定论。</p>
           <EmperorPanelList items={courtDebate} emptyText="暂无朝议材料，可先召内阁、六部、言官各陈所见。" />
           {draftButtonText("召集朝议", "召集朝议，命内阁、六部、言官就奏折队列分别陈奏，先形成问政草稿。", canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard emperorPanelAppointments" aria-labelledby="emperor-appointments-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel emperorPanelAppointments" aria-labelledby="emperor-appointments-title">
           <h3 id="emperor-appointments-title">任免候选</h3>
           <p>候选列表只是官职与人事安全摘要，不能在前端直接任官、罢官或改写考成。</p>
           <EmperorPanelList items={candidates} emptyText="暂无任免候选材料，可先命吏部具名列缺、资历和考成。" />
           {draftButtonText("审看任免", "审看任免候选，命吏部列明资历、缺额、考成和争议，只拟成候裁草稿。", canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard emperorPanelRewards" aria-labelledby="emperor-rewards-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel emperorPanelRewards" aria-labelledby="emperor-rewards-title">
           <h3 id="emperor-rewards-title">赏罚预留</h3>
           <p>赏罚线索只作预留；功过、处分、封赏与追责不得由界面直接结算。</p>
           {consequenceAgenda.active ? (
@@ -515,7 +515,7 @@ export function EmperorPanel({
           onDraft={onDraft}
         />
 
-        <article className="scholarPanelCard emperorPanelBoundary" aria-labelledby="emperor-boundary-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel emperorPanelBoundary" aria-labelledby="emperor-boundary-title">
           <h3 id="emperor-boundary-title">御案边界</h3>
           <ul className="scholarPanelBoundary">
             <li>本面板只读公开朝廷卷宗，不展示内部推演细节、连接凭据或私密宫档。</li>

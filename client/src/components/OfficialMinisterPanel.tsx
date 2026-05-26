@@ -601,7 +601,7 @@ export function OfficialMinisterPanel({
           onOpenSurface={onOpenRoleCycleSurface}
           onDraft={onDraft}
         />
-        <article className="scholarPanelCard officialMinisterPanelCareer" aria-labelledby="official-career-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel officialMinisterPanelCareer" aria-labelledby="official-career-title">
           <h3 id="official-career-title">官职履历</h3>
           <dl className="scholarPanelCompactDl">
             <div>
@@ -623,7 +623,7 @@ export function OfficialMinisterPanel({
           {draftButtonText("整理履历", `整理${officeTitle}履历、授官轨迹与避嫌事项，先拟成自陈奏稿。`, canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard officialMinisterPanelAssignments" aria-labelledby="official-assignments-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel officialMinisterPanelAssignments" aria-labelledby="official-assignments-title">
           <h3 id="official-assignments-title">部院公文</h3>
           <p>{bureau.officeTitle}职掌：{bureau.duties.length ? bureau.duties.join("、") : "公文、稽核、奏报与差遣"}</p>
           <OfficialMinisterPanelList items={assignments} emptyText="暂无在办公文，可先查阅部院题本与旧牍。" />
@@ -634,7 +634,7 @@ export function OfficialMinisterPanel({
         </article>
 
         {firstMonth.active ? (
-          <article className="scholarPanelCard officialMinisterPanelFirstMonth" aria-labelledby="official-first-month-title">
+          <article className="scholarPanelCard paperMotionPanel rolePanel officialMinisterPanelFirstMonth" aria-labelledby="official-first-month-title">
             <h3 id="official-first-month-title">官署首月</h3>
             <dl className="scholarPanelCompactDl">
               <div>
@@ -675,14 +675,14 @@ export function OfficialMinisterPanel({
           </article>
         ) : null}
 
-        <article className="scholarPanelCard officialMinisterPanelNetwork" aria-labelledby="official-network-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel officialMinisterPanelNetwork" aria-labelledby="official-network-title">
           <h3 id="official-network-title">同年座师与人脉</h3>
           <p>{network.summary}</p>
           <OfficialMinisterPanelList items={network.items} emptyText="暂无可见人脉摘要，可先拜会座师或堂官。" />
           {draftButtonText("拜会座师", "具帖拜会座师、同年或堂官，询问本职差遣与朝局风向，只形成行动草稿。", canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard officialMinisterPanelFaction" aria-labelledby="official-faction-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel officialMinisterPanelFaction" aria-labelledby="official-faction-title">
           <h3 id="official-faction-title">派系与朝局风险</h3>
           <dl className="scholarPanelCompactDl">
             <div>
@@ -703,7 +703,7 @@ export function OfficialMinisterPanel({
           {draftButtonText("探问朝局", "谨慎探问朝局风声，记录可公开线索、避嫌事项与可能弹劾风险。", canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard officialMinisterPanelAssessment" aria-labelledby="official-assessment-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel officialMinisterPanelAssessment" aria-labelledby="official-assessment-title">
           <h3 id="official-assessment-title">考成与弹劾</h3>
           <ul className="scholarPanelMetrics" aria-label="官场考成">
             <li>
@@ -775,7 +775,7 @@ export function OfficialMinisterPanel({
           onDraft={onDraft}
         />
 
-        <article className="scholarPanelCard officialMinisterPanelMemorial" aria-labelledby="official-memorial-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel officialMinisterPanelMemorial" aria-labelledby="official-memorial-title">
           <h3 id="official-memorial-title">奏折朝议入口</h3>
           {courtResponse.active ? (
             <>

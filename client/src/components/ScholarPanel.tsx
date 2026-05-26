@@ -386,7 +386,7 @@ export function ScholarPanel({
           onOpenSurface={onOpenRoleCycleSurface}
           onDraft={onDraft}
         />
-        <article className="scholarPanelCard scholarPanelStudyLedger" aria-labelledby="scholar-ledger-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel scholarPanelStudyLedger" aria-labelledby="scholar-ledger-title">
           <h3 id="scholar-ledger-title">读书簿</h3>
           <ul className="scholarPanelMetrics" aria-label="学业七项">
             {dimensions.map((item) => (
@@ -451,7 +451,7 @@ export function ScholarPanel({
           </section>
         </article>
 
-        <article className="scholarPanelCard scholarPanelTeacher" aria-labelledby="scholar-teacher-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel scholarPanelTeacher" aria-labelledby="scholar-teacher-title">
           <h3 id="scholar-teacher-title">老师点评</h3>
           <dl className="scholarPanelCompactDl">
             <div>
@@ -472,7 +472,7 @@ export function ScholarPanel({
           {draftButtonText("请老师改文", "携旧作拜见老师，请其点评破题、承题与立意得失。", canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard scholarPanelNetwork" aria-labelledby="scholar-network-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel scholarPanelNetwork" aria-labelledby="scholar-network-title">
           <h3 id="scholar-network-title">师友</h3>
           <p>{academyNetwork.academy.name}（{academyNetwork.academy.level}）：{academyNetwork.academy.summary}</p>
           <section className="scholarPanelSubsection" aria-labelledby="scholar-sponsor-title">
@@ -498,7 +498,7 @@ export function ScholarPanel({
           {draftButtonText("同窗互评", "赴县学讲会，请师友互评近文，并问本期保结是否稳妥。", canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard scholarPanelExamCalendar" aria-labelledby="scholar-calendar-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel scholarPanelExamCalendar" aria-labelledby="scholar-calendar-title">
           <h3 id="scholar-calendar-title">科期</h3>
           {nextExam ? (
             <section className="scholarPanelSubsection" aria-label="下一场考试">
@@ -554,7 +554,7 @@ export function ScholarPanel({
           </div>
         </article>
 
-        <article className="scholarPanelCard scholarPanelPractice" aria-labelledby="scholar-practice-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel scholarPanelPractice" aria-labelledby="scholar-practice-title">
           <h3 id="scholar-practice-title">文章练习</h3>
           <ScholarPanelList items={smallExercises} emptyText="暂无小题，可先按弱项拟一篇破题。" />
           <section className="scholarPanelSubsection" aria-labelledby="scholar-recent-title">
@@ -568,7 +568,7 @@ export function ScholarPanel({
           {draftButtonText("练一篇文", `按${nextPlan.focus}作一篇时文，先交老师圈点，不自行取题或交卷。`, canDraft, onDraft)}
         </article>
 
-        <article className="scholarPanelCard scholarPanelBoundary" aria-labelledby="scholar-boundary-title">
+        <article className="scholarPanelCard paperMotionPanel rolePanel scholarPanelBoundary" aria-labelledby="scholar-boundary-title">
           <h3 id="scholar-boundary-title">裁决边界</h3>
           <ul>
             <li>本面板只读学业画像、科期和案主公开摘要。</li>

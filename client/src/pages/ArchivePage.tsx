@@ -393,7 +393,7 @@ export function ArchivePage() {
       </section>
 
       <section
-        className="scholarPanelCard"
+        className="scholarPanelCard paperMotionPanel"
         aria-label="史册证据读法"
         data-polish-archive-reader="s89-29-evidence-reader"
       >

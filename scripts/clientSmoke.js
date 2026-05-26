@@ -965,8 +965,10 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
       },
       s8930: {
         saveShelf: styleOf(".saveShelf"),
-        sharedCard: styleOf(".paperMotionCard, .scholarPanelCard, .mapActionList li, .archiveItemList li, .peopleCard, .inventoryItemCard, .rankingTopSeal, .settingsDirectoryCard, .topicSurfaceItem"),
+        sharedCard: styleOf(".paperMotionCard, .paperMotionPanel, .mapActionList li, .archiveItemList li, .peopleCard, .inventoryItemCard, .rankingTopSeal, .settingsDirectoryCard, .topicSurfaceItem"),
         semanticCardCount: document.querySelectorAll(".paperMotionCard.paperMotionInteractive").length,
+        paperMotionPanelCount: document.querySelectorAll(".scholarPanelCard.paperMotionPanel").length,
+        rolePanelCount: document.querySelectorAll(".scholarPanelCard.rolePanel").length,
         statusLine: styleOf(".statusLine"),
         statusAccent: styleOf(".statusLine", "::before"),
         selectedControl: styleOf(".paperMotionSelected[aria-pressed='true'], .paperMotionSelected[aria-selected='true'], .paperMotionSelected:has(input:checked)"),
@@ -1034,6 +1036,9 @@ async function assertS895MaterialFeedbackPolish(page, label, expected = {}) {
   }
   if ((expected.map || expected.settings) && snapshot.s8930.semanticCardCount < 1) {
     failures.push(`semantic paper motion utilities were absent: ${snapshot.s8930.semanticCardCount}`);
+  }
+  if (expected.rolePanel && (snapshot.s8930.rolePanelCount < 1 || snapshot.s8930.paperMotionPanelCount < snapshot.s8930.rolePanelCount)) {
+    failures.push(`semantic role panel utilities were absent: ${JSON.stringify({ paperMotionPanelCount: snapshot.s8930.paperMotionPanelCount, rolePanelCount: snapshot.s8930.rolePanelCount })}`);
   }
   if (snapshot.s8930.sharedCard && snapshot.shellMotion !== "reduced" && !snapshot.s8930.sharedCard.animationName.includes("s8930PaperRise")) {
     failures.push(`S89.30 shared card animation was ${snapshot.s8930.sharedCard.animationName}`);
@@ -3419,6 +3424,7 @@ async function runClientSmoke(options = {}) {
     const startedSessionId = mockStart.sessionId;
     screenshots.push(mockStart.screenshot);
     screenshots.push(await assertScholarPanel(page, startedSessionId, options.screenshotsDir));
+    await assertS895MaterialFeedbackPolish(page, "S89.41 scholar role panels", { rolePanel: true });
     const continueFlow = await assertReturnHomeContinueAndTurn(page, startedSessionId, options.screenshotsDir);
     screenshots.push(continueFlow.homeScreenshot);
     screenshots.push(continueFlow.gameScreenshot);

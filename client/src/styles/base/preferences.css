@@ -36,7 +36,7 @@
   color: var(--qq-color-ink-strong);
 }
 
-.appShell[data-contrast="high"] :is(.paperSurface, .rolePanel, .statusSurface, .ledgerCard, .paperMotionCard, .paperMotionInteractive, .paperMotionEmpty, .scholarPanelCard, .paperButton, .paperLink, .topNav a, .sessionNav a, .settingsDirectoryCard, .archiveDigestBand, .crossPageTraceGrid article),
+.appShell[data-contrast="high"] :is(.paperSurface, .rolePanel, .statusSurface, .ledgerCard, .paperMotionCard, .paperMotionPanel, .paperMotionInteractive, .paperMotionEmpty, .paperButton, .paperLink, .topNav a, .sessionNav a, .settingsDirectoryCard, .archiveDigestBand, .crossPageTraceGrid article),
 .appShell[data-contrast="high"] .paperMotionSelected:is([aria-pressed="true"], [aria-selected="true"], :has(input:checked)) {
   border-color: var(--qq-color-border-medium);
 }
@@ -108,6 +108,6 @@
 .appShell[data-motion="reduced"] .topNav[data-polish-shell-nav="s89-32-main-nav-density"] a::after,
 .appShell[data-motion="reduced"] .inkboxPanel[data-polish-inkbox-panel="s89-32-inkbox-glass-ledger"],
 .appShell[data-motion="reduced"] .inkboxTabs[data-polish-inkbox-tabs="s89-32-inkbox-glass-ledger"] .inkboxTab[aria-selected="true"],
-.appShell[data-motion="reduced"][data-material-motion="shared-paper"] :is(.paperMotionCard, .paperMotionInteractive, .paperMotionSelected[aria-pressed="true"], .paperMotionSelected[aria-selected="true"], .paperMotionSelected:has(input:checked), .paperMotionDraft[data-draft-state="written"], .scholarPanelCard, .npcRelationshipAgendaCard, .quickActionSlip[data-draft-state="written"], .inkMapTooltip .paperButton[data-draft-state="written"]) {
+.appShell[data-motion="reduced"][data-material-motion="shared-paper"] :is(.paperMotionCard, .paperMotionPanel, .paperMotionInteractive, .paperMotionSelected[aria-pressed="true"], .paperMotionSelected[aria-selected="true"], .paperMotionSelected:has(input:checked), .paperMotionDraft[data-draft-state="written"], .quickActionSlip[data-draft-state="written"], .inkMapTooltip .paperButton[data-draft-state="written"]) {
   animation: none !important;
 }

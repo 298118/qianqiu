@@ -2647,7 +2647,7 @@ test("S89.37 CSS token and accessibility refactor stays visual-only", () => {
   assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*--qq-motion-fast: var\(--qq-motion-instant\)/);
   assert.match(styleSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*--qq-motion-fast: var\(--qq-motion-instant\)/);
   assert.match(styleSource, /transition-duration: var\(--qq-motion-instant\) !important/);
-  assert.match(crossTraceSource, /className="crossPageTraceRail scholarPanelCard paperSurface"/);
+  assert.match(crossTraceSource, /className="crossPageTraceRail scholarPanelCard paperMotionPanel paperSurface"/);
   assert.match(crossTraceSource, /className="ledgerCard"/);
   assert.doesNotMatch(
     runtimeCombined,
@@ -2698,7 +2698,7 @@ test("S89.39 semantic paper motion utilities reduce route-specific selector coup
   assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard/);
   assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.paperMotionInteractive/);
   assert.match(styleSource, /\.paperMotionDraft\[data-draft-state="written"\]/);
-  assert.match(styleSource, /\.appShell\[data-motion="reduced"\]\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard, \.paperMotionInteractive/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\]\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard, \.paperMotionPanel, \.paperMotionInteractive/);
   assert.doesNotMatch(
     styleSource,
     /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|hiddenNotes|完整提示词|本地路径|密钥|AI read scope|proposal boundary|server adjudication/
@@ -2743,7 +2743,7 @@ test("S89.40 selected and empty paper motion utilities stay semantic and gated",
   }
   assert.match(aiSettingsSource, /matrixState === "error" \? "aiSettingsMatrixStatus paperMotionEmpty" : "aiSettingsMatrixStatus"/);
 
-  assert.match(styleSource, /:where\(\.paperSurface, \.rolePanel, \.statusSurface, \.ledgerCard, \.paperMotionCard, \.paperMotionInteractive, \.paperMotionSelected, \.paperMotionDraft, \.paperMotionEmpty\)/);
+  assert.match(styleSource, /:where\(\.paperSurface, \.rolePanel, \.statusSurface, \.ledgerCard, \.paperMotionCard, \.paperMotionPanel, \.paperMotionInteractive, \.paperMotionSelected, \.paperMotionDraft, \.paperMotionEmpty\)/);
   assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] \.paperMotionSelected:is\(\[aria-pressed="true"\], \[aria-selected="true"\], :has\(input:checked\)\)/);
   assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] \.paperMotionEmpty/);
   assert.match(styleSource, /\.appShell\[data-contrast="high"\] \.paperMotionSelected:is\(\[aria-pressed="true"\], \[aria-selected="true"\], :has\(input:checked\)\)/);
@@ -2757,6 +2757,56 @@ test("S89.40 selected and empty paper motion utilities stay semantic and gated",
   assert.match(clientSmokeSource, /emptyState: styleOf\("\.paperMotionEmpty"\)/);
   assert.match(clientSmokeSource, /emptyStateCount: document\.querySelectorAll\("\.paperMotionEmpty"\)\.length/);
   assert.match(clientSmokeSource, /S89\.5 desktop map all layers empty", \{ empty: true \}/);
+});
+
+test("S89.41 paper motion panel utilities reduce scholar panel selector coupling", () => {
+  const rolePanelSources = [
+    "client/src/components/ScholarPanel.tsx",
+    "client/src/components/MagistratePanel.tsx",
+    "client/src/components/GeneralPanel.tsx",
+    "client/src/components/EmperorPanel.tsx",
+    "client/src/components/OfficialMinisterPanel.tsx",
+    "client/src/components/RoleCycleSection.tsx"
+  ].map((sourcePath) => readText(sourcePath)).join("\n");
+  const genericPanelSources = [
+    "client/src/components/DomainConsequenceSection.tsx",
+    "client/src/components/NpcFollowUpEvidenceSection.tsx",
+    "client/src/components/CrossPageTraceRail.tsx",
+    "client/src/pages/ArchivePage.tsx"
+  ].map((sourcePath) => readText(sourcePath)).join("\n");
+  const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
+  const preferencesSource = readClientStyleModule("base/preferences.css");
+  const reducedMotionSource = readClientStyleModule("motion/reduced-motion.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(rolePanelSources, /className="scholarPanelCard paperMotionPanel rolePanel scholarPanelStudyLedger"/);
+  assert.match(rolePanelSources, /className="scholarPanelCard paperMotionPanel rolePanel magistratePanelDocket"/);
+  assert.match(rolePanelSources, /className="scholarPanelCard paperMotionPanel rolePanel generalPanelCommand"/);
+  assert.match(rolePanelSources, /className="scholarPanelCard paperMotionPanel rolePanel emperorPanelMemorials"/);
+  assert.match(rolePanelSources, /className="scholarPanelCard paperMotionPanel rolePanel officialMinisterPanelCareer"/);
+  assert.match(rolePanelSources, /className="scholarPanelCard paperMotionPanel rolePanel roleCycleSection"/);
+  assert.match(rolePanelSources, /className="scholarPanelCardHeader"/);
+  assert.doesNotMatch(rolePanelSources, /rolePanelHeader/);
+  assert.doesNotMatch(rolePanelSources, /className="[^"]*\bscholarPanelCard\b(?![^"]*\bpaperMotionPanel\b)[^"]*"/);
+
+  assert.match(genericPanelSources, /className="scholarPanelCard paperMotionPanel domainConsequenceSection"/);
+  assert.match(genericPanelSources, /className="scholarPanelCard paperMotionPanel npcFollowUpEvidenceSection"/);
+  assert.match(genericPanelSources, /className="crossPageTraceRail scholarPanelCard paperMotionPanel paperSurface"/);
+  assert.match(genericPanelSources, /className="scholarPanelCard paperMotionPanel"/);
+  assert.doesNotMatch(genericPanelSources, /\brolePanel\b/);
+
+  assert.match(polishSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard, \.paperMotionPanel/);
+  assert.match(polishSource, /:is\(\.paperMotionInteractive, \.paperMotionPanel, \.rankingList button\)/);
+  assert.match(polishSource, /:is\(\.paperMotionCard, \.paperMotionPanel\):nth-child\(2\)/);
+  assert.doesNotMatch(polishSource, /\.scholarPanelCard|\.npcRelationshipAgendaCard/);
+  assert.match(preferencesSource, /\.appShell\[data-contrast="high"\] :is\(\.paperSurface, \.rolePanel, \.statusSurface, \.ledgerCard, \.paperMotionCard, \.paperMotionPanel/);
+  assert.doesNotMatch(preferencesSource, /\.scholarPanelCard|\.npcRelationshipAgendaCard/);
+  assert.match(reducedMotionSource, /\.paperMotionPanel/);
+  assert.doesNotMatch(reducedMotionSource, /\.scholarPanelCard|\.npcRelationshipAgendaCard/);
+
+  assert.match(clientSmokeSource, /paperMotionPanelCount: document\.querySelectorAll\("\.scholarPanelCard\.paperMotionPanel"\)\.length/);
+  assert.match(clientSmokeSource, /rolePanelCount: document\.querySelectorAll\("\.scholarPanelCard\.rolePanel"\)\.length/);
+  assert.match(clientSmokeSource, /S89\.41 scholar role panels", \{ rolePanel: true \}/);
 });
 
 test("S89.25 overlay glass polish stays shared and safe", () => {

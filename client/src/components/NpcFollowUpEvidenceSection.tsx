@@ -229,7 +229,7 @@ export function NpcFollowUpEvidenceSection({
   const titleId = `${idPrefix}-title`;
 
   return (
-    <article className="scholarPanelCard npcFollowUpEvidenceSection" aria-labelledby={titleId} data-polish-evidence="s89-15-follow-up-reader">
+    <article className="scholarPanelCard paperMotionPanel npcFollowUpEvidenceSection" aria-labelledby={titleId} data-polish-evidence="s89-15-follow-up-reader">
       <div className="npcFollowUpEvidenceHeader">
         <div>
           <p className="eyebrow">来函线索</p>
