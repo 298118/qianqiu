@@ -1179,11 +1179,11 @@ async function assertS8932HomeShellPolish(page, label, expected = {}) {
       settingsEntry: document.querySelector(".settingsDirectoryRoute")?.getAttribute("data-polish-settings-entry") || "",
       settingsTabs: [...document.querySelectorAll(".settingsDirectoryCard[data-settings-tab]")].map((card) => card.getAttribute("data-settings-tab")),
       keyframes: {
-        scroll: keyframesOf("s8932ScrollUnfurl"),
-        path: keyframesOf("s8932InkPathRise"),
-        glass: keyframesOf("s8932InkboxGlassIn"),
-        nav: keyframesOf("s8932NavInkGlow"),
-        seal: keyframesOf("s8932SealPressBloom")
+        scroll: keyframesOf("homeOpeningDeskUnfurl"),
+        path: keyframesOf("homeOpeningPathStepRise"),
+        glass: keyframesOf("inkboxPanelGlassIn"),
+        nav: keyframesOf("shellNavInkUnderlineGlow"),
+        seal: keyframesOf("inkboxTabSelectedSealBloom")
       },
       horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 4,
       unsafeText: bodyText.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || [],
@@ -1213,10 +1213,10 @@ async function assertS8932HomeShellPolish(page, label, expected = {}) {
       failures.push(`home sample links were ${snapshot.sampleLinks.join(", ")}`);
     }
     if (!snapshot.homeDeskStyle?.boxShadow || snapshot.homeDeskStyle.boxShadow === "none") failures.push("home desk material shadow missing");
-    if (snapshot.shellMotion !== "reduced" && !snapshot.homeDeskStyle?.animationName.includes("s8932ScrollUnfurl")) {
+    if (snapshot.shellMotion !== "reduced" && !snapshot.homeDeskStyle?.animationName.includes("homeOpeningDeskUnfurl")) {
       failures.push(`home desk animation was ${snapshot.homeDeskStyle?.animationName}`);
     }
-    if (snapshot.shellMotion !== "reduced" && !snapshot.homePathItemStyle?.animationName.includes("s8932InkPathRise")) {
+    if (snapshot.shellMotion !== "reduced" && !snapshot.homePathItemStyle?.animationName.includes("homeOpeningPathStepRise")) {
       failures.push(`home path animation was ${snapshot.homePathItemStyle?.animationName}`);
     }
   }
@@ -1226,7 +1226,7 @@ async function assertS8932HomeShellPolish(page, label, expected = {}) {
     if (snapshot.inkboxTabs !== "s89-32-inkbox-glass-ledger") failures.push(`inkbox tabs marker was ${snapshot.inkboxTabs}`);
     if (snapshot.inkboxPanel !== "s89-32-inkbox-glass-ledger") failures.push(`inkbox panel marker was ${snapshot.inkboxPanel}`);
     if (!snapshot.inkboxPanelStyle?.backdropFilter.includes("blur")) failures.push("inkbox panel glass blur missing");
-    if (snapshot.shellMotion !== "reduced" && !snapshot.inkboxPanelStyle?.animationName.includes("s8932InkboxGlassIn")) {
+    if (snapshot.shellMotion !== "reduced" && !snapshot.inkboxPanelStyle?.animationName.includes("inkboxPanelGlassIn")) {
       failures.push(`inkbox panel animation was ${snapshot.inkboxPanelStyle?.animationName}`);
     }
   }

@@ -3273,6 +3273,33 @@ test("S89.56 shell chrome uses semantic surface tokens", () => {
   assert.doesNotMatch(shellSource, /rgb\(255 250 234 \/ \.88|rgb\(229 211 178 \/ \.78|rgb\(142 47 39 \/ \.54|rgb\(204 156 72 \/ \.38|rgb\(255 252 238 \/ \.28|rgb\(142 47 39 \/ \.48|#7b241f|rgb\(86 40 31 \/ \.18|rgb\(123 36 31 \/ \.24|rgb\(75 43 28 \/ \.18/);
 });
 
+test("S89.57 home and shell polish keyframes use semantic names", () => {
+  const homeSource = readClientStyleModule("routes/home.css");
+  const shellSource = readClientStyleModule("components/shell.css");
+  const overlaysSource = readClientStyleModule("components/overlays-surfaces.css");
+  const keyframesSource = readClientStyleModule("motion/keyframes.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const combinedRuntimeSource = `${homeSource}\n${shellSource}\n${overlaysSource}\n${keyframesSource}`;
+
+  for (const keyframeName of [
+    "homeOpeningDeskUnfurl",
+    "homeOpeningPathStepRise",
+    "inkboxPanelGlassIn",
+    "shellNavInkUnderlineGlow",
+    "inkboxTabSelectedSealBloom"
+  ]) {
+    assert.match(keyframesSource, new RegExp(`@keyframes ${keyframeName}`));
+    assert.match(combinedRuntimeSource, new RegExp(`animation: ${keyframeName}`));
+    assert.match(clientSmokeSource, new RegExp(`keyframesOf\\("${keyframeName}"\\)`));
+  }
+
+  assert.match(clientSmokeSource, /animationName\.includes\("homeOpeningDeskUnfurl"\)/);
+  assert.match(clientSmokeSource, /animationName\.includes\("homeOpeningPathStepRise"\)/);
+  assert.match(clientSmokeSource, /animationName\.includes\("inkboxPanelGlassIn"\)/);
+  assert.doesNotMatch(combinedRuntimeSource, /s8932(?:ScrollUnfurl|InkPathRise|InkboxGlassIn|NavInkGlow|SealPressBloom)/);
+  assert.doesNotMatch(clientSmokeSource, /s8932(?:ScrollUnfurl|InkPathRise|InkboxGlassIn|NavInkGlow|SealPressBloom)/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");
@@ -3382,11 +3409,13 @@ test("S89.32 home and shell entry polish stays visual-only", () => {
   assert.match(surfaceHostSource, /data-polish-inkbox-panel="s89-32-inkbox-glass-ledger"/);
   assert.match(settingsPageSource, /data-polish-settings-entry="s89-32-settings-directory-entry"/);
   assert.match(settingsPageSource, /data-settings-tab=\{card\.tab\}/);
-  assert.match(styleSource, /@keyframes s8932ScrollUnfurl/);
-  assert.match(styleSource, /@keyframes s8932InkPathRise/);
-  assert.match(styleSource, /@keyframes s8932InkboxGlassIn/);
-  assert.match(styleSource, /@keyframes s8932NavInkGlow/);
-  assert.match(styleSource, /@keyframes s8932SealPressBloom/);
+  assert.match(styleSource, /@keyframes homeOpeningDeskUnfurl/);
+  assert.match(styleSource, /@keyframes homeOpeningPathStepRise/);
+  assert.match(styleSource, /@keyframes inkboxPanelGlassIn/);
+  assert.match(styleSource, /@keyframes shellNavInkUnderlineGlow/);
+  assert.match(styleSource, /@keyframes inkboxTabSelectedSealBloom/);
+  assert.doesNotMatch(styleSource, /@keyframes s8932(?:ScrollUnfurl|InkPathRise|InkboxGlassIn|NavInkGlow|SealPressBloom)/);
+  assert.doesNotMatch(clientSmokeSource, /keyframesOf\("s8932(?:ScrollUnfurl|InkPathRise|InkboxGlassIn|NavInkGlow|SealPressBloom)"\)/);
   assert.match(styleSource, /\.topTools\[data-polish-shell-tools="s89-32-inkbox-entry"\][\s\S]*backdrop-filter: blur\(10px\) saturate\(1\.04\)/);
   assert.match(styleSource, /\.homeOpeningPath ol/);
   assert.match(styleSource, /\.inkboxPanel\[data-polish-inkbox-panel="s89-32-inkbox-glass-ledger"\][\s\S]*backdrop-filter: blur\(8px\) saturate\(1\.03\)/);

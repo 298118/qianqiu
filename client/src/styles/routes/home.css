@@ -170,7 +170,7 @@ h2 {
   box-shadow:
     0 22px 48px rgb(44 30 21 / .18),
     inset 0 0 0 1px rgb(255 252 238 / .42);
-  animation: s8932ScrollUnfurl 420ms cubic-bezier(0.2, 0.78, 0.2, 1);
+  animation: homeOpeningDeskUnfurl 420ms cubic-bezier(0.2, 0.78, 0.2, 1);
 }
 
 .homeDesk[data-entry-state="loading"] {
@@ -403,7 +403,7 @@ h2 {
   border: 1px solid rgb(142 47 39 / .16);
   background: rgb(255 252 238 / .52);
   padding: 8px;
-  animation: s8932InkPathRise 360ms ease both;
+  animation: homeOpeningPathStepRise 360ms ease both;
 }
 
 .homeOpeningPath li:nth-child(2) {
@@ -705,4 +705,3 @@ legend {
   outline: 2px solid rgb(142 47 39 / .24);
   outline-offset: 2px;
 }
-

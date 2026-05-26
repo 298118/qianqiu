@@ -117,7 +117,7 @@
 .topNav[data-polish-shell-nav="s89-32-main-nav-density"] a:focus-visible::after,
 .topNav[data-polish-shell-nav="s89-32-main-nav-density"] a.active::after,
 .topNav[data-polish-shell-nav="s89-32-main-nav-density"] a[aria-current="page"]::after {
-  animation: s8932NavInkGlow 420ms ease-out;
+  animation: shellNavInkUnderlineGlow 420ms ease-out;
   opacity: 1;
   transform: scaleX(1);
 }

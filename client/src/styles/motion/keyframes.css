@@ -339,7 +339,7 @@
   }
 }
 
-@keyframes s8932ScrollUnfurl {
+@keyframes homeOpeningDeskUnfurl {
   from {
     clip-path: inset(0 4% 5% 4%);
     filter: blur(1px);
@@ -355,7 +355,7 @@
   }
 }
 
-@keyframes s8932InkPathRise {
+@keyframes homeOpeningPathStepRise {
   from {
     opacity: 0;
     transform: translateY(7px);
@@ -367,7 +367,7 @@
   }
 }
 
-@keyframes s8932InkboxGlassIn {
+@keyframes inkboxPanelGlassIn {
   from {
     filter: blur(0.8px);
     opacity: 0;
@@ -381,7 +381,7 @@
   }
 }
 
-@keyframes s8932NavInkGlow {
+@keyframes shellNavInkUnderlineGlow {
   0% {
     filter: blur(0.6px);
     opacity: 0;
@@ -395,7 +395,7 @@
   }
 }
 
-@keyframes s8932SealPressBloom {
+@keyframes inkboxTabSelectedSealBloom {
   0% {
     box-shadow:
       inset 0 -2px 0 rgb(142 47 39 / .16),
