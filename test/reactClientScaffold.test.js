@@ -3044,6 +3044,36 @@ test("S89.50 shared paper motion keyframes use semantic names and tokens", () =>
   assert.doesNotMatch(clientSmokeSource, /s8930PaperRise|s8930StateWash|s8930SealBloom/);
 });
 
+test("S89.51 shared paper state surfaces reuse semantic color tokens", () => {
+  const tokensSource = readClientStyleModule("tokens/tokens.css");
+  const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
+  const runtimeSource = readClientStyleSource();
+
+  assert.match(tokensSource, /--qq-color-vermilion-border-soft: rgb\(142 47 39 \/ \.28\)/);
+  assert.match(tokensSource, /--qq-color-vermilion-border-medium: rgb\(142 47 39 \/ \.46\)/);
+  assert.match(tokensSource, /--qq-color-vermilion-border-strong: rgb\(142 47 39 \/ \.62\)/);
+  assert.match(tokensSource, /--qq-color-paper-inset-faint: rgb\(255 252 238 \/ \.34\)/);
+  assert.match(tokensSource, /--qq-shadow-paper-selected:/);
+  assert.match(tokensSource, /--qq-shadow-paper-written:/);
+  assert.match(tokensSource, /--qq-shadow-paper-empty:/);
+  assert.match(tokensSource, /--qq-surface-paper-selected:/);
+  assert.match(tokensSource, /--qq-surface-paper-written:/);
+  assert.match(tokensSource, /--qq-surface-paper-empty:/);
+
+  assert.match(polishSource, /border-color: var\(--qq-color-vermilion-border-medium\)/);
+  assert.match(polishSource, /background-image: var\(--qq-surface-paper-selected\)/);
+  assert.match(polishSource, /box-shadow: var\(--qq-shadow-paper-selected\)/);
+  assert.match(polishSource, /border-color: var\(--qq-color-vermilion-border-strong\)/);
+  assert.match(polishSource, /background-image: var\(--qq-surface-paper-written\)/);
+  assert.match(polishSource, /box-shadow: var\(--qq-shadow-paper-written\)/);
+  assert.match(polishSource, /border-color: var\(--qq-color-vermilion-border-soft\)/);
+  assert.match(polishSource, /background: var\(--qq-surface-paper-empty\)/);
+  assert.match(polishSource, /box-shadow: var\(--qq-shadow-paper-empty\)/);
+  assert.doesNotMatch(polishSource, /rgb\(/);
+  assert.match(runtimeSource, /\.appShell\[data-contrast="high"\] \.paperMotionSelected:is/);
+  assert.match(runtimeSource, /\.appShell\[data-motion="reduced"\]\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");

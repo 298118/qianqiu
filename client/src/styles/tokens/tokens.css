@@ -20,8 +20,12 @@
   --qq-color-vermilion-glow-medium: rgb(142 47 39 / .12);
   --qq-color-vermilion-glow-strong: rgb(142 47 39 / .2);
   --qq-color-vermilion-glow-outline: rgb(142 47 39 / .22);
+  --qq-color-vermilion-border-soft: rgb(142 47 39 / .28);
+  --qq-color-vermilion-border-medium: rgb(142 47 39 / .46);
+  --qq-color-vermilion-border-strong: rgb(142 47 39 / .62);
   --qq-color-warm-shadow-soft: rgb(86 40 31 / .12);
   --qq-color-warm-shadow-medium: rgb(86 40 31 / .16);
+  --qq-color-paper-inset-faint: rgb(255 252 238 / .34);
   --qq-color-paper-inset-soft: rgb(255 252 238 / .5);
   --qq-color-paper-inset-medium: rgb(255 252 238 / .58);
   --qq-color-disabled-text: rgb(92 74 55 / .76);
@@ -64,6 +68,16 @@
   --qq-shadow-card-hover:
     0 18px 42px rgb(43 32 22 / .13),
     inset 0 0 0 1px rgb(255 252 238 / .5);
+  --qq-shadow-paper-selected:
+    var(--qq-shadow-ink-focus),
+    0 12px 26px var(--qq-color-vermilion-glow-medium),
+    inset 0 0 0 1px var(--qq-color-paper-inset-soft);
+  --qq-shadow-paper-written:
+    0 0 0 3px var(--qq-color-vermilion-glow-soft),
+    0 12px 28px var(--qq-color-warm-shadow-soft),
+    inset 0 0 0 1px var(--qq-color-paper-inset-soft);
+  --qq-shadow-paper-empty:
+    inset 0 0 0 1px var(--qq-color-paper-inset-faint);
   --qq-surface-paper-soft:
     linear-gradient(135deg, rgb(255 252 238 / .72), rgb(230 211 178 / .56)),
     var(--qq-material-xuan) center / 420px repeat;
@@ -72,6 +86,15 @@
     var(--qq-material-xuan) center / 420px repeat;
   --qq-surface-disabled:
     linear-gradient(180deg, rgb(240 230 210 / .62), rgb(215 199 171 / .48)),
+    var(--qq-material-xuan) center / 420px repeat;
+  --qq-surface-paper-selected:
+    linear-gradient(135deg, rgb(255 248 230 / .88), rgb(248 229 198 / .7)),
+    var(--qq-material-red-smudge);
+  --qq-surface-paper-written:
+    linear-gradient(115deg, rgb(255 252 238 / .86), rgb(248 229 198 / .72)),
+    var(--qq-material-red-smudge);
+  --qq-surface-paper-empty:
+    linear-gradient(135deg, rgb(255 252 238 / .7), rgb(232 214 183 / .44)),
     var(--qq-material-xuan) center / 420px repeat;
   --qq-motion-instant: 0.01ms;
   --qq-motion-fast: 160ms;
