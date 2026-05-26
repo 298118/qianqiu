@@ -2850,6 +2850,28 @@ test("S89.42 static surface utilities reduce structural selector coupling", () =
   assert.match(clientSmokeSource, /rankingSelectedHookRows !== 0/);
 });
 
+test("S89.43 route surface containers use static paper surface utilities", () => {
+  const rankingSource = readText("client/src/pages/RankingPage.tsx");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(rankingSource, /className="rankingNoticeBoard paperMotionSurface"/);
+  assert.match(rankingSource, /className="rankingListPanel paperMotionSurface"/);
+  assert.match(rankingSource, /className="rankingDetailPanel paperMotionSurface"/);
+  assert.match(rankingSource, /className="rankingBoundary paperMotionSurface"/);
+  assert.ok((surfaceHostSource.match(/className="topicSurfaceColumn(?: topicDraftColumn)? paperMotionSurface"/g) || []).length >= 6);
+  assert.match(surfaceHostSource, /className="topicSurfaceColumn topicDraftColumn paperMotionSurface"/);
+
+  assert.match(polishSource, /\.paperMotionSurface/);
+  assert.doesNotMatch(polishSource, /\.rankingNoticeBoard|\.rankingListPanel|\.rankingDetailPanel|\.rankingBoundary|\.topicSurfaceColumn/);
+  assert.doesNotMatch(rankingSource, /className="rankingNoticeBoard paperMotionCard|className="rankingListPanel paperMotionPanel|className="rankingDetailPanel paperMotionPanel|className="rankingBoundary paperMotionCard/);
+  assert.doesNotMatch(surfaceHostSource, /className="topicSurfaceColumn(?: topicDraftColumn)? paperMotionPanel|className="topicSurfaceColumn(?: topicDraftColumn)? paperMotionCard/);
+
+  assert.match(clientSmokeSource, /rankingSurfaceCount: document\.querySelectorAll\("\.rankingNoticeBoard\.paperMotionSurface, \.rankingListPanel\.paperMotionSurface, \.rankingDetailPanel\.paperMotionSurface, \.rankingBoundary\.paperMotionSurface"\)\.length/);
+  assert.match(clientSmokeSource, /topicSurfaceColumnCount: dialog\?\.querySelectorAll\("\.topicSurfaceColumn\.paperMotionSurface"\)\.length \|\| 0/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");

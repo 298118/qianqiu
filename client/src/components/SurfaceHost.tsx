@@ -1345,7 +1345,7 @@ function MapFilterSurfaceGuide({ summary, onClose }: { readonly summary: MapFilt
       data-polish-map-surface="s89-12-filter-ledger"
       aria-label="舆图筛选说明"
     >
-      <section className="topicSurfaceColumn" aria-label="舆图图层">
+      <section className="topicSurfaceColumn paperMotionSurface" aria-label="舆图图层">
         <div className="topicSurfaceColumnHeader">
           <h3>卷上图层</h3>
           <span>{summary.totalCues} 线</span>
@@ -1362,7 +1362,7 @@ function MapFilterSurfaceGuide({ summary, onClose }: { readonly summary: MapFilt
           ))}
         </div>
       </section>
-      <section className="topicSurfaceColumn" aria-label="筛看方法">
+      <section className="topicSurfaceColumn paperMotionSurface" aria-label="筛看方法">
         <div className="topicSurfaceColumnHeader">
           <h3>筛看方法</h3>
           <span>{summary.layerCount} 层</span>
@@ -1370,7 +1370,7 @@ function MapFilterSurfaceGuide({ summary, onClose }: { readonly summary: MapFilt
         <p className="topicSurfaceMeta">在舆图页勾选地点、驿路和近事，可把卷面收成单层、双层或素绢空图。</p>
         <p className="topicSurfaceMeta">三层全隐时，地图与局势簿只保留恢复入口；展开三层后，点位、路线和近事即回到卷上。</p>
       </section>
-      <section className="topicSurfaceColumn" aria-label="候复边界">
+      <section className="topicSurfaceColumn paperMotionSurface" aria-label="候复边界">
         <div className="topicSurfaceColumnHeader">
           <h3>候复边界</h3>
           <span>只读</span>
@@ -1524,7 +1524,7 @@ function TopicSurfaceWorkbench({
 
   return (
     <div className="topicSurfaceLayout" data-surface-id={activeSurface}>
-      <section className="topicSurfaceColumn" aria-label="材料栏">
+      <section className="topicSurfaceColumn paperMotionSurface" aria-label="材料栏">
         <div className="topicSurfaceColumnHeader">
           <h3>材料</h3>
           <span>{status === "loading" ? "检索中" : hasMaterials ? "可阅" : "暂无"}</span>
@@ -1547,7 +1547,7 @@ function TopicSurfaceWorkbench({
         )}
       </section>
 
-      <section className="topicSurfaceColumn" aria-label="筹议栏">
+      <section className="topicSurfaceColumn paperMotionSurface" aria-label="筹议栏">
         <div className="topicSurfaceColumnHeader">
           <h3>筹议</h3>
           <span>{selectedEvidenceRefs.length} 引</span>
@@ -1594,7 +1594,7 @@ function TopicSurfaceWorkbench({
         <p className="topicSurfaceMeta">{selectedLabels.length ? `已引：${selectedLabels.join("、")}` : "未勾选线索时，将按公开材料自行取用。"}</p>
       </section>
 
-      <section className="topicSurfaceColumn topicDraftColumn" aria-label="草稿栏">
+      <section className="topicSurfaceColumn topicDraftColumn paperMotionSurface" aria-label="草稿栏">
         <div className="topicSurfaceColumnHeader">
           <h3>草稿</h3>
           <span>{draftStatus === "loading" ? "拟稿中" : draftSource}</span>

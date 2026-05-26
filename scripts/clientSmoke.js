@@ -2194,6 +2194,7 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
       hasBoard: Boolean(board),
       hasCeremonyLedger: Boolean(document.querySelector('[data-polish-ranking-ledger="s89-18-ranking-ceremony"]')),
       hasCeremonyCopy: text.includes("放榜仪程") && text.includes("张榜取材") && text.includes("我名") && text.includes("同年座师") && text.includes("授官过渡"),
+      rankingSurfaceCount: document.querySelectorAll(".rankingNoticeBoard.paperMotionSurface, .rankingListPanel.paperMotionSurface, .rankingDetailPanel.paperMotionSurface, .rankingBoundary.paperMotionSurface").length,
       rankingInteractiveRows: document.querySelectorAll(".rankingList button.paperMotionInteractive").length,
       rankingSelectedHookRows: document.querySelectorAll(".rankingList button.paperMotionSelected").length,
       selectedRowInteractive: selectedRow?.classList.contains("paperMotionInteractive") || false,
@@ -2224,6 +2225,7 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
   if (!snapshot.hasTopThree) failures.push("missing top-three ranking seals");
   if (!snapshot.hasBoard) failures.push("missing ranking notice board");
   if (!snapshot.hasCeremonyLedger || !snapshot.hasCeremonyCopy) failures.push("missing S89.18 ranking ceremony ledger");
+  if (snapshot.rankingSurfaceCount !== 4) failures.push(`S89.43 ranking static surfaces were incomplete: ${snapshot.rankingSurfaceCount}`);
   if (snapshot.hasPlayerRow && (!snapshot.selectedRowInteractive || snapshot.rankingInteractiveRows < 1)) failures.push("S89.42 ranking rows lacked semantic interactive hook");
   if (snapshot.rankingSelectedHookRows !== 0) failures.push(`S89.42 ranking rows were incorrectly marked as shared selected controls: ${snapshot.rankingSelectedHookRows}`);
   if (!snapshot.hasBoundary) failures.push("missing server-owned ranking boundary");
@@ -3315,6 +3317,7 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
         hasMaterials: dialogText.includes("材料"),
         hasDeliberation: dialogText.includes("筹议"),
         hasDraft: dialogText.includes("草稿"),
+        topicSurfaceColumnCount: dialog?.querySelectorAll(".topicSurfaceColumn.paperMotionSurface").length || 0,
         hasReplyBoundary:
           dialogText.includes("回批口径") ||
           dialogText.includes("主卷定夺") ||
@@ -3334,6 +3337,7 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     if (!dialogSnapshot.hasMaterials) perSurfaceFailures.push("missing materials column");
     if (!dialogSnapshot.hasDeliberation) perSurfaceFailures.push("missing deliberation column");
     if (!dialogSnapshot.hasDraft) perSurfaceFailures.push("missing draft column");
+    if (dialogSnapshot.topicSurfaceColumnCount < 3) perSurfaceFailures.push(`S89.43 topic surface columns lacked static paper hook: ${dialogSnapshot.topicSurfaceColumnCount}`);
     if (!dialogSnapshot.hasReplyBoundary) perSurfaceFailures.push("missing player-facing reply boundary");
     if (dialogSnapshot.hiddenLeaks.length) perSurfaceFailures.push(`hidden text leaked: ${dialogSnapshot.hiddenLeaks.join(", ")}`);
     if (dialogSnapshot.playerFacingLeaks.length) perSurfaceFailures.push(`player-facing topic terms leaked: ${dialogSnapshot.playerFacingLeaks.join(", ")}`);
@@ -3541,6 +3545,7 @@ async function runClientSmoke(options = {}) {
         marker: dialog?.querySelector("[data-polish-map-filter]")?.getAttribute("data-polish-map-filter") || "",
         ledgerMarker: dialog?.querySelector("[data-polish-map-surface]")?.getAttribute("data-polish-map-surface") || "",
         hasLayerGuide: text.includes("卷上图层") && text.includes("人物动向") && text.includes("候复边界"),
+        topicSurfaceColumnCount: dialog?.querySelectorAll(".topicSurfaceColumn.paperMotionSurface").length || 0,
         hasReturnButton: text.includes("回舆图勾选"),
         hasDraftWord: text.includes("草稿"),
         hasMapDraftButton: text.includes("写入舆图草稿"),
@@ -3549,7 +3554,7 @@ async function runClientSmoke(options = {}) {
         forbiddenText: text.match(/数据来源|裁决边界|服务器裁决|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|resolver|safe view|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
       };
     });
-    if (mapFilterSurface.marker !== "s89-12-surface-guide" || mapFilterSurface.ledgerMarker !== "s89-12-filter-ledger" || !mapFilterSurface.hasLayerGuide || !mapFilterSurface.hasReturnButton || mapFilterSurface.hasDraftWord || mapFilterSurface.hasMapDraftButton || mapFilterSurface.hasWrongDraftButton || mapFilterSurface.horizontalOverflow || mapFilterSurface.forbiddenText.length) {
+    if (mapFilterSurface.marker !== "s89-12-surface-guide" || mapFilterSurface.ledgerMarker !== "s89-12-filter-ledger" || !mapFilterSurface.hasLayerGuide || mapFilterSurface.topicSurfaceColumnCount < 3 || !mapFilterSurface.hasReturnButton || mapFilterSurface.hasDraftWord || mapFilterSurface.hasMapDraftButton || mapFilterSurface.hasWrongDraftButton || mapFilterSurface.horizontalOverflow || mapFilterSurface.forbiddenText.length) {
       throw new Error(`S89.12 map filter surface unsafe or incomplete: ${JSON.stringify(mapFilterSurface)}`);
     }
     await page.getByRole("button", { name: "关闭专题" }).click();
@@ -4168,12 +4173,13 @@ async function runClientSmoke(options = {}) {
         marker: dialog?.querySelector("[data-polish-map-filter]")?.getAttribute("data-polish-map-filter") || "",
         ledgerMarker: dialog?.querySelector("[data-polish-map-surface]")?.getAttribute("data-polish-map-surface") || "",
         hasLayerGuide: text.includes("卷上图层") && text.includes("筛看方法") && text.includes("回舆图勾选"),
+        topicSurfaceColumnCount: dialog?.querySelectorAll(".topicSurfaceColumn.paperMotionSurface").length || 0,
         hasDraftWord: text.includes("草稿"),
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
         forbiddenText: text.match(/数据来源|裁决边界|服务器裁决|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|resolver|safe view|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
       };
     });
-    if (mobileMapFilterSurface.marker !== "s89-12-surface-guide" || mobileMapFilterSurface.ledgerMarker !== "s89-12-filter-ledger" || !mobileMapFilterSurface.hasLayerGuide || mobileMapFilterSurface.hasDraftWord || mobileMapFilterSurface.horizontalOverflow || mobileMapFilterSurface.forbiddenText.length) {
+    if (mobileMapFilterSurface.marker !== "s89-12-surface-guide" || mobileMapFilterSurface.ledgerMarker !== "s89-12-filter-ledger" || !mobileMapFilterSurface.hasLayerGuide || mobileMapFilterSurface.topicSurfaceColumnCount < 3 || mobileMapFilterSurface.hasDraftWord || mobileMapFilterSurface.horizontalOverflow || mobileMapFilterSurface.forbiddenText.length) {
       throw new Error(`S89.12 mobile map filter surface unsafe or overflowing: ${JSON.stringify(mobileMapFilterSurface)}`);
     }
     await page.getByRole("button", { name: "关闭专题" }).click();

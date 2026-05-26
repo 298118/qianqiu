@@ -362,7 +362,7 @@ export function RankingPage() {
         <button className="paperLink rankingJumpLink" type="button" disabled={!routeSessionSupported} onClick={focusPlayerDetail}>跳至我名</button>
       </section>
 
-      <section className="rankingNoticeBoard" aria-label="皇榜" data-polish-ranking-board="s89-33-ranking-golden-board">
+      <section className="rankingNoticeBoard paperMotionSurface" aria-label="皇榜" data-polish-ranking-board="s89-33-ranking-golden-board">
         <section
           className="rankingCeremonyBand"
           aria-label="金榜仪轨"
@@ -408,7 +408,7 @@ export function RankingPage() {
         </div>
 
         <div className="rankingBoardGrid">
-          <section className="rankingListPanel" aria-label="正榜名单">
+          <section className="rankingListPanel paperMotionSurface" aria-label="正榜名单">
             <div className="rankingSectionHeading">
               <p className="eyebrow">正榜</p>
               <h2>金榜名单</h2>
@@ -440,7 +440,7 @@ export function RankingPage() {
             )}
           </section>
 
-          <aside ref={detailPanelRef} className="rankingDetailPanel" id="ranking-player-detail" aria-label="榜名详情" tabIndex={-1}>
+          <aside ref={detailPanelRef} className="rankingDetailPanel paperMotionSurface" id="ranking-player-detail" aria-label="榜名详情" tabIndex={-1}>
             <p className="eyebrow">{selectedEntry?.isPlayer ? "我名在此" : "榜名细读"}</p>
             <h2>{selectedEntry?.name ?? playerName}</h2>
             <section aria-label="放榜仪程索引" data-polish-ranking-ledger="s89-18-ranking-ceremony">
@@ -546,7 +546,7 @@ export function RankingPage() {
         </div>
       </section>
 
-      <section className="rankingBoundary" aria-label="皇榜安全边界">
+      <section className="rankingBoundary paperMotionSurface" aria-label="皇榜安全边界">
         <p>{serverDecision}</p>
         <p>本榜只录已经张挂的定榜结果；不改名次、不补评分、不推断授官，只呈现已公开的榜文、评语与授官提示。</p>
       </section>
