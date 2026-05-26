@@ -3196,6 +3196,33 @@ test("S89.54 base controls and status lines use semantic tokens", () => {
   assert.doesNotMatch(controlsSource, /rgb\(84 60 43 \/ \.34|rgb\(255 252 238 \/ \.9\)|#241b16|rgb\(142 47 39 \/ \.58|rgb\(255 252 238 \/ \.88|rgb\(236 218 184 \/ \.72|rgb\(255 248 230 \/ \.52|rgb\(255 248 230 \/ \.34|rgb\(54 37 24 \/ \.13|rgb\(95 24 21 \/ \.82|rgb\(224 197 161 \/ \.82|rgb\(75 43 28 \/ \.18|rgb\(142 47 39 \/ \.18|rgb\(236 218 184 \/ \.46|rgb\(206 153 64 \/ \.52|#7a6048/);
 });
 
+test("S89.55 utility surfaces use shared semantic tokens", () => {
+  const tokensSource = readClientStyleModule("tokens/tokens.css");
+  const preferencesSource = readClientStyleModule("base/preferences.css");
+  const surfacesSource = readClientStyleModule("utilities/surfaces.css");
+  const highContrastBlock = preferencesSource.match(/\.appShell\[data-contrast="high"\] \{[\s\S]*?\n\}/)?.[0] || "";
+  const highContrastSurfaceRule =
+    preferencesSource.match(/\.appShell\[data-contrast="high"\] :is\([\s\S]*?\),\n\.appShell\[data-contrast="high"\] \.paperMotionSelected:is\([\s\S]*?\) \{[\s\S]*?\n\}/)?.[0] || "";
+  const statusSurfaceBlock = surfacesSource.match(/:where\(\.statusSurface\) \{[\s\S]*?\n\}/)?.[0] || "";
+
+  for (const tokenName of [
+    "--qq-color-status-surface-border",
+    "--qq-shadow-ledger-card",
+    "--qq-surface-status-surface"
+  ]) {
+    assert.match(tokensSource, new RegExp(`${tokenName}:`));
+    assert.match(highContrastBlock, new RegExp(`${tokenName}:`));
+  }
+
+  assert.match(surfacesSource, /:where\(\.ledgerCard\) \{[\s\S]*box-shadow: var\(--qq-shadow-ledger-card\)/);
+  assert.match(statusSurfaceBlock, /border: 1px solid var\(--qq-color-status-surface-border\)[\s\S]*background: var\(--qq-surface-status-surface\)/);
+  assert.match(highContrastSurfaceRule, /\.statusSurface/);
+  assert.match(highContrastSurfaceRule, /\.ledgerCard/);
+  assert.match(highContrastSurfaceRule, /border-color: var\(--qq-color-border-medium\)/);
+  assert.doesNotMatch(statusSurfaceBlock, /--qq-surface-status-line/);
+  assert.doesNotMatch(surfacesSource, /0 10px 22px rgb\(80 50 35 \/ \.08|rgb\(255 255 255 \/ \.28|rgb\(142 47 39 \/ \.18|rgb\(255 252 238 \/ \.64/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");

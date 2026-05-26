@@ -64,6 +64,10 @@
   --qq-shadow-status-line:
     inset 0 0 0 1px rgb(255 252 238 / .34),
     0 8px 18px rgb(54 37 24 / .07);
+  --qq-shadow-ledger-card:
+    0 10px 22px rgb(80 50 35 / .08),
+    inset 0 1px 0 rgb(255 255 255 / .28);
+  --qq-surface-status-surface: rgb(255 252 238 / .64);
   --qq-surface-status-marker: linear-gradient(180deg, rgb(142 47 39 / .62), rgb(206 153 64 / .52));
   --qq-shadow-status-marker: 0 0 10px rgb(142 47 39 / .16);
   --qq-color-seal-status: #7a6048;
