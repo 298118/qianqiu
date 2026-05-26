@@ -845,6 +845,7 @@ async function assertArchiveDigestPolish(page, label) {
       hasPanel: Boolean(panel),
       polishMarker: panel?.getAttribute("data-polish-archive") || "",
       hasDigest: Boolean(digest),
+      archiveSurfaceCount: document.querySelectorAll(".archiveDigestBand.paperMotionSurface, .archiveDigestIntro.paperMotionSurface").length,
       hasStats: Boolean(digest?.querySelector(".archiveDigestStats")),
       hasLeadListOrEmpty: Boolean(digest?.querySelector(".archiveLeadList")) || Boolean(digest?.querySelector(".archiveLeadEmpty")),
       hasReader: Boolean(reader),
@@ -872,6 +873,7 @@ async function assertArchiveDigestPolish(page, label) {
   if (!snapshot.hasPanel) failures.push("missing archive route panel");
   if (snapshot.polishMarker !== "s89-10-chronicle-density") failures.push(`missing S89.10 archive polish marker: ${snapshot.polishMarker}`);
   if (!snapshot.hasDigest) failures.push("missing archive digest band");
+  if (snapshot.archiveSurfaceCount !== 2) failures.push(`S89.44 archive static surfaces were incomplete: ${snapshot.archiveSurfaceCount}`);
   if (!snapshot.hasStats) failures.push("missing archive digest stats");
   if (!snapshot.hasLeadListOrEmpty) failures.push("missing archive lead list or empty lead copy");
   if (!snapshot.hasReader) failures.push("missing S89.29 archive evidence reader");
@@ -3474,6 +3476,7 @@ async function runClientSmoke(options = {}) {
         polishMarker: document.querySelector(".mapFullScreen")?.getAttribute("data-polish-map") || "",
         layerSummary: document.querySelector(".mapLayerSummary")?.textContent || "",
         hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
+        mapStaticSurfaceCount: document.querySelectorAll(".mapSituationLedger.paperMotionSurface, .mapVisibleLayerDigest.paperMotionSurface, .mapSituationIndex.paperMotionSurface").length,
         situationMarker: document.querySelector("[data-polish-map-situation]")?.getAttribute("data-polish-map-situation") || "",
         readingMarker: document.querySelector("[data-polish-map-reading]")?.getAttribute("data-polish-map-reading") || "",
         situationText: document.querySelector("[data-polish-map-situation]")?.textContent || "",
@@ -3498,6 +3501,9 @@ async function runClientSmoke(options = {}) {
     }
     if (mapRuntime.situationMarker !== "s89-21-situation-index" || mapRuntime.readingMarker !== "s89-21-situation-reader" || !/山河局势轴|本卷读法|据局势拟稿|不进入主卷裁决/.test(mapRuntime.situationText)) {
       throw new Error(`S89.21 map situation index missing safe player-facing copy: ${JSON.stringify(mapRuntime)}`);
+    }
+    if (mapRuntime.mapStaticSurfaceCount !== 3) {
+      throw new Error(`S89.44 map static surfaces were incomplete: ${JSON.stringify(mapRuntime)}`);
     }
     if (
       mapRuntime.tideMarker !== "s89-31-map-tide-compass" ||
@@ -4133,6 +4139,7 @@ async function runClientSmoke(options = {}) {
         hasLayerControls: document.querySelectorAll(".mapLayerToggle").length >= 3,
         hasLayerSummary: /筛选只改卷上显示/.test(document.querySelector(".mapLayerSummary")?.textContent || ""),
         hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
+        mapStaticSurfaceCount: document.querySelectorAll(".mapSituationLedger.paperMotionSurface, .mapVisibleLayerDigest.paperMotionSurface, .mapSituationIndex.paperMotionSurface").length,
         tideMarker: document.querySelector("[data-polish-map-tide]")?.getAttribute("data-polish-map-tide") || "",
         tideText: document.querySelector("[data-polish-map-tide]")?.textContent || "",
         tideTabCount: document.querySelectorAll(".mapTideCompassTab[role='tab']").length,
@@ -4148,6 +4155,7 @@ async function runClientSmoke(options = {}) {
       !mobileMap.hasLayerControls ||
       !mobileMap.hasLayerSummary ||
       !mobileMap.hasSituationLedger ||
+      mobileMap.mapStaticSurfaceCount !== 3 ||
       mobileMap.tideMarker !== "s89-31-map-tide-compass" ||
       mobileMap.tideTabCount !== 4 ||
       !/舆图态势罗盘|先看何处|近事|人物|后果|可拟/.test(mobileMap.tideText) ||

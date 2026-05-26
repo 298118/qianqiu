@@ -2865,11 +2865,33 @@ test("S89.43 route surface containers use static paper surface utilities", () =>
 
   assert.match(polishSource, /\.paperMotionSurface/);
   assert.doesNotMatch(polishSource, /\.rankingNoticeBoard|\.rankingListPanel|\.rankingDetailPanel|\.rankingBoundary|\.topicSurfaceColumn/);
-  assert.doesNotMatch(rankingSource, /className="rankingNoticeBoard paperMotionCard|className="rankingListPanel paperMotionPanel|className="rankingDetailPanel paperMotionPanel|className="rankingBoundary paperMotionCard/);
-  assert.doesNotMatch(surfaceHostSource, /className="topicSurfaceColumn(?: topicDraftColumn)? paperMotionPanel|className="topicSurfaceColumn(?: topicDraftColumn)? paperMotionCard/);
+  assert.doesNotMatch(rankingSource, /className="(?=[^"]*(?:rankingNoticeBoard|rankingListPanel|rankingDetailPanel|rankingBoundary))(?=[^"]*paperMotion(?:Card|Panel))[^"]*"/);
+  assert.doesNotMatch(surfaceHostSource, /className="(?=[^"]*topicSurfaceColumn)(?=[^"]*paperMotion(?:Card|Panel))[^"]*"/);
 
   assert.match(clientSmokeSource, /rankingSurfaceCount: document\.querySelectorAll\("\.rankingNoticeBoard\.paperMotionSurface, \.rankingListPanel\.paperMotionSurface, \.rankingDetailPanel\.paperMotionSurface, \.rankingBoundary\.paperMotionSurface"\)\.length/);
   assert.match(clientSmokeSource, /topicSurfaceColumnCount: dialog\?\.querySelectorAll\("\.topicSurfaceColumn\.paperMotionSurface"\)\.length \|\| 0/);
+});
+
+test("S89.44 map and archive static ledgers use paper surface utilities", () => {
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
+  const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
+  const preferencesSource = readClientStyleModule("base/preferences.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(mapPageSource, /className="mapSituationLedger paperMotionSurface"/);
+  assert.match(mapPageSource, /className="mapVisibleLayerDigest paperMotionSurface"/);
+  assert.match(mapPageSource, /className="mapVisibleLayerDigest mapSituationIndex paperMotionSurface"/);
+  assert.match(archivePageSource, /className="archiveDigestBand paperMotionSurface"/);
+  assert.match(archivePageSource, /className="archiveDigestIntro paperMotionSurface"/);
+
+  assert.match(polishSource, /\.paperMotionSurface/);
+  assert.doesNotMatch(polishSource, /\.mapSituationLedger|\.mapVisibleLayerDigest|\.mapSituationIndex|\.archiveDigestBand|\.archiveDigestIntro/);
+  assert.doesNotMatch(preferencesSource, /\.archiveDigestBand/);
+  assert.doesNotMatch(`${mapPageSource}\n${archivePageSource}`, /className="(?=[^"]*(?:mapSituationLedger|mapVisibleLayerDigest|mapSituationIndex|archiveDigestBand|archiveDigestIntro))(?=[^"]*paperMotion(?:Card|Panel))[^"]*"/);
+
+  assert.match(clientSmokeSource, /mapStaticSurfaceCount: document\.querySelectorAll\("\.mapSituationLedger\.paperMotionSurface, \.mapVisibleLayerDigest\.paperMotionSurface, \.mapSituationIndex\.paperMotionSurface"\)\.length/);
+  assert.match(clientSmokeSource, /archiveSurfaceCount: document\.querySelectorAll\("\.archiveDigestBand\.paperMotionSurface, \.archiveDigestIntro\.paperMotionSurface"\)\.length/);
 });
 
 test("S89.25 overlay glass polish stays shared and safe", () => {

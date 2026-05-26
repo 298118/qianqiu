@@ -36,7 +36,7 @@
   color: var(--qq-color-ink-strong);
 }
 
-.appShell[data-contrast="high"] :is(.paperSurface, .rolePanel, .statusSurface, .ledgerCard, .paperMotionCard, .paperMotionPanel, .paperMotionSurface, .paperMotionInteractive, .paperMotionEmpty, .paperButton, .paperLink, .topNav a, .sessionNav a, .settingsDirectoryCard, .archiveDigestBand, .crossPageTraceGrid article),
+.appShell[data-contrast="high"] :is(.paperSurface, .rolePanel, .statusSurface, .ledgerCard, .paperMotionCard, .paperMotionPanel, .paperMotionSurface, .paperMotionInteractive, .paperMotionEmpty, .paperButton, .paperLink, .topNav a, .sessionNav a, .settingsDirectoryCard, .crossPageTraceGrid article),
 .appShell[data-contrast="high"] .paperMotionSelected:is([aria-pressed="true"], [aria-selected="true"], :has(input:checked)) {
   border-color: var(--qq-color-border-medium);
 }

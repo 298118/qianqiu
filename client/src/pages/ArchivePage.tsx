@@ -356,8 +356,8 @@ export function ArchivePage() {
         <Link className="paperLink" to={gameHref}>回主卷</Link>
       </div>
 
-      <section className="archiveDigestBand" aria-label="史册案卷索引">
-        <div className="archiveDigestIntro">
+      <section className="archiveDigestBand paperMotionSurface" aria-label="史册案卷索引">
+        <div className="archiveDigestIntro paperMotionSurface">
           <p className="eyebrow">案卷索引</p>
           <h2>近次线索</h2>
           <p>

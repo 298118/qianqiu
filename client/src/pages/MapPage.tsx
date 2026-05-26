@@ -770,12 +770,12 @@ export function MapPage() {
           onRestoreLayers={restoreAllLayers}
           onActionDraft={writeMapRuntimeSelection}
         />
-        <aside className="mapSituationLedger" aria-labelledby="map-ledger-title" data-polish-card="s89-5-map-ledger">
+        <aside className="mapSituationLedger paperMotionSurface" aria-labelledby="map-ledger-title" data-polish-card="s89-5-map-ledger">
           <div>
             <p className="eyebrow">局势簿摘录</p>
             <h2 id="map-ledger-title">公开近事</h2>
           </div>
-          <section className="mapVisibleLayerDigest" aria-label="卷上可见舆图线索" data-polish-map-empty="s89-11-ledger-digest">
+          <section className="mapVisibleLayerDigest paperMotionSurface" aria-label="卷上可见舆图线索" data-polish-map-empty="s89-11-ledger-digest">
             <span>卷上可见</span>
             <strong>{visibleLayerDigest}</strong>
             <p>
@@ -790,7 +790,7 @@ export function MapPage() {
             ) : null}
           </section>
           <section
-            className="mapVisibleLayerDigest mapSituationIndex"
+            className="mapVisibleLayerDigest mapSituationIndex paperMotionSurface"
             aria-label="山河局势轴"
             data-polish-map-situation="s89-21-situation-index"
             data-polish-map-reading="s89-21-situation-reader"
