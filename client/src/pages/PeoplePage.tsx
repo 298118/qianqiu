@@ -3,6 +3,7 @@ import { useParams } from "react-router";
 import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import type { DelegatedTaskRecordView, NpcActiveRequestFollowUpTaskView, NpcActiveRequestItemView, NpcActiveRequestResponseOptionView, NpcDetailView, NpcRosterItem, PlayerSummary, TradeRecordView, WorldPeopleNpc, WorldPeopleRelationship } from "../api";
+import { CrossPageTraceRail, type CrossPageTraceItem, type CrossPageTraceState } from "../components/CrossPageTraceRail";
 import { EconomyTraceSection } from "../components/EconomyTraceSection";
 import { NpcFollowUpEvidenceSection } from "../components/NpcFollowUpEvidenceSection";
 import { Portrait } from "../components/Portrait";
@@ -851,6 +852,45 @@ export function PeoplePage() {
   const selectedNpcTags = selectedNpc
     ? [...selectedNpc.stageTags, ...selectedNpc.roleTags, ...selectedNpc.relationshipLabels].slice(0, 5)
     : [];
+  const peopleCrossTraceState: CrossPageTraceState = routeSessionSupported
+    ? peopleRows.length || followUpEvidenceCount || relationshipAgendaThreads.length || economyTraceCount
+      ? "ready"
+      : "empty"
+    : "unsupported";
+  const peopleCrossTraceItems: readonly CrossPageTraceItem[] = [
+    {
+      target: "people",
+      label: "人物线索",
+      value: peopleRows.length ? `入谱 ${peopleRows.length} 人` : "待入谱",
+      detail: selectedNpc ? `当前照面为${selectedNpcName}；人物页只看公开名册、来函和交游。` : "人物名册候载时不补造人名或画像。",
+      href: `/game/${sessionId}/people`,
+      actionLabel: "留本页"
+    },
+    {
+      target: "court",
+      label: "朝议专题",
+      value: relationshipAgendaThreads.length || followUpEvidenceCount ? `${relationshipAgendaThreads.length} 题 · ${followUpEvidenceCount} 证` : "可成题",
+      detail: "公开来人、拜会、论道和礼法余波可入朝议页查专题入口。",
+      href: `/game/${sessionId}/court`,
+      actionLabel: "入朝议"
+    },
+    {
+      target: "archive",
+      label: "史册留痕",
+      value: economyTraceCount ? `${economyTraceCount} 条账解` : "候归档",
+      detail: "人物线索若已入卷，可去史册回看后果、来函证据和账解余波。",
+      href: `/game/${sessionId}/archive`,
+      actionLabel: "查史册"
+    },
+    {
+      target: "game",
+      label: "回主卷",
+      value: hasLocalDraft ? "已有候复稿" : "未写草稿",
+      detail: "人物页不展示草稿正文；真实后果仍回主卷候复。",
+      href: `/game/${sessionId}`,
+      actionLabel: "回主卷候复"
+    }
+  ];
   const activeNpcDialogueView = activeLastNpcInteraction?.npcDialogueView?.npcId === selectedNpcIdForResults
     ? activeLastNpcInteraction.npcDialogueView
     : undefined;
@@ -985,6 +1025,12 @@ export function PeoplePage() {
           </div>
         </dl>
       </section>
+      <CrossPageTraceRail
+        page="people"
+        state={peopleCrossTraceState}
+        items={peopleCrossTraceItems}
+        summary="人物线索先看公开名册与来函，再去朝议成题，归史册留痕。"
+      />
       <section
         className="peopleGalleryBand"
         aria-labelledby="people-gallery-title"

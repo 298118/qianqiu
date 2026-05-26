@@ -834,10 +834,13 @@ async function assertArchiveDigestPolish(page, label) {
     const digest = document.querySelector(".archiveDigestBand");
     const reader = document.querySelector("[data-polish-archive-reader='s89-29-evidence-reader']");
     const readerBoundary = reader?.querySelector("[data-polish-archive-boundary]");
+    const crossTrace = document.querySelector("[data-polish-cross-trace='s89-36-cross-page-trace'][data-cross-trace-page='archive']");
     const traceGrid = document.querySelector(".archiveTraceGrid");
     const evidenceStack = document.querySelector(".archiveEvidenceStack");
     const text = digest?.textContent || "";
     const readerText = reader?.textContent || "";
+    const crossTraceText = crossTrace?.textContent || "";
+    const crossTraceLinks = [...(crossTrace?.querySelectorAll("a[href]") || [])].map((link) => new URL(link.href).pathname);
     return {
       hasPanel: Boolean(panel),
       polishMarker: panel?.getAttribute("data-polish-archive") || "",
@@ -848,6 +851,11 @@ async function assertArchiveDigestPolish(page, label) {
       readerRows: reader ? reader.querySelectorAll(".surfaceSafetyList > div").length : 0,
       readerBoundaryMarker: readerBoundary?.getAttribute("data-polish-archive-boundary") || "",
       readerBoundaryText: readerBoundary?.textContent || "",
+      hasCrossTrace: Boolean(crossTrace),
+      crossTraceState: crossTrace?.getAttribute("data-cross-trace-state") || "",
+      crossTraceTargets: [...(crossTrace?.querySelectorAll("[data-cross-trace-target]") || [])].map((entry) => entry.getAttribute("data-cross-trace-target") || "").sort(),
+      crossTraceText,
+      crossTraceLinks,
       hasTraceGrid: Boolean(traceGrid),
       tracePolishMarker: traceGrid?.getAttribute("data-polish-archive-trace") || "",
       traceLayout: traceGrid?.getAttribute("data-archive-layout") || "",
@@ -874,6 +882,18 @@ async function assertArchiveDigestPolish(page, label) {
   }
   if (!snapshot.readerBoundaryText.includes("按钮只写案头草稿") || !snapshot.readerBoundaryText.includes("回主卷候复")) {
     failures.push(`archive reader lacked draft boundary copy: ${snapshot.readerBoundaryText.slice(0, 120)}`);
+  }
+  if (!snapshot.hasCrossTrace || !/^(ready|empty)$/.test(snapshot.crossTraceState)) {
+    failures.push(`missing S89.36 archive cross trace: ${JSON.stringify({ hasCrossTrace: snapshot.hasCrossTrace, crossTraceState: snapshot.crossTraceState })}`);
+  }
+  if (snapshot.crossTraceTargets.join("|") !== "archive|court|game|people") {
+    failures.push(`archive cross trace targets were ${snapshot.crossTraceTargets.join(", ")}`);
+  }
+  if (!/跨页追索笺|查人物|入朝议|回主卷候复|这里只指明读卷路径/.test(snapshot.crossTraceText)) {
+    failures.push(`archive cross trace lacked player-facing copy: ${snapshot.crossTraceText.slice(0, 140)}`);
+  }
+  if (!snapshot.crossTraceLinks.some((path) => path.endsWith("/people")) || !snapshot.crossTraceLinks.some((path) => path.endsWith("/court"))) {
+    failures.push(`archive cross trace links were incomplete: ${snapshot.crossTraceLinks.join(", ")}`);
   }
   if (!snapshot.hasTraceGrid) failures.push("missing archive trace grid");
   if (snapshot.tracePolishMarker !== "s89-10-chronicle-density") failures.push(`missing S89.10 archive trace marker: ${snapshot.tracePolishMarker}`);
@@ -3137,9 +3157,11 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     const labels = ["奏折队列", "拟圣旨", "朝议", "堂审", "军议", "人物档案"];
     const bodyText = document.body.innerText || "";
     const agendaBand = document.querySelector('[data-polish-court-agenda-band="s89-34-main-court-desk"]');
+    const crossTrace = document.querySelector('[data-polish-cross-trace="s89-36-cross-page-trace"][data-cross-trace-page="court"]');
     const agendaStyle = agendaBand ? window.getComputedStyle(agendaBand) : null;
     const surfaceEntries = [...document.querySelectorAll(".courtSurfacePage [data-court-surface]")];
     const surfaceIds = surfaceEntries.map((entry) => entry.getAttribute("data-court-surface") || "").sort();
+    const crossTraceLinks = [...(crossTrace?.querySelectorAll("a[href]") || [])].map((link) => new URL(link.href).pathname);
     const buttonCounts = Object.fromEntries(labels.map((label) => [
       label,
       [...document.querySelectorAll(".courtSurfacePage button")].filter((button) => (button.textContent || "").trim() === label).length
@@ -3154,6 +3176,11 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
       agendaState: agendaBand?.getAttribute("data-agenda-state") || "",
       agendaText: agendaBand?.textContent || "",
       agendaAnimation: agendaStyle?.animationName || "",
+      hasCrossTrace: Boolean(crossTrace),
+      crossTraceState: crossTrace?.getAttribute("data-cross-trace-state") || "",
+      crossTraceTargets: [...(crossTrace?.querySelectorAll("[data-cross-trace-target]") || [])].map((entry) => entry.getAttribute("data-cross-trace-target") || "").sort(),
+      crossTraceText: crossTrace?.textContent || "",
+      crossTraceLinks,
       indexEntryCount: document.querySelectorAll(".courtSurfacePage [data-court-surface]").length,
       surfaceIds,
       surfaceStates: surfaceEntries.map((entry) => entry.getAttribute("data-court-state") || ""),
@@ -3187,6 +3214,18 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
   }
   if (initialSnapshot.shellMotion === "reduced" && initialSnapshot.agendaAnimation !== "none") {
     failures.push(`S89.34 reduced court agenda animation was ${initialSnapshot.agendaAnimation}`);
+  }
+  if (!initialSnapshot.hasCrossTrace || initialSnapshot.crossTraceState !== "ready") {
+    failures.push(`missing S89.36 court cross trace: ${JSON.stringify({ hasCrossTrace: initialSnapshot.hasCrossTrace, crossTraceState: initialSnapshot.crossTraceState })}`);
+  }
+  if (initialSnapshot.crossTraceTargets.join("|") !== "archive|game|people") {
+    failures.push(`court cross trace targets were ${initialSnapshot.crossTraceTargets.join(", ")}`);
+  }
+  if (!/跨页追索笺|查人物|查史册|回主卷候复|这里只指明读卷路径/.test(initialSnapshot.crossTraceText)) {
+    failures.push(`court cross trace lacked player-facing copy: ${initialSnapshot.crossTraceText.slice(0, 140)}`);
+  }
+  if (!initialSnapshot.crossTraceLinks.some((path) => path.endsWith("/people")) || !initialSnapshot.crossTraceLinks.some((path) => path.endsWith("/archive"))) {
+    failures.push(`court cross trace links were incomplete: ${initialSnapshot.crossTraceLinks.join(", ")}`);
   }
   if (initialSnapshot.indexEntryCount !== 6) failures.push(`court directory index entry count was ${initialSnapshot.indexEntryCount}`);
   const expectedSurfaceIds = ["court-debate", "edict-draft", "memorial-review", "npc-profile", "trial", "war-council"];
@@ -3591,6 +3630,8 @@ async function runClientSmoke(options = {}) {
       const galleryReadout = galleryBand?.querySelector(".peopleGalleryReadout");
       const galleryReadoutStyle = galleryReadout ? window.getComputedStyle(galleryReadout) : null;
       const galleryBandStyle = galleryBand ? window.getComputedStyle(galleryBand) : null;
+      const crossTrace = document.querySelector("[data-polish-cross-trace='s89-36-cross-page-trace'][data-cross-trace-page='people']");
+      const crossTraceLinks = [...(crossTrace?.querySelectorAll("a[href]") || [])].map((link) => new URL(link.href).pathname);
       const firstCard = document.querySelector("[data-polish-people-card='s89-9-portrait-material']");
       const firstCardStyle = firstCard ? window.getComputedStyle(firstCard) : null;
       const images = [...document.querySelectorAll(".peopleLedgerList img")];
@@ -3614,6 +3655,11 @@ async function runClientSmoke(options = {}) {
         gallerySelectedCards: document.querySelectorAll("[data-polish-people-gallery-card='s89-35-people-portrait-gallery'][data-selected='true']").length,
         galleryCardCount: document.querySelectorAll("[data-polish-people-gallery-card='s89-35-people-portrait-gallery']").length,
         galleryPortraitCards: document.querySelectorAll("[data-polish-portrait-card='s89-35-people-portrait-gallery']").length,
+        hasCrossTrace: Boolean(crossTrace),
+        crossTraceState: crossTrace?.getAttribute("data-cross-trace-state") || "",
+        crossTraceTargets: [...(crossTrace?.querySelectorAll("[data-cross-trace-target]") || [])].map((entry) => entry.getAttribute("data-cross-trace-target") || "").sort(),
+        crossTraceText: crossTrace?.textContent || "",
+        crossTraceLinks,
         polishCardCount: document.querySelectorAll("[data-polish-people-card='s89-9-portrait-material']").length,
         cardBackground: firstCardStyle?.backgroundImage || "",
         cardTransition: firstCardStyle?.transitionProperty || "",
@@ -3635,6 +3681,18 @@ async function runClientSmoke(options = {}) {
     }
     if (!portraitLedger.galleryShell || !portraitLedger.galleryBand || portraitLedger.galleryState !== "ready" || portraitLedger.galleryLedgerState !== "ready" || portraitLedger.galleryCardCount < 1 || portraitLedger.galleryPortraitCards < 1 || portraitLedger.gallerySelectedButtons !== 1 || !/人物画屏|入谱照面|画屏|公开小传|草稿|候复线索/.test(portraitLedger.galleryReadoutText) || portraitLedger.galleryReadoutRows < 5 || portraitLedger.galleryReadoutGrid !== "grid" || !portraitLedger.galleryReadoutColumns || (portraitLedger.galleryAnimation !== "s8935GalleryUnroll" && portraitLedger.galleryAnimation !== "none")) {
       throw new Error(`S89.35 people portrait gallery readout missing or unsafe: ${JSON.stringify(portraitLedger)}`);
+    }
+    if (!portraitLedger.hasCrossTrace || !/^(ready|empty)$/.test(portraitLedger.crossTraceState)) {
+      throw new Error(`S89.36 people cross trace missing: ${JSON.stringify({ hasCrossTrace: portraitLedger.hasCrossTrace, crossTraceState: portraitLedger.crossTraceState })}`);
+    }
+    if (portraitLedger.crossTraceTargets.join("|") !== "archive|court|game|people") {
+      throw new Error(`S89.36 people cross trace targets were ${portraitLedger.crossTraceTargets.join(", ")}`);
+    }
+    if (!/跨页追索笺|入朝议|查史册|回主卷候复|这里只指明读卷路径/.test(portraitLedger.crossTraceText)) {
+      throw new Error(`S89.36 people cross trace lacked player-facing copy: ${portraitLedger.crossTraceText.slice(0, 140)}`);
+    }
+    if (!portraitLedger.crossTraceLinks.some((path) => path.endsWith("/court")) || !portraitLedger.crossTraceLinks.some((path) => path.endsWith("/archive")) || !portraitLedger.crossTraceLinks.includes(`/game/${startedSessionId}`)) {
+      throw new Error(`S89.36 people cross trace links were incomplete: ${portraitLedger.crossTraceLinks.join(", ")}`);
     }
     if (portraitLedger.total <= 0 || portraitLedger.total > 80) {
       throw new Error(`People ledger did not stay on the current public person view: ${portraitLedger.total}`);

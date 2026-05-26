@@ -1,7 +1,9 @@
 import { useParams } from "react-router";
+import { CrossPageTraceRail, type CrossPageTraceItem } from "../components/CrossPageTraceRail";
 import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRouteLocalSessionId } from "../routes/sessionId";
 import { surfaceRegistry } from "../surfaces/surfaceRegistry";
+import { useGameSessionStore } from "../state/gameSessionState";
 import type { LocalSurface } from "../state/uiState";
 import { useUiStateStore } from "../state/uiState";
 
@@ -45,11 +47,69 @@ const courtAgendaItems = [
   { label: "堂审军议", value: "证据与边患", note: "列明风险，不造判词战果。" }
 ] as const;
 
+function recordValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function arrayLength(value: unknown) {
+  return Array.isArray(value) ? value.length : 0;
+}
+
+function countNumber(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.round(number)) : 0;
+}
+
+function countFollowUpEvidence(evidence: unknown) {
+  const view = recordValue(evidence);
+  const counts = recordValue(view.counts);
+  const total = countNumber(counts.total);
+  if (total) return total;
+  return arrayLength(view.items) + arrayLength(view.people) + arrayLength(view.events) + arrayLength(view.economy);
+}
+
 export function CourtPage() {
   const { sessionId = "s74-preview" } = useParams();
+  const currentSession = useGameSessionStore((state) => state.currentSession);
   const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
   const routeSessionSupported = isRouteLocalSessionId(sessionId);
+  const sessionMatches = routeSessionSupported && currentSession?.sessionId === sessionId;
+  const archiveView = recordValue(sessionMatches ? currentSession?.eventArchiveView : null);
+  const archiveCounts = recordValue(archiveView.counts);
+  const archivePagination = recordValue(archiveView.pagination);
+  const archiveCount = countNumber(archivePagination.totalItems ?? archiveCounts.total) || arrayLength(archiveView.items);
+  const domainCount = countNumber(archiveCounts.domain_consequence) ||
+    arrayLength(recordValue(sessionMatches ? currentSession?.domainConsequenceView : null).recentConsequences);
+  const followUpCount = countFollowUpEvidence(sessionMatches ? currentSession?.npcActiveRequestView?.followUpEvidence : null);
+  const threadCount = arrayLength(recordValue(sessionMatches ? currentSession?.worldThreadView : null).activeThreads);
+  const economyCount = arrayLength(recordValue(sessionMatches ? currentSession?.economyTraceView : null).traceItems);
   const agendaState = routeSessionSupported ? "ready" : "unsupported";
+  const crossTraceItems: readonly CrossPageTraceItem[] = [
+    {
+      target: "people",
+      label: "人物线索",
+      value: followUpCount ? `${followUpCount} 条来函` : "查名册",
+      detail: "从人物页看公开名册、来函后续和交游余波，再择要带回朝议成题。",
+      href: `/game/${sessionId}/people`,
+      actionLabel: "查人物"
+    },
+    {
+      target: "archive",
+      label: "史册留痕",
+      value: archiveCount ? `${archiveCount} 条入册` : "待入册",
+      detail: domainCount ? `${domainCount} 条公开后果可回看；案卷未载者不补造。` : "史册只收已入卷条目，未回响时不补造后果。",
+      href: `/game/${sessionId}/archive`,
+      actionLabel: "查史册"
+    },
+    {
+      target: "game",
+      label: "回主卷",
+      value: threadCount || economyCount ? `${threadCount} 题 · ${economyCount} 账` : "候复",
+      detail: "朝议页只指明读卷路径；真正草稿仍回主卷候复。",
+      href: `/game/${sessionId}`,
+      actionLabel: "回主卷候复"
+    }
+  ];
 
   return (
     <article
@@ -86,6 +146,12 @@ export function CourtPage() {
           ))}
         </ol>
       </section>
+      <CrossPageTraceRail
+        page="court"
+        state={routeSessionSupported ? "ready" : "unsupported"}
+        items={crossTraceItems}
+        summary="从六署专题读议题，从人物页查来人，从史册页看已留痕后果。"
+      />
       <div className="courtSurfaceGrid" aria-label="官署专题入口">
         {courtSurfaceGroups.map((group) => (
           <section key={group.title} className="courtSurfaceGroup" aria-label={group.title}>

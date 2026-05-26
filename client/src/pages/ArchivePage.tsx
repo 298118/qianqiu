@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router";
 import type { JsonObject, JsonValue } from "../api";
+import { CrossPageTraceRail, type CrossPageTraceItem, type CrossPageTraceState } from "../components/CrossPageTraceRail";
 import { DomainConsequenceSection } from "../components/DomainConsequenceSection";
 import { NpcFollowUpEvidenceSection } from "../components/NpcFollowUpEvidenceSection";
 import { markOverlayTrigger } from "../components/overlayFocus";
@@ -259,7 +260,48 @@ export function ArchivePage() {
     routeSessionSupported
   });
   const mapHref = routeSessionSupported ? `/game/${sessionId}/map` : "/";
+  const peopleHref = routeSessionSupported ? `/game/${sessionId}/people` : "/";
+  const courtHref = routeSessionSupported ? `/game/${sessionId}/court` : "/";
   const gameHref = routeSessionSupported ? `/game/${sessionId}` : "/";
+  const crossTraceState: CrossPageTraceState = routeSessionSupported
+    ? archiveItems.length || domainCount || entityImpactCount || followUpCount
+      ? "ready"
+      : "empty"
+    : "unsupported";
+  const crossTraceItems: readonly CrossPageTraceItem[] = [
+    {
+      target: "archive",
+      label: "史册留痕",
+      value: archiveItems.length ? `近次 ${archiveItems.length} 条` : "待入册",
+      detail: "史册只收已入卷条目；未公开材料不会补入旁注。",
+      href: `/game/${sessionId}/archive`,
+      actionLabel: "留本页"
+    },
+    {
+      target: "people",
+      label: "人物线索",
+      value: followUpCount ? `${followUpCount} 条来函` : "查来人",
+      detail: "要查来人、拜会、人情债或礼法余波，可回人物页看公开名册。",
+      href: peopleHref,
+      actionLabel: "查人物"
+    },
+    {
+      target: "court",
+      label: "朝议专题",
+      value: domainCount ? `${domainCount} 条后果` : "可成题",
+      detail: "要把后果、来函和案牍整理成议题，可入朝议页择专题。",
+      href: courtHref,
+      actionLabel: "入朝议"
+    },
+    {
+      target: "game",
+      label: "回主卷",
+      value: canDraft ? "可留草稿" : "先择案卷",
+      detail: "史册按钮只写候复草稿，不直接推进回合或结算后果。",
+      href: gameHref,
+      actionLabel: "回主卷候复"
+    }
+  ];
 
   function draftFromArchive(item: ArchiveItem) {
     setActionDraft({
@@ -370,6 +412,12 @@ export function ArchivePage() {
           主列看已入册公开条目，旁注看公开后果与来函线索；按钮只写案头草稿，仍回主卷候复。
         </p>
       </section>
+      <CrossPageTraceRail
+        page="archive"
+        state={crossTraceState}
+        items={crossTraceItems}
+        summary="史册只收已入卷条目；要查来人去人物页，要成议题入朝议页。"
+      />
 
       <section
         className="archiveTraceGrid"

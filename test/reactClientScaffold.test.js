@@ -1787,6 +1787,82 @@ test("S89.34 main desk and court agenda material polish stays safe-view-only", (
   );
 });
 
+test("S89.36 cross-page trace rail stays frontend-only and safe-view-only", () => {
+  const crossTraceSource = readText("client/src/components/CrossPageTraceRail.tsx");
+  const courtPageSource = readText("client/src/pages/CourtPage.tsx");
+  const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
+  const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const courtTraceBlock = courtPageSource.slice(
+    courtPageSource.indexOf("function recordValue"),
+    courtPageSource.indexOf("<div className=\"courtSurfaceGrid\"", courtPageSource.indexOf("<CrossPageTraceRail"))
+  );
+  const peopleTraceBlock = peoplePageSource.slice(
+    peoplePageSource.indexOf("const peopleCrossTraceState"),
+    peoplePageSource.indexOf("<section", peoplePageSource.indexOf("<CrossPageTraceRail"))
+  );
+  const archiveTraceBlock = archivePageSource.slice(
+    archivePageSource.indexOf("const peopleHref"),
+    archivePageSource.indexOf("<section", archivePageSource.indexOf("<CrossPageTraceRail"))
+  );
+  const traceBlocks = `${crossTraceSource}\n${courtTraceBlock}\n${peopleTraceBlock}\n${archiveTraceBlock}`;
+
+  assert.ok(styleSource.length < 200_000);
+  assert.match(crossTraceSource, /export type CrossPageTracePage = "court" \| "people" \| "archive"/);
+  assert.match(crossTraceSource, /export type CrossPageTraceState = "ready" \| "empty" \| "unsupported"/);
+  assert.match(crossTraceSource, /data-polish-cross-trace="s89-36-cross-page-trace"/);
+  assert.match(crossTraceSource, /data-cross-trace-page=\{page\}/);
+  assert.match(crossTraceSource, /data-cross-trace-state=\{state\}/);
+  assert.match(crossTraceSource, /data-cross-trace-target=\{item\.target\}/);
+  assert.match(crossTraceSource, /to=\{state === "unsupported" \? "\/" : item\.href\}/);
+  assert.match(crossTraceSource, /aria-disabled=\{state === "unsupported" \? "true" : undefined\}/);
+  assert.match(crossTraceSource, /跨页追索笺/);
+  assert.match(crossTraceSource, /草稿、后果、关系、任免和钱粮仍回主卷候复/);
+  assert.match(courtPageSource, /useGameSessionStore/);
+  assert.match(courtTraceBlock, /currentSession\?\.sessionId === sessionId/);
+  assert.match(courtTraceBlock, /eventArchiveView/);
+  assert.match(courtTraceBlock, /domainConsequenceView/);
+  assert.match(courtTraceBlock, /npcActiveRequestView\?\.followUpEvidence/);
+  assert.match(courtTraceBlock, /worldThreadView/);
+  assert.match(courtTraceBlock, /economyTraceView/);
+  assert.match(courtTraceBlock, /查人物/);
+  assert.match(courtTraceBlock, /查史册/);
+  assert.match(courtTraceBlock, /回主卷候复/);
+  assert.match(peopleTraceBlock, /peopleCrossTraceState/);
+  assert.match(peopleTraceBlock, /peopleRows\.length/);
+  assert.match(peopleTraceBlock, /followUpEvidenceCount/);
+  assert.match(peopleTraceBlock, /relationshipAgendaThreads\.length/);
+  assert.match(peopleTraceBlock, /economyTraceCount/);
+  assert.match(peopleTraceBlock, /hasLocalDraft/);
+  assert.match(peopleTraceBlock, /入朝议/);
+  assert.match(archiveTraceBlock, /crossTraceState/);
+  assert.match(archiveTraceBlock, /archiveItems\.length/);
+  assert.match(archiveTraceBlock, /domainCount/);
+  assert.match(archiveTraceBlock, /entityImpactCount/);
+  assert.match(archiveTraceBlock, /followUpCount/);
+  assert.match(archiveTraceBlock, /peopleHref/);
+  assert.match(archiveTraceBlock, /courtHref/);
+  assert.match(styleSource, /\.crossPageTraceRail\[data-polish-cross-trace="s89-36-cross-page-trace"\]/);
+  assert.match(styleSource, /\.crossPageTraceGrid[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(styleSource, /@keyframes s8936TraceSlipIn/);
+  assert.match(styleSource, /\.appShell\[data-motion="reduced"\][\s\S]*\.crossPageTraceGrid article/);
+  assert.match(styleSource, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.crossPageTraceGrid article/);
+  assert.match(styleSource, /@media \(max-width: 760px\)[\s\S]*\.crossPageTraceGrid/);
+  assert.match(appTestSource, /s89-36-cross-page-trace/);
+  assert.match(appTestSource, /data-cross-trace-page='court'/);
+  assert.match(appTestSource, /data-cross-trace-page='people'/);
+  assert.match(appTestSource, /data-cross-trace-page='archive'/);
+  assert.match(clientSmokeSource, /S89\.36 court cross trace/);
+  assert.match(clientSmokeSource, /S89\.36 people cross trace/);
+  assert.match(clientSmokeSource, /S89\.36 archive cross trace/);
+  assert.doesNotMatch(
+    traceBlocks,
+    /qianqiuApi|submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|sourceRef|relatedRefs|scopeRefs|payload/
+  );
+});
+
 test("S89.23 inventory transfer reader stays player-facing and CSS-neutral", () => {
   const inventoryPageSource = readText("client/src/pages/InventoryPage.tsx");
   const styleSource = readText("client/src/styles/global.css");

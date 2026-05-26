@@ -113,6 +113,7 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
+| S89.36 | DONE | 朝议 / 人物 / 史册跨页追踪读法 polish | 承接 S89.35 后继续做产品级前端 polish，已新增共享 `CrossPageTraceRail`，在 `/game/:sessionId/court`、`/game/:sessionId/people` 和 `/game/:sessionId/archive` 放入“跨页追索笺”，把朝议、人物、史册和主卷候复之间的自然读卷路径整理成只读卡片；rail 使用折纸材质、错落进入、hover/focus 抬升和低动效关闭守门，移动端单列。范围限 React `CrossPageTraceRail` / `CourtPage` / `PeoplePage` / `ArchivePage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费当前 route session 的安全 view、既有页面已清洗计数和本地草稿有无，不请求诊断接口，不读取 raw 存档、本地路径、source manifest 或完整 manifest，不裁决资源、身份、交易、委派、NPC 行动、经济、考试、官职、地图行动、关系或 hidden 信息。实现提交：待回填。 |
 | S89.35 | DONE | 人物页与高清立绘查看器二轮高级展示 polish | 承接 S89.34 后继续做产品级前端 polish，已在 `/game/:sessionId/people` 新增“人物画屏 / 入谱照面”、画屏案读、人物名册选中态、人物谱牒卡选中/高清状态和 S89.35 可检测 marker；高清立绘查看器新增“画屏案读”只读栏、viewer 状态和画像卡 zoomable/ready/fallback 状态。范围限 React `PeoplePage` / `Portrait` / `SurfaceHost`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费 `worldPeopleView`、`npcRosterView`、`npcDetailView.publicProfile`、既有 follow-up/economy/relationship 安全 view、route/local 状态和已审核 runtime 画像字段，不读取 raw 存档、本地路径、source manifest 或完整 manifest，不裁决资源、身份、交易、委派、NPC 行动、经济、考试、官职、地图行动、关系或 hidden 信息。实现提交：`d6ad9af4`。 |
 | S89.34 | DONE | 主卷与朝议案头中枢二轮材质动效 polish | 承接 S89.33 后继续做产品级前端 polish，已在 `/game/:sessionId` 新增“案头中枢 / 本卷案桌”、主卷命令栏/场景带 marker、场景/卷宗/草稿/去处读法和行旅/人物/账解/科举复核分组计数；在 `/game/:sessionId/court` 新增“官署议程 / 御案传签”、章奏/谕旨/朝议/堂审军议读法、议程状态和六个既有专题入口状态。范围限 React `GamePage` / `CourtPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、route/local 状态和本地草稿状态，不裁决资源、身份、交易、NPC 行动、经济、考试、官职、地图行动、关系或 hidden 信息。实现提交：`0bae6c8f`。 |
 | S89.33 | DONE | 科举与皇榜二轮仪式材质动效 polish | 承接 S89.32 后继续做产品级前端 polish，已在 `/game/:sessionId/exam` 新增“科场仪幕”、科举 hero/试卷纸卷 marker、题纸启封/落墨/候榜状态和纸卷展开动效；在 `/game/:sessionId/ranking` 新增“金榜仪轨”、皇榜 hero/榜纸 marker、金榜张榜/我名/同年/授官读法和榜行选中反馈。范围限 React `ExamPage` / `RankingPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 与交接文档；不新增依赖或素材，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。浏览器仍只消费安全 view、既有科举 API、route/local 状态和本地草稿，不裁决取题、评分、舞弊、放榜、晋级、授官、同年座师关系、官职任免或 hidden 信息。实现提交：`dd47cb17`。 |
@@ -189,7 +190,8 @@
 - 2026-05-25：S89.33 完成科举与皇榜二轮仪式材质动效 polish。当前范围限 React `ExamPage` / `RankingPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增科场仪幕、金榜仪轨、科举纸卷展开、皇榜金光/榜行选中反馈和低动效关闭守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.34 完成主卷与朝议案头中枢二轮材质动效 polish。当前范围限 React `GamePage` / `CourtPage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增主卷案头中枢、官署议程、草稿状态 marker、朝议入口状态、材质动效和低动效关闭守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
 - 2026-05-25：S89.35 完成人物页与高清立绘查看器二轮高级展示 polish。当前范围限 React `PeoplePage` / `Portrait` / `SurfaceHost`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增人物画屏、入谱照面、名册/谱牒选中态、画像卡状态、高清标记和查看器案读栏，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
-- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.35 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
+- 2026-05-26：S89.36 完成朝议 / 人物 / 史册跨页追踪读法 polish。当前范围限 React `CrossPageTraceRail` / `CourtPage` / `PeoplePage` / `ArchivePage`、全局 CSS、客户端 smoke/source canary、前端测试、brief 和开发文档；新增跨页追索笺、朝议/人物/史册/主卷候复路径、折纸材质动效和低动效关闭守门，不新增浏览器裁决权，不改后端 API/schema、AI 权限、prompt、provider、SQLite、存档、runtime manifest 或素材 manifest。
+- 前一轮 S88 归档是低风险纯文档维护；S89.3-S89.36 涉及前端代码、样式、验证脚本和文档，提交前按子代理复审规则执行。
 
 ## 6. 最近完整验证口径
 
@@ -271,6 +273,17 @@ S89.8 高清立绘查看器画中所见 polish 验证结果：
 - 已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js`、`git diff --check`。提交前只读子代理复审已通过，未发现阻断问题；非阻断建议为后续可给题签格补专门材质样式。
 
 ## 7. 近期进度记录
+
+### 2026-05-26：S89.36 朝议 / 人物 / 史册跨页追踪读法 polish
+
+- 范围：新增 `client/src/components/CrossPageTraceRail.tsx`，统一 `data-polish-cross-trace="s89-36-cross-page-trace"`、`data-cross-trace-page`、`data-cross-trace-state` 与 `data-cross-trace-target`；`CourtPage`、`PeoplePage`、`ArchivePage` 分别在既有朝议议程、人物案头索引和史册证据读法之后插入“跨页追索笺”。
+- 内容：朝议页把“查人物 / 查史册 / 回主卷候复”整理为议题追索路径；人物页把“留本页 / 入朝议 / 查史册 / 回主卷候复”整理为公开名册、来函、交游和账解的下一步读法；史册页把“留本页 / 查人物 / 入朝议 / 回主卷候复”整理为已入卷条目、来人线索、朝议专题和草稿候复的自然去处。所有文案使用“候复、案卷未载、已入卷、公开名册”等游戏内口径，不显示工程字段。
+- 样式与低动效：`global.css` 新增 `.crossPageTraceRail` / `.crossPageTraceGrid` 折纸材质、四列密度、卡片错落进入、hover/focus 朱边抬升和 `s8936TraceSlipIn`；移动端纳入现有单列 grid 规则。本地 `data-motion="reduced"` 和系统 `prefers-reduced-motion` 均关闭 rail 卡片动画，但保留纸面层次、边框、链接状态和可读布局。
+- 安全边界：本步不新增依赖或素材，不改后端 API/schema、AI 权限矩阵、prompt、provider facade、SQLite schema、存档格式、runtime manifest 或素材 manifest。浏览器仍只消费当前 route session 的安全 view、既有页面已清洗计数和本地草稿有无，不请求诊断接口，不读取 raw 存档、本地路径、source manifest 或完整 manifest，不裁决资源、身份、交易、委派、NPC 行动、经济、考试、官职、地图行动、关系、婚姻、弹劾、定罪、背叛或 hidden 信息；unsupported route 的追索链接统一退回首页。
+- Smoke/canary：`App.test.tsx` 覆盖朝议、人物、史册三页 S89.36 marker、state、玩家文案、target 数量和链接；`scripts/clientSmoke.js` 在朝议、人物、史册桌面/移动路径检查跨页追索 marker、state、targets、文案和链接；`test/reactClientScaffold.test.js` 新增 S89.36 source canary，确认共享组件、三页 safe-view 计数、CSS、移动端、低动效和 smoke 同步存在，并守住无 turn API、诊断、raw/provider/path/key/hidden、`draftContext`、`schema`、`manifest`、工程词或存储污染。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（69 tests）、focused `npx vitest --config vitest.config.mjs run client/src/__tests__/App.test.tsx -t "unsupported court|archive route entries|current people ledger|registry-backed local surfaces" --pool=vmThreads --fileParallelism=false --maxWorkers=1`（4 tests / 70 skipped）、完整串行客户端套件 `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client` 和直接 browser smoke `node scripts/clientSmoke.js`。`npm run test:client` 复现既有 Vitest fork worker 启动超时：5 files / 97 tests 已通过，但 `client/src/state/uiState.test.ts` worker 未启动；已用上述串行池完整复核同一客户端套件。`npm run smoke:browser` wrapper 完成 runtime manifest、build 和 budget 后在 browser 段首页 `networkidle` 等待超时；直接 browser smoke 通过同一浏览器段。预算输出为 `JS 658.4 KiB / CSS 139.6 KiB / fonts 26288.4 KiB / client-assets 27086.4 KiB`；构建与 smoke 仍输出既有 npm `globalignorefile` warning、Vite `/assets/ui/...` runtime asset resolution warning 和 plugin timing warning。
+- 复审：开工只读探索子代理 Schrodinger 建议把本步收窄为朝议、人物、史册共享“跨页追索笺”，保持前端-only、安全 view-only、route session guard，不增加重复主要按钮，不新增 API/schema 或 surface id；本轮按建议实施。提交前只读复审 Schrodinger 通过，未发现阻断问题；非阻断风险为 unsupported 状态下 rail 链接仍是可点击 `Link` 但安全退回首页，以及低动效下 hover/focus 仍保留轻微反馈，均符合本步安全退回和保留可读反馈目标。
+- 提交：实现提交待回填；提交哈希回填仅修改本文件与 [SHARED_CONTEXT.md](SHARED_CONTEXT.md)，可按低风险纯文档规则跳过子代理复审。
 
 ### 2026-05-25：S89.35 人物页与高清立绘查看器二轮高级展示 polish
 
