@@ -1,4 +1,4 @@
-.appShell[data-material-motion="shared-paper"] :is(.paperMotionCard, .paperMotionPanel, .paperMotionSurface, .examQuestionPanel, .examDesk, .examRecordPanel, .examPeerPanel, .examPreviewPanel, .examRecentSubmitPanel) {
+.appShell[data-material-motion="shared-paper"] :is(.paperMotionCard, .paperMotionPanel, .paperMotionSurface) {
   box-shadow: var(--qq-shadow-card-rest);
 }
 

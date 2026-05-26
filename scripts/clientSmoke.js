@@ -2056,6 +2056,8 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
       hasRitualLedger: Boolean(document.querySelector('[data-polish-exam-ledger="s89-18-exam-ritual"]')),
       hasRitualCopy: text.includes("科举仪程") && text.includes("取题启封") && text.includes("场内推进") && text.includes("交卷候批") && text.includes("候榜回音"),
       hasQuestionPanel: Boolean(document.querySelector(".examQuestionPanel")),
+      examStaticSurfaceCount: document.querySelectorAll(".examQuestionPanel.paperMotionSurface, .examDesk.paperMotionSurface, .examRecordPanel.paperMotionSurface, .examPeerPanel.paperMotionSurface, .examPreviewPanel.paperMotionSurface, .examRecentSubmitPanel.paperMotionSurface").length,
+      examStaticSurfaceMissing: Boolean(document.querySelector(".examQuestionPanel:not(.paperMotionSurface), .examDesk:not(.paperMotionSurface), .examRecordPanel:not(.paperMotionSurface), .examPeerPanel:not(.paperMotionSurface), .examPreviewPanel:not(.paperMotionSurface), .examRecentSubmitPanel:not(.paperMotionSurface)")),
       hasSafetyBoundary: text.includes("交卷、评分、舞弊、放榜、晋级和授官都回主卷定夺"),
       hasMainGameShell: Boolean(document.querySelector(".gameCommandBar") || document.querySelector(".gameMainDeck") || document.querySelector(".memorialComposer")),
       background,
@@ -2076,6 +2078,7 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   if (!initialSnapshot.hasPaperMarker) failures.push("missing S89.33 exam paper marker");
   if (!initialSnapshot.hasRitualLedger || !initialSnapshot.hasRitualCopy) failures.push("missing S89.18 exam ritual ledger copy");
   if (!initialSnapshot.hasQuestionPanel) failures.push("missing question panel");
+  if (initialSnapshot.examStaticSurfaceCount < 6 || initialSnapshot.examStaticSurfaceMissing) failures.push(`S89.49 exam static surfaces were incomplete before question: ${JSON.stringify({ examStaticSurfaceCount: initialSnapshot.examStaticSurfaceCount, examStaticSurfaceMissing: initialSnapshot.examStaticSurfaceMissing })}`);
   if (!initialSnapshot.hasSafetyBoundary) failures.push("missing server-owned exam boundary");
   if (initialSnapshot.hasMainGameShell) failures.push("exam route was still nested inside the main game shell");
   if (!initialSnapshot.background.includes("/assets/ui/")) failures.push("exam hero did not use a reviewed UI asset");
@@ -2129,6 +2132,9 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
       ceremonyBandState: band?.getAttribute("data-exam-state") || "",
       hasCeremonyActiveCopy: text.includes("科场仪幕") && text.includes("题纸既启，落墨候批。"),
       hasPaperMarker: Boolean(paper),
+      activePaperSurface: Boolean(document.querySelector("[aria-label='当前试卷'].examDesk.paperMotionSurface[data-polish-exam-paper='s89-33-exam-ceremony-material']")),
+      examStaticSurfaceCount: document.querySelectorAll(".examQuestionPanel.paperMotionSurface, .examDesk.paperMotionSurface, .examRecordPanel.paperMotionSurface, .examPeerPanel.paperMotionSurface, .examPreviewPanel.paperMotionSurface, .examRecentSubmitPanel.paperMotionSurface").length,
+      examStaticSurfaceMissing: Boolean(document.querySelector(".examQuestionPanel:not(.paperMotionSurface), .examDesk:not(.paperMotionSurface), .examRecordPanel:not(.paperMotionSurface), .examPeerPanel:not(.paperMotionSurface), .examPreviewPanel:not(.paperMotionSurface), .examRecentSubmitPanel:not(.paperMotionSurface)")),
       hasPeerPanel: text.includes("同场考生、阅卷官与榜单只显示公开占位"),
       hasPhaseFeedback: text.includes("入场后反馈"),
       hasFeedbackDraftButton: [...document.querySelectorAll("button")].some((button) => (button.textContent || "").trim() === "拟行动"),
@@ -2149,6 +2155,7 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   if (!examSnapshot.hasRitualLedger || !examSnapshot.hasRitualCopy) afterFailures.push("missing S89.18 active exam ritual ledger");
   if (examSnapshot.ceremonyBandState !== "active" || !examSnapshot.hasCeremonyActiveCopy) afterFailures.push(`missing S89.33 active exam ceremony band: ${examSnapshot.ceremonyBandState}`);
   if (!examSnapshot.hasPaperMarker) afterFailures.push("missing S89.33 active exam paper marker");
+  if (!examSnapshot.activePaperSurface || examSnapshot.examStaticSurfaceCount < 6 || examSnapshot.examStaticSurfaceMissing) afterFailures.push(`S89.49 exam static surfaces were incomplete after question: ${JSON.stringify({ activePaperSurface: examSnapshot.activePaperSurface, examStaticSurfaceCount: examSnapshot.examStaticSurfaceCount, examStaticSurfaceMissing: examSnapshot.examStaticSurfaceMissing })}`);
   if (!examSnapshot.hasPeerPanel) afterFailures.push("missing safe virtual candidate panel");
   if (!examSnapshot.hasPhaseFeedback) afterFailures.push("missing server-owned phase feedback");
   if (!examSnapshot.hasFeedbackDraftButton) afterFailures.push("missing phase feedback draft button");

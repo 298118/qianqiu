@@ -2983,6 +2983,39 @@ test("S89.48 people static surfaces use paper surface utilities", () => {
   assert.match(clientSmokeSource, /S89\.48 people static surfaces were incomplete/);
 });
 
+test("S89.49 exam static surfaces use paper surface utilities", () => {
+  const examSource = readText("client/src/pages/ExamPage.tsx");
+  const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
+  const preferencesSource = readClientStyleModule("base/preferences.css");
+  const reducedMotionSource = readClientStyleModule("motion/reduced-motion.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(examSource, /className="examQuestionPanel paperMotionSurface"/);
+  assert.match(examSource, /className="examDesk paperMotionSurface"/);
+  assert.match(examSource, /className="examDesk examEmptyPaper paperMotionSurface"/);
+  assert.match(examSource, /className="examPeerPanel paperMotionSurface"/);
+  assert.match(examSource, /className="examRecentSubmitPanel paperMotionSurface"/);
+  assert.ok((examSource.match(/className="examPreviewPanel paperMotionSurface"/g) || []).length >= 3);
+  assert.ok((examSource.match(/className="examRecordPanel paperMotionSurface"/g) || []).length >= 2);
+  assert.match(examSource, /onSubmit=\{handleQuestion\}/);
+  assert.match(examSource, /onSubmit=\{handleProgress\}/);
+  assert.match(examSource, /onSubmit=\{handleSubmit\}/);
+  assert.match(examSource, /requestExamQuestion\(sessionId, level\)/);
+  assert.match(examSource, /progressExam\(sessionId, examId, sceneAction\.trim\(\)\)/);
+  assert.match(examSource, /submitExam\(sessionId, examId, essay\.trim\(\)\)/);
+
+  assert.match(polishSource, /\.appShell\[data-material-motion="shared-paper"\] :is\(\.paperMotionCard, \.paperMotionPanel, \.paperMotionSurface\)/);
+  assert.doesNotMatch(polishSource, /\.examQuestionPanel|\.examDesk|\.examRecordPanel|\.examPeerPanel|\.examPreviewPanel|\.examRecentSubmitPanel/);
+  assert.match(preferencesSource, /\.examDesk\[data-polish-exam-paper="s89-33-exam-ceremony-material"\]/);
+  assert.match(reducedMotionSource, /\.examDesk\[data-polish-exam-paper="s89-33-exam-ceremony-material"\]/);
+  assert.doesNotMatch(examSource, /className="(?=[^"]*(?:examQuestionPanel|examDesk|examRecordPanel|examPeerPanel|examPreviewPanel|examRecentSubmitPanel))(?=[^"]*paperMotion(?:Card|Panel))[^"]*"/);
+
+  assert.match(clientSmokeSource, /examStaticSurfaceCount: document\.querySelectorAll\("\.examQuestionPanel\.paperMotionSurface, \.examDesk\.paperMotionSurface, \.examRecordPanel\.paperMotionSurface, \.examPeerPanel\.paperMotionSurface, \.examPreviewPanel\.paperMotionSurface, \.examRecentSubmitPanel\.paperMotionSurface"\)\.length/);
+  assert.match(clientSmokeSource, /activePaperSurface: Boolean\(document\.querySelector\("\[aria-label='当前试卷'\]\.examDesk\.paperMotionSurface\[data-polish-exam-paper='s89-33-exam-ceremony-material'\]"\)\)/);
+  assert.match(clientSmokeSource, /S89\.49 exam static surfaces were incomplete before question/);
+  assert.match(clientSmokeSource, /S89\.49 exam static surfaces were incomplete after question/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");

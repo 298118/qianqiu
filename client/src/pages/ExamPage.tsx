@@ -395,7 +395,7 @@ export function ExamPage() {
 
       <div className="examImmersiveLayout">
         <main className="examPaperColumn" aria-label="中央试卷">
-          <section className="examQuestionPanel" aria-label="取题与试别">
+          <section className="examQuestionPanel paperMotionSurface" aria-label="取题与试别">
             <div>
               <p className="eyebrow">弥封试卷</p>
               <h2>{safeExamName}</h2>
@@ -418,7 +418,7 @@ export function ExamPage() {
           </section>
 
           {activeExamForSession ? (
-            <section className="examDesk" aria-label="当前试卷" data-polish-exam-paper="s89-33-exam-ceremony-material">
+            <section className="examDesk paperMotionSurface" aria-label="当前试卷" data-polish-exam-paper="s89-33-exam-ceremony-material">
               <div className="examPaperHeader">
                 <p className="eyebrow">考题</p>
                 <p className="examPaperMeta">
@@ -455,7 +455,7 @@ export function ExamPage() {
               </form>
             </section>
           ) : (
-            <section className="examDesk examEmptyPaper" aria-label="中央试卷预览" data-polish-exam-paper="s89-33-exam-ceremony-material">
+            <section className="examDesk examEmptyPaper paperMotionSurface" aria-label="中央试卷预览" data-polish-exam-paper="s89-33-exam-ceremony-material">
               <p className="eyebrow">中央试卷</p>
               <h2>案卷未启</h2>
               <p>{routeSessionSupported ? "先择试别取题；预览案卷只展示界面，不启封考题。" : unsupportedRouteMessage}</p>
@@ -464,7 +464,7 @@ export function ExamPage() {
         </main>
 
         <aside className="examSideColumn" aria-label="考场记录">
-          <section className="examPreviewPanel" aria-label="科举仪程索引" data-polish-exam-ledger="s89-18-exam-ritual">
+          <section className="examPreviewPanel paperMotionSurface" aria-label="科举仪程索引" data-polish-exam-ledger="s89-18-exam-ritual">
             <p className="eyebrow">案头仪程</p>
             <h2>科举仪程</h2>
             <dl className="surfaceSafetyList">
@@ -478,7 +478,7 @@ export function ExamPage() {
             <p className="statusLine">场内反馈只作案卷公开记录；科名、舞弊、晋级与授官仍候主卷回批。</p>
           </section>
 
-          <section className="examRecordPanel">
+          <section className="examRecordPanel paperMotionSurface">
             <p className="eyebrow">场内记录</p>
             <ul className="examRecordList">
               <li>{activeExamForSession ? `流程：${procedure.phaseLabel}` : "监临未点名，题纸尚封。"}</li>
@@ -500,7 +500,7 @@ export function ExamPage() {
           </section>
 
           {preparationPressure ? (
-            <section className="examPreviewPanel" aria-label="备考压力">
+            <section className="examPreviewPanel paperMotionSurface" aria-label="备考压力">
               <p className="eyebrow">备考压力</p>
               <p>{preparationPressure.studyFocus}：{preparationPressure.summary}</p>
               {preparationPressure.causes.length ? (
@@ -516,7 +516,7 @@ export function ExamPage() {
             </section>
           ) : null}
 
-          <section className="examPeerPanel" aria-label="虚拟考生占位">
+          <section className="examPeerPanel paperMotionSurface" aria-label="虚拟考生占位">
             <p className="eyebrow">同场诸生</p>
             <div className="examPeerGrid" aria-hidden="true">
               <span />
@@ -526,18 +526,18 @@ export function ExamPage() {
             <p>同场考生、阅卷官与榜单只显示公开占位；名次、同年与座师关系待金榜张挂。</p>
           </section>
 
-          <section className="examPreviewPanel" aria-label="预览案卷提示">
+          <section className="examPreviewPanel paperMotionSurface" aria-label="预览案卷提示">
             <p className="eyebrow">预览案卷</p>
             <p>{canCallSessionApi ? "当前案卷可取题、推进考场并交卷。" : routeSessionSupported ? "预览案卷不取题；请先从首页新开一卷。" : unsupportedRouteMessage}</p>
           </section>
 
-          <section className="examRecentSubmitPanel" aria-label="最近交卷提示">
+          <section className="examRecentSubmitPanel paperMotionSurface" aria-label="最近交卷提示">
             <p className="eyebrow">最近交卷</p>
             <p>{hasLatestExamEvaluation ? `${safeRecentExamName} 已有评定，可入皇榜细看。` : "尚无本案卷交卷评定。"}</p>
           </section>
 
           {procedure.phaseFeedback || procedure.incidents.length ? (
-            <section className="examRecordPanel" aria-label="入场后反馈">
+            <section className="examRecordPanel paperMotionSurface" aria-label="入场后反馈">
               <p className="eyebrow">入场后反馈</p>
               {procedure.phaseFeedback ? (
                 <div className="examPhaseFeedback">
