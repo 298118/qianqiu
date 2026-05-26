@@ -384,7 +384,7 @@ export function GamePage() {
         />
       </nav>
       <div className="gameMainDeck">
-        <article className="narrativeScroll" aria-labelledby="narrative-title">
+        <article className="narrativeScroll paperMotionSurface" aria-labelledby="narrative-title">
           <div className="scrollHeading">
             <div>
               <p className="eyebrow">本纪</p>
@@ -394,7 +394,7 @@ export function GamePage() {
           </div>
           <p>{narrativeText}</p>
         </article>
-        <aside className="gameSideLedger" aria-label="案头索引" data-polish-game="s89-22-main-ledger-reader" data-draft-state={activeActionDraft ? "written" : "empty"}>
+        <aside className="gameSideLedger paperMotionSurface" aria-label="案头索引" data-polish-game="s89-22-main-ledger-reader" data-draft-state={activeActionDraft ? "written" : "empty"}>
           <h2>案头索引</h2>
           <div className="safeViewGrid">
             {safeViewItems.map((item) => (
@@ -424,7 +424,7 @@ export function GamePage() {
         </aside>
       </div>
       {openingClaimsView?.status === "processed" ? (
-        <section className="openingClaimPanel" aria-labelledby="opening-claim-title">
+        <section className="openingClaimPanel paperMotionSurface" aria-labelledby="opening-claim-title">
           <div>
             <p className="eyebrow">开局裁决</p>
             <h2 id="opening-claim-title">身世与家计已入案</h2>

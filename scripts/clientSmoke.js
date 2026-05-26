@@ -1849,6 +1849,8 @@ async function startMockGameThroughHome(page, screenshotsDir) {
       mainLedgerMarker: mainLedger?.getAttribute("data-polish-game") || "",
       mainLedgerBoundary: mainLedger?.querySelector('[data-polish-game-boundary="s89-22-main-ledger-boundary"]')?.getAttribute("data-polish-game-boundary") || "",
       mainLedgerDraftState: mainLedger?.getAttribute("data-draft-state") || "",
+      mainStaticSurfaceCount: document.querySelectorAll(".narrativeScroll.paperMotionSurface, .gameSideLedger.paperMotionSurface, .openingClaimPanel.paperMotionSurface").length,
+      mainStaticSurfaceMissing: Boolean(document.querySelector(".narrativeScroll:not(.paperMotionSurface), .gameSideLedger:not(.paperMotionSurface), .openingClaimPanel:not(.paperMotionSurface)")),
       mainLedgerText,
       deskRootMarker: document.querySelector(".gameSurface")?.getAttribute("data-polish-game-center") || "",
       deskCommandMarker: document.querySelector(".gameCommandBar")?.getAttribute("data-polish-game-command") || "",
@@ -1887,6 +1889,8 @@ async function startMockGameThroughHome(page, screenshotsDir) {
   if (entrypoints.mainLedgerMarker !== "s89-22-main-ledger-reader") failures.push(`missing S89.22 main ledger marker: ${entrypoints.mainLedgerMarker}`);
   if (entrypoints.mainLedgerBoundary !== "s89-22-main-ledger-boundary") failures.push(`missing S89.22 main ledger boundary: ${entrypoints.mainLedgerBoundary}`);
   if (entrypoints.mainLedgerDraftState !== "empty") failures.push(`unexpected S89.34 main ledger draft state: ${entrypoints.mainLedgerDraftState}`);
+  if (entrypoints.mainStaticSurfaceCount !== 3) failures.push(`S89.47 main static surfaces were incomplete: ${entrypoints.mainStaticSurfaceCount}`);
+  if (entrypoints.mainStaticSurfaceMissing) failures.push("S89.47 main static surface hook missing on a main container");
   if (entrypoints.deskRootMarker !== "s89-34-main-court-desk") failures.push(`missing S89.34 game root marker: ${entrypoints.deskRootMarker}`);
   if (entrypoints.deskCommandMarker !== "s89-34-main-court-desk") failures.push(`missing S89.34 game command marker: ${entrypoints.deskCommandMarker}`);
   if (entrypoints.deskSceneMarker !== "s89-34-main-court-desk") failures.push(`missing S89.34 game scene marker: ${entrypoints.deskSceneMarker}`);
@@ -2003,6 +2007,7 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
     return {
       ledgerText: ledger?.textContent || "",
       ledgerDraftState: ledger?.getAttribute("data-draft-state") || "",
+      ledgerSurfaceWritten: Boolean(document.querySelector(".gameSideLedger.paperMotionSurface[data-draft-state='written']")),
       deskState: desk?.getAttribute("data-desk-state") || "",
       deskText: desk?.textContent || ""
     };
@@ -2011,6 +2016,7 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
     !mainLedgerDraftState.ledgerText.includes("已有本地草稿") ||
     !mainLedgerDraftState.ledgerText.includes("来处：案头摘录") ||
     mainLedgerDraftState.ledgerDraftState !== "written" ||
+    !mainLedgerDraftState.ledgerSurfaceWritten ||
     mainLedgerDraftState.deskState !== "draft" ||
     !mainLedgerDraftState.deskText.includes("本地草稿候呈") ||
     /manual|role-surface|map-runtime|archive-view|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs/i.test(`${mainLedgerDraftState.ledgerText} ${mainLedgerDraftState.deskText}`)

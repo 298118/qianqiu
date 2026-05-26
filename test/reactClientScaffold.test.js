@@ -2935,6 +2935,30 @@ test("S89.46 home route static surfaces use paper surface utilities", () => {
   assert.match(clientSmokeSource, /S89\.46 return-home continue shelf missed static surface hook/);
 });
 
+test("S89.47 main route static surfaces use paper surface utilities", () => {
+  const gameSource = readText("client/src/pages/GamePage.tsx");
+  const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
+  const preferencesSource = readClientStyleModule("base/preferences.css");
+  const reducedMotionSource = readClientStyleModule("motion/reduced-motion.css");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+
+  assert.match(gameSource, /className="narrativeScroll paperMotionSurface"/);
+  assert.match(gameSource, /className="gameSideLedger paperMotionSurface"/);
+  assert.match(gameSource, /className="openingClaimPanel paperMotionSurface"/);
+  assert.match(gameSource, /data-draft-state=\{activeActionDraft \? "written" : "empty"\}/);
+
+  assert.match(polishSource, /\.paperMotionSurface/);
+  assert.doesNotMatch(polishSource, /\.narrativeScroll|\.gameSideLedger|\.openingClaimPanel/);
+  assert.match(preferencesSource, /\.gameSideLedger\[data-draft-state="written"\]/);
+  assert.match(reducedMotionSource, /\.gameSideLedger\[data-draft-state="written"\]/);
+  assert.doesNotMatch(gameSource, /className="(?=[^"]*(?:narrativeScroll|gameSideLedger|openingClaimPanel))(?=[^"]*paperMotion(?:Card|Panel))[^"]*"/);
+
+  assert.match(clientSmokeSource, /mainStaticSurfaceCount: document\.querySelectorAll\("\.narrativeScroll\.paperMotionSurface, \.gameSideLedger\.paperMotionSurface, \.openingClaimPanel\.paperMotionSurface"\)\.length/);
+  assert.match(clientSmokeSource, /mainStaticSurfaceMissing: Boolean\(document\.querySelector\("\.narrativeScroll:not\(\.paperMotionSurface\), \.gameSideLedger:not\(\.paperMotionSurface\), \.openingClaimPanel:not\(\.paperMotionSurface\)"\)\)/);
+  assert.match(clientSmokeSource, /ledgerSurfaceWritten: Boolean\(document\.querySelector\("\.gameSideLedger\.paperMotionSurface\[data-draft-state='written'\]"\)\)/);
+  assert.match(clientSmokeSource, /S89\.47 main static surfaces were incomplete/);
+});
+
 test("S89.25 overlay glass polish stays shared and safe", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const styleSource = readText("client/src/styles/global.css");
