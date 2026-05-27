@@ -2191,6 +2191,52 @@ test("S91.7 ranking outcome reader stays selection-only and frontend-only", () =
   );
 });
 
+test("S91.8 map layer reader stays local-layer-only and frontend-only", () => {
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const mapStyleSource = readClientStyleModule("routes/map-archive.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = mapPageSource.indexOf('data-polish-map-reader="s91-8-map-layer-reader"');
+  const readerEnd = mapPageSource.indexOf('<div className="mapImmersiveLayout">', readerStart);
+  const readerMarkup = readerStart >= 0 && readerEnd > readerStart
+    ? mapPageSource.slice(readerStart, readerEnd)
+    : "";
+  const readerDataStart = mapPageSource.indexOf("const mapLayerReaderRows");
+  const readerDataEnd = mapPageSource.indexOf("const mapSituationEntries", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? mapPageSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const mapWithoutGuard = mapPageSource.replace(/const unsafeMapTextFragments[\s\S]*?\] as const;\r?\n/, "");
+  const runtimeCombined = stripSafeGuardPatterns(`${mapWithoutGuard}\n${mapStyleSource}`);
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.match(mapPageSource, /type MapLayerReaderRow/);
+  assert.match(mapPageSource, /const mapLayerReaderRows: MapLayerReaderRow\[\]/);
+  assert.match(mapPageSource, /aria-label="舆图图层校阅"/);
+  assert.match(readerDataBlock, /筛选只改卷上显示，不改案卷事实/);
+  assert.match(readerDataBlock, /均取公开舆图/);
+  assert.match(readerDataBlock, /人物动向只作观图线索，不定关系或去向/);
+  assert.match(readerDataBlock, /本地舆图札记已入底部奏折，仍候主卷回音/);
+  assert.match(readerDataBlock, /lastWrittenMapDraftId/);
+  assert.match(readerDataBlock, /visibleMapActionEntries\.length/);
+  assert.doesNotMatch(readerDataBlock, /layout|layoutPath|mapBounds|viewportHint|coordinates|position|\.x|\.y/);
+  assert.doesNotMatch(readerMarkup, /submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|layout|layoutPath|mapBounds|viewportHint|coordinates|position/);
+
+  assert.match(mapStyleSource, /\.mapLayerReader \{/);
+  assert.match(mapStyleSource, /\.mapLayerReader \{[\s\S]*grid-template-columns: minmax\(170px, 0\.32fr\) minmax\(0, 1fr\)/);
+  assert.match(mapStyleSource, /\.mapLayerReader dl \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(mapStyleSource, /@media \(max-width: 760px\)[\s\S]*\.mapLayerReader,[\s\S]*\.mapLayerReader dl \{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(appTestSource, /s91-8-map-layer-reader/);
+  assert.match(appTestSource, /本地舆图札记已入底部奏折/);
+  assert.match(clientSmokeSource, /s91-8-map-layer-reader/);
+  assert.match(clientSmokeSource, /S91\.8 map layer reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.60 main and court desk keyframes use semantic names", () => {
   const keyframesSource = readText("client/src/styles/motion/keyframes.css");
   const gameStyleSource = readText("client/src/styles/routes/game.css");

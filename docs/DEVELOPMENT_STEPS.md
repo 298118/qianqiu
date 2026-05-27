@@ -124,31 +124,41 @@
 | S91.5 | DONE | 囊箧移置校阅与候批状态 polish | 已完成囊箧页“移置校阅”四读：只从当前安全囊箧 view、本地移置选择、既有候批 readiness 和当前案卷本地回执提示派生物件、去处、候批与回执状态；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.6 | DONE | 科举落墨校阅与候榜状态 polish | 已完成科举页“落墨校阅”四读：只从现有安全考试 view、本地文章字数、route 支持状态、交卷 readiness 和本案卷近次交卷评定派生试别、草稿、交卷与候榜状态；不回显文章正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.7 | DONE | 皇榜题名校阅与授官候复状态 polish | 已完成皇榜“题名校阅”四读：只从现有公开榜行、案主榜行、本地细读选择、同年座师公开计数和授官提示派生榜文、我名、细读与授官候复；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.8 | DONE | 舆图图层校阅与草稿候复状态 polish | 已完成舆图“图层校阅”四读：只从现有 `mapRuntimeView` 安全投影、图层显示状态、公开计数、可见行动条数和本地草稿写入状态派生图层、卷宗、可见与草稿候复读法；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.7：皇榜题名校阅与授官候复状态 polish 已完成。皇榜页新增 `s91-7-ranking-reader` 的“榜文 / 我名 / 细读 / 授官”四读，把已张挂公开榜行、案主榜行、本地细读选择、公开同年座师计数和授官提示集中成可扫读状态；同名榜行、本地细读、评语和荣誉摘要都不补认本人、名次、关系或官职。
-- S91.7 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全皇榜/科举公开 view 和本地榜名选择，不裁决放榜、晋级、授官、同年座师、关系或 hidden 信息。
-- 最近完整运行态验证来自 S91.7：`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（108 tests）、`npm run typecheck:client`、S91.7 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-7-ranking-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1222 tests）已通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning；提交前只读复审代理 `019e6acd-3e5a-7f00-85b2-269545fa87cc` 未发现阻塞问题。
+- 最新实现步骤 S91.8：舆图图层校阅与草稿候复状态 polish 已完成。舆图页新增 `s91-8-map-layer-reader` 的“图层 / 卷宗 / 可见 / 草稿”四读，把当前图层显隐、公开地点/驿路/近事/人物计数、可见近事与人物条数、公开后果计数、可拟行动条数和本地舆图草稿写入状态集中成可扫读状态；写稿后只显示“已入主卷”候复，不回显行动全文。
+- S91.8 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有 `mapRuntimeView`、`domainConsequenceView` 安全投影、图层显示偏好和本地草稿状态，不把坐标、layout、viewport、画面层级、visual-only effect 或 NPC visual-only anchor 当作案卷事实。
+- 最近完整运行态验证来自 S91.8：`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（109 tests）、`npm run typecheck:client`、S91.8 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-8-map-layer-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1223 tests）已通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning；提交前只读复审代理 `019e6b0a-1f98-72f0-a363-dce46d46cff3` 未发现阻塞问题。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.7：
+最新运行态完整验证锚点来自 S91.8：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（108 tests）
+- `node --test test/reactClientScaffold.test.js`（109 tests）
 - `npm run typecheck:client`
 - `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 76 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-7-ranking-reader-smoke`
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-8-map-layer-reader-smoke`
 - `npm run check:docs-governance`
 - `git diff --check`（仅既有 CRLF warning）
-- `npm test`（1222 tests）
+- `npm test`（1223 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S91.8 舆图图层校阅与草稿候复状态 polish 完成
+
+- 范围：舆图页在操作区与地图 runtime 之间新增 `data-polish-map-reader="s91-8-map-layer-reader"` 的“图层校阅”，四格显示图层显隐、公开地点/驿路/近事/人物计数、当前可见近事/人物、公开后果与可拟行动、本地舆图草稿是否已入主卷。
+- 体验修正：三层全开时读法显示公开卷宗计数和可拟行动条数；点击罗盘、点位、路线或近事写入草稿后，“草稿”格只变为“已入主卷”和候复说明，不回显行动全文；三层全关时读法切换为“三层暂收 / 暂不显示”，提示公开线索不在卷上显示。移动端同 route CSS 单列。
+- 边界：本步只改 React 前端读法、舆图 route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。浏览器仍只消费现有 `mapRuntimeView`、`domainConsequenceView` 安全投影、图层显示偏好和本地草稿状态；坐标、layout、viewport、画面层级、visual-only effect 和 NPC visual-only anchor 仍只供观图，不能成为主卷证据或地图行动事实。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（109 tests）、`npm run typecheck:client`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-8-map-layer-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1223 tests）；首次 source canary 因新增 `.mapLayerReader dl` 复用旧四格 CSS 间距形状触发 S89.24 重复预算守门失败，已将新读法间距调为 10px 后复跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
+- 子代理：提交前只读复审代理 `019e6b0a-1f98-72f0-a363-dce46d46cff3` 已复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为提交前把复审待执行文案改为已完成，已采纳。代理确认未编辑文件、未运行任何 Git 命令。
+- 提交：待本次 coherent change 提交后补记；最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-27：S91.7 皇榜题名校阅与授官候复状态 polish 完成
 

@@ -66,6 +66,13 @@ type MapReadingGuideEntry = {
   readonly detail: string;
 };
 
+type MapLayerReaderRow = {
+  readonly id: string;
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
 type MapCompassFocus = "events" | "people" | "consequence" | "drafts";
 
 type MapCompassEntry = {
@@ -730,6 +737,42 @@ export function MapPage() {
       detail: visibleMapActionEntries.length ? "行动只写入本地草稿，仍回主卷候复。" : "暂无可拟时，可先筛图层或轻点题签看札记。"
     }
   ];
+  const mapLayerReaderRows: MapLayerReaderRow[] = [
+    {
+      id: "layers",
+      label: "图层",
+      value: allLayersHidden ? "三层暂收" : activeLayerText,
+      detail: allLayersHidden ? "卷上只留恢复入口，案卷事实未改。" : "筛选只改卷上显示，不改案卷事实。"
+    },
+    {
+      id: "archive",
+      label: "卷宗",
+      value: hasCurrentSession
+        ? `${refCount} 地 / ${routeCount} 路`
+        : routeSessionSupported
+        ? status === "loading" ? "舆图候载" : "暂未接图"
+        : "请回首页",
+      detail: hasCurrentSession
+        ? `近事 ${eventCount} 项，人物动向 ${npcActivityCount} 条，均取公开舆图。`
+        : routeSessionSupported
+        ? "等本卷公开舆图载入后再校阅。"
+        : "此编号暂不可读，请从首页开卷或读取旧案。"
+    },
+    {
+      id: "visible",
+      label: "可见",
+      value: allLayersHidden ? "暂不显示" : `${visibleMapEvents.length} 近事 / ${visibleNpcActivityAnchors.length} 人物`,
+      detail: allLayersHidden
+        ? "图层暂收，公开线索不在卷上显示。"
+        : `后果 ${visibleDomainConsequences.length} 条，可拟 ${visibleMapActionEntries.length} 条；人物动向只作观图线索，不定关系或去向。`
+    },
+    {
+      id: "draft",
+      label: "草稿",
+      value: lastWrittenMapDraftId ? "已入主卷" : `${visibleMapActionEntries.length} 条可拟`,
+      detail: lastWrittenMapDraftId ? "本地舆图札记已入底部奏折，仍候主卷回音。" : "可拟行动只写本地草稿，呈上后再候回音。"
+    }
+  ];
   const mapSituationEntries = getMapSituationEntries({
     activeLayerText,
     allLayersHidden,
@@ -911,6 +954,25 @@ export function MapPage() {
           <Link className="paperLink" to={archiveHref}>入局势簿</Link>
           <Link className="paperLink" to={gameHref}>回主卷</Link>
         </div>
+      </section>
+      <section className="mapLayerReader" aria-label="舆图图层校阅" data-polish-map-reader="s91-8-map-layer-reader">
+        <div>
+          <p className="eyebrow">舆图图层校阅</p>
+          <h2>卷面、卷宗与草稿</h2>
+          <p>先确认图层显隐与公开线索，再决定是否把舆图札记写入主卷。</p>
+        </div>
+        <dl>
+          {mapLayerReaderRows.map((entry) => (
+            <div key={entry.id}>
+              <dt>{entry.label}</dt>
+              <dd>
+                <strong>{entry.value}</strong>
+                <span>{entry.detail}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mapLayerReaderBoundary">只读卷上公开线索和本地草稿状态；画面位置与水墨效果不作案卷凭据。</p>
       </section>
       <div className="mapImmersiveLayout">
         <InkMapRuntimeBridge

@@ -6892,6 +6892,15 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".mapFullScreen")?.getAttribute("data-polish-map")).toBe("s89-7-layer-tooltip");
     expect(document.querySelector("[data-polish-map-situation='s89-21-situation-index']")).toBeTruthy();
     expect(document.querySelector("[data-polish-map-reading='s89-21-situation-reader']")).toBeTruthy();
+    const mapLayerReader = document.querySelector("[data-polish-map-reader='s91-8-map-layer-reader']") as HTMLElement;
+    expect(mapLayerReader).toBeTruthy();
+    expect(within(mapLayerReader).getByText("舆图图层校阅")).toBeTruthy();
+    expect(within(mapLayerReader).getByText("卷面、卷宗与草稿")).toBeTruthy();
+    expect(within(mapLayerReader).getByText("2 地 / 1 路")).toBeTruthy();
+    expect(within(mapLayerReader).getByText("1 近事 / 1 人物")).toBeTruthy();
+    expect(within(mapLayerReader).getByText("2 条可拟")).toBeTruthy();
+    expect(within(mapLayerReader).getByText(/人物动向只作观图线索，不定关系或去向/)).toBeTruthy();
+    expect(within(mapLayerReader).getByText("只读卷上公开线索和本地草稿状态；画面位置与水墨效果不作案卷凭据。")).toBeTruthy();
     const unsafeMapDraftContextPattern = /layout|layoutPath|mapBounds|viewportHint|coordinates|position|"x"|"y"|C:\\|path|provider|raw|draftContext|schema|manifest|server[- ]adjudication|AI[- ]read[- ]scope|proposal[- ]boundary|safe[- ]view|resolver/i;
     fireEvent.click(within(mapCompass).getByRole("button", { name: "据罗盘拟稿" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
@@ -6910,6 +6919,8 @@ describe("S74.1 React client shell", () => {
       }
     });
     expect(JSON.stringify(useUiStateStore.getState().actionDraft?.draftContext || {})).not.toMatch(unsafeMapDraftContextPattern);
+    expect(within(mapLayerReader).getByText("已入主卷")).toBeTruthy();
+    expect(within(mapLayerReader).getByText("本地舆图札记已入底部奏折，仍候主卷回音。")).toBeTruthy();
     fireEvent.click(within(mapCompass).getByRole("tab", { name: /人物.*可见度 66/ }));
     expect(mapCompass.getAttribute("data-compass-focus")).toBe("people");
     expect(within(mapCompass).getByText("同年问讯")).toBeTruthy();
@@ -7040,6 +7051,9 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".inkMapRuntimeBridge")?.getAttribute("data-layer-visibility")).toBe("all-hidden");
     expect(document.querySelector(".inkMapLayerEmptyOverlay")?.getAttribute("data-polish-map-empty")).toBe("s89-11-runtime-empty");
     expect(screen.getByText("暂无可见舆图线索")).toBeTruthy();
+    expect(within(mapLayerReader).getByText("三层暂收")).toBeTruthy();
+    expect(within(mapLayerReader).getByText("暂不显示")).toBeTruthy();
+    expect(within(mapLayerReader).getByText("图层暂收，公开线索不在卷上显示。")).toBeTruthy();
     expect(screen.getByText("三层暂收，暂无可见舆图预备行动；展开图层后再写入候复草稿。")).toBeTruthy();
     expect(screen.getByText("近事图层暂收，局势簿不显示公开近事。")).toBeTruthy();
     expect(screen.queryByText("草拟循贡院驿路")).toBeNull();

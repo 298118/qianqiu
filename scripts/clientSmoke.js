@@ -3765,6 +3765,9 @@ async function runClientSmoke(options = {}) {
         hasS90ReadingGuide: Boolean(document.querySelector("[data-polish-map-ia='s90-map-reading-guide']")),
         hasS90PlaceStatus: Boolean(document.querySelector("[data-polish-map-status='s90-map-place-status']")),
         hasS90RouteHints: Boolean(document.querySelector("[data-polish-map-route='s90-map-route-hints']")),
+        readerMarker: document.querySelector("[data-polish-map-reader]")?.getAttribute("data-polish-map-reader") || "",
+        readerText: document.querySelector("[data-polish-map-reader]")?.textContent || "",
+        readerRows: document.querySelectorAll("[data-polish-map-reader] dt").length,
         situationMarker: document.querySelector("[data-polish-map-situation]")?.getAttribute("data-polish-map-situation") || "",
         readingMarker: document.querySelector("[data-polish-map-reading]")?.getAttribute("data-polish-map-reading") || "",
         situationText: document.querySelector("[data-polish-map-situation]")?.textContent || "",
@@ -3791,6 +3794,14 @@ async function runClientSmoke(options = {}) {
     }
     if (mapRuntime.situationMarker !== "s89-21-situation-index" || mapRuntime.readingMarker !== "s89-21-situation-reader" || !/山河局势轴|本卷读法|据局势拟稿|不进入主卷裁决/.test(mapRuntime.situationText)) {
       throw new Error(`S89.21 map situation index missing safe player-facing copy: ${JSON.stringify(mapRuntime)}`);
+    }
+    if (
+      mapRuntime.readerMarker !== "s91-8-map-layer-reader" ||
+      mapRuntime.readerRows !== 4 ||
+      !/舆图图层校阅|卷面、卷宗与草稿|图层|卷宗|可见|草稿|公开舆图|本地草稿|不作案卷凭据/.test(mapRuntime.readerText) ||
+      /draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//i.test(mapRuntime.readerText)
+    ) {
+      throw new Error(`S91.8 map layer reader missing safe player-facing copy: ${JSON.stringify(mapRuntime)}`);
     }
     if (mapRuntime.mapStaticSurfaceCount < 3 || !mapRuntime.hasS90ReadingGuide || !mapRuntime.hasS90PlaceStatus || !mapRuntime.hasS90RouteHints) {
       throw new Error(`S89.44 map static surfaces were incomplete: ${JSON.stringify(mapRuntime)}`);
@@ -3831,9 +3842,10 @@ async function runClientSmoke(options = {}) {
       const tideAfterDraft = await page.evaluate(() => ({
         writtenCount: document.querySelectorAll(".mapTideCompass .paperButton[data-draft-state='written']").length,
         text: document.querySelector("[data-polish-map-tide]")?.textContent || "",
+        readerText: document.querySelector("[data-polish-map-reader]")?.textContent || "",
         forbiddenText: (document.querySelector("[data-polish-map-tide]")?.textContent || "").match(/\/api\/game\/turn|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
       }));
-      if (tideAfterDraft.writtenCount < 1 || !/主卷回音|候复/.test(tideAfterDraft.text) || tideAfterDraft.forbiddenText.length) {
+      if (tideAfterDraft.writtenCount < 1 || !/主卷回音|候复/.test(tideAfterDraft.text) || !/已入主卷|本地舆图札记已入底部奏折/.test(tideAfterDraft.readerText) || tideAfterDraft.forbiddenText.length) {
         throw new Error(`S89.31 map tide compass draft feedback unsafe or missing: ${JSON.stringify(tideAfterDraft)}`);
       }
     }
@@ -3891,6 +3903,7 @@ async function runClientSmoke(options = {}) {
         digestMarker: document.querySelector(".mapVisibleLayerDigest")?.getAttribute("data-polish-map-empty") || "",
         labelCount: document.querySelectorAll(".inkMapLabel").length,
         digestText: document.querySelector(".mapVisibleLayerDigest")?.textContent || "",
+        readerText: document.querySelector("[data-polish-map-reader]")?.textContent || "",
         actionText: document.querySelector(".mapActionDeck")?.textContent || "",
         eventText: document.querySelector(".mapEventList")?.textContent || "",
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
@@ -3904,6 +3917,7 @@ async function runClientSmoke(options = {}) {
       allHiddenLayer.digestMarker !== "s89-11-ledger-digest" ||
       allHiddenLayer.labelCount !== 0 ||
       !/暂无可见舆图线索/.test(allHiddenLayer.digestText) ||
+      !/三层暂收|暂不显示|公开线索不在卷上显示/.test(allHiddenLayer.readerText) ||
       !/暂无可见舆图预备行动/.test(allHiddenLayer.actionText) ||
       allHiddenLayer.eventText ||
       allHiddenLayer.horizontalOverflow ||
@@ -4554,6 +4568,9 @@ async function runClientSmoke(options = {}) {
         hasS90ReadingGuide: Boolean(document.querySelector("[data-polish-map-ia='s90-map-reading-guide']")),
         hasS90PlaceStatus: Boolean(document.querySelector("[data-polish-map-status='s90-map-place-status']")),
         hasS90RouteHints: Boolean(document.querySelector("[data-polish-map-route='s90-map-route-hints']")),
+        readerMarker: document.querySelector("[data-polish-map-reader]")?.getAttribute("data-polish-map-reader") || "",
+        readerText: document.querySelector("[data-polish-map-reader]")?.textContent || "",
+        readerRows: document.querySelectorAll("[data-polish-map-reader] dt").length,
         tideMarker: document.querySelector("[data-polish-map-tide]")?.getAttribute("data-polish-map-tide") || "",
         tideText: document.querySelector("[data-polish-map-tide]")?.textContent || "",
         tideTabCount: document.querySelectorAll(".mapTideCompassTab[role='tab']").length,
@@ -4573,6 +4590,9 @@ async function runClientSmoke(options = {}) {
       !mobileMap.hasS90ReadingGuide ||
       !mobileMap.hasS90PlaceStatus ||
       !mobileMap.hasS90RouteHints ||
+      mobileMap.readerMarker !== "s91-8-map-layer-reader" ||
+      mobileMap.readerRows !== 4 ||
+      !/舆图图层校阅|卷面、卷宗与草稿|图层|卷宗|可见|草稿|公开舆图|本地草稿|不作案卷凭据/.test(mobileMap.readerText) ||
       mobileMap.tideMarker !== "s89-31-map-tide-compass" ||
       mobileMap.tideTabCount !== 4 ||
       !/舆图态势罗盘|先看何处|近事|人物|后果|可拟/.test(mobileMap.tideText) ||
@@ -4619,12 +4639,13 @@ async function runClientSmoke(options = {}) {
         shellVisibility: document.querySelector(".mapFullScreen")?.getAttribute("data-layer-visibility") || "",
         overlayMarker: document.querySelector(".inkMapLayerEmptyOverlay")?.getAttribute("data-polish-map-empty") || "",
         digestText: document.querySelector(".mapVisibleLayerDigest")?.textContent || "",
+        readerText: document.querySelector("[data-polish-map-reader]")?.textContent || "",
         restoreButtons: [...document.querySelectorAll("button")].filter((button) => (button.textContent || "").includes("展开三层")).length,
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
         forbiddenText: (document.body.innerText || "").match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|tp-[a-z0-9_-]{6,}|\/Users|\/private|file:\/\//gi) || []
       };
     });
-    if (mobileHiddenMap.shellVisibility !== "all-hidden" || mobileHiddenMap.overlayMarker !== "s89-11-runtime-empty" || !/暂无可见舆图线索/.test(mobileHiddenMap.digestText) || mobileHiddenMap.restoreButtons < 1 || mobileHiddenMap.horizontalOverflow || mobileHiddenMap.forbiddenText.length) {
+    if (mobileHiddenMap.shellVisibility !== "all-hidden" || mobileHiddenMap.overlayMarker !== "s89-11-runtime-empty" || !/暂无可见舆图线索/.test(mobileHiddenMap.digestText) || !/三层暂收|暂不显示|公开线索不在卷上显示/.test(mobileHiddenMap.readerText) || mobileHiddenMap.restoreButtons < 1 || mobileHiddenMap.horizontalOverflow || mobileHiddenMap.forbiddenText.length) {
       throw new Error(`S89.11 mobile map all layers hidden state unsafe or overflowing: ${JSON.stringify(mobileHiddenMap)}`);
     }
     await page.getByRole("button", { name: "展开三层" }).first().click();
