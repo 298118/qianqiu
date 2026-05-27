@@ -21,7 +21,7 @@
 - Backend: Node.js + Express，当前以 CommonJS JavaScript 为主。S86/S87 已完成渐进 TypeScript 检查与 route/API response shape 首轮覆盖；`npm run typecheck:server` 覆盖契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 的首批边界。不得为大型 route 一次性 whole-file `@ts-check`，也不得放宽 raw ledger 剥离、Ajv/runtime 校验或服务器裁决。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地派生表、索引和审计。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复，不是玩家 API、prompt 或服务器裁决的 raw truth source。
 - Roadmap status: S49-S88 已完成并归档；S89.1-S89.68 已从活动台账迁出并压缩到 `docs/ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md`，S89-S90 React 产品 polish 已进一步整理到 `docs/FRONTEND_PRODUCT_POLISH_ARCHIVE.md`。活动台账现在只保留当前边界、下一候选步骤和本轮文档维护记录。
-- Latest implementation: S90.3 已完成 S89/S90 前端 polish 专题归档，运行时代码最新实现仍为 S90.4 囊箧、史册、朝议深层读卷 polish。S90.4 新增囊箧“四读”账解索引、史册“由史册成题”归档读法、朝议“材料入席”专题读法和 `SurfaceHost` 专题层材料/证据/草稿读法；仍不新增 route/API/schema/AI 权限/依赖/素材或服务器裁决能力。
+- Latest implementation: S91.1 设置/AI 来源状态读法 polish 已完成。右上角印匣“推演设置”新增 `s91-1-ai-source-reader` 来源三读，从既有 `aiSettingsView.providerOptions` 与 `taskRoutes` 派生本地样例可开卷、真实来源接通/缺 key、未保存改动和候复边界；设置失败时只显示候载与固定中文提示，不补造外部来源或回显底层诊断。仍不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。
 - Current collaboration: 2026-05-14 起停止 Gemini CLI 协作。后续开发、素材生成/审核、验证、文档同步和 Git 提交由 Codex 负责；用户已授权本仓库使用 Codex 子代理，实施子代理不得提交，提交前复审子代理必须只读。
 - Current local `.env`: 可能含用户 provider keys。`.env` 被 Git 忽略，不能打印、复制到文档或提交。
 
@@ -66,6 +66,8 @@
 
 ## Current Work Note
 
+2026-05-27：S91.1 设置/AI 来源状态读法 polish 已完成。右上角印匣“推演设置”面板新增 `data-polish-ai-source="s91-1-ai-source-reader"` 的“底本 / 接通 / 候复”三格读法，说明本地样例 no-key 可玩、真实来源接通或缺 key、未保存改动、可呈候复事项和工具辅佐次数；设置失败时只显示候载与固定中文提示，不补造外部来源或回显底层诊断。样式放在共享 `overlays-surfaces.css`，移动端通过 `mobile-layout.css` 单列。边界：只改 React 前端读法、CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决；浏览器仍只消费既有安全 settings view、本地偏好/草稿和专题状态。已通过 `node --test test/reactClientScaffold.test.js`（102 tests）、`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（75 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run check:docs-governance`、`git diff --check`、`npm test`（1216 tests）和 `npm run smoke:browser -- --screenshots artifacts/s91-1-ai-source-reader-smoke`。首次 browser smoke 因新文案包含“未保存”导致既有 Playwright 文本选择器严格匹配到两处而失败，改为“尚待落印”后重跑通过；提交前只读复审代理 `019e690f-e043-7a01-ab07-787e14e514dc` 未发现阻塞问题，非阻塞提醒为污染词检查主要覆盖可见文本而非所有 DOM 属性、未载入/空来源口径仍保持粗粒度 fallback。
+
 2026-05-27：S90.3 S89/S90 前端 polish 专题归档已完成。新增 `docs/FRONTEND_PRODUCT_POLISH_ARCHIVE.md`，把 S89.1-S89.68 与 S90.1/S90.2/S90.4 的 React 产品 polish、玩家可见读法、CSS 架构/token/keyframe/surface 收敛、安全守门、验证锚点和追溯入口整理为专题归档；同步 `docs/DEVELOPMENT_STEPS.md` 和 `docs/ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md`。本轮纯文档归档，不改运行时代码、前端行为、后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；按低风险纯文档规则跳过提交前子代理复审。已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。提交随本次 coherent change 完成，最终哈希见 Git history 和本轮回复。
 
 2026-05-27：S90.4 囊箧、史册、朝议深层读卷 polish 已完成。囊箧页新增 `s90-4-inventory-ledger-index` 的“囊箧四读”，只从安全囊箧、资源、资产、凭证、经济 trace、容器与物件列表整理账面/仓储/物件/流转读法，并过滤污染账解；史册页新增 `s90-4-archive-court-reader` 的“由史册成题”，把归档、旁证、成题与候复边界放在公开追踪前；朝议页新增同标记的“材料入席”，提示材料、人物、专题与不定终局；`SurfaceHost` 专题层新增材料/证据/草稿读法，样式放在共享 overlay CSS 而非单一路由 CSS。实施子代理 `019e686e-06c0-7a11-aa91-9e44529016d9` 提交 patch 报告但未提交、未推送、未创建 PR；提交前只读复审代理 `019e68b1-028f-7bd1-961c-1be6b44bf40e` 已复审最终 diff 和验证证据，未发现阻塞问题。边界：不新增 route/API/schema/AI 权限/依赖/素材，不请求完整 manifest，不硬编码本地路径，不改变 provider、prompt、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费安全 view、本地草稿和页面/专题状态。已通过 `node --test test/reactClientScaffold.test.js`（101 tests）、`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（74 tests）、`npm run build:client`、`npm run budget:client`、`npm run check:docs-governance`、`git diff --check`、`npm test`（1215 tests）和 `npm run smoke:browser -- --screenshots artifacts/s90-4-polish-smoke`。一次与全量 `npm test` 并行的 browser smoke 因首页 `networkidle` 超时失败，单独重跑同命令通过，失败未命中 S90.4 断言。提交随本次 coherent change 完成，最终哈希见 Git history 和本轮回复。
@@ -76,6 +78,6 @@
 
 ## Next Recommended Step
 
-可继续 CSS 预算后续瘦身，或按具体页面/route 新开下一轮 polish 小步骤。
+可继续 CSS 预算后续瘦身，或按具体页面/route 新开下一轮 polish 小步骤；若继续设置方向，应只围绕现有印匣、显示偏好和 AI settings view 的玩家读法，不新增 provider 能力、存档字段或服务器裁决面。
 
 无论下一步是什么，都必须继续从安全 view 重建 evidence，保持 proposal-only、browser-draft-only 和服务器裁决，不让浏览器 task、地图 layout、visual-only effect、NPC anchor、runtime manifest 元数据、world entity impact/recent impact、交游 evidence、world thread 或 draftContext 变成真实任务队列、资源结算器、关系/婚姻/弹劾/定罪/背叛裁决器。

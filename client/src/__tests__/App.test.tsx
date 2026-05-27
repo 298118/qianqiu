@@ -2835,11 +2835,99 @@ describe("S74.1 React client shell", () => {
     await screen.findByDisplayValue("900");
     expect(document.querySelector("[data-polish-ai-settings='s89-19-ai-state-ledger']")).toBeTruthy();
     expect(document.querySelector("[data-polish-ai-settings-ledger='s89-19-ai-state-ledger']")).toBeTruthy();
+    expect(document.querySelector("[data-polish-ai-source='s91-1-ai-source-reader']")).toBeTruthy();
+    expect(screen.getByText("本地样例可开卷")).toBeTruthy();
+    expect(screen.getByText("没有外部来源时仍可完整游玩；试连只核可用，不取连接凭据。")).toBeTruthy();
     expect(screen.getByText("1 类推演分工已载入。")).toBeTruthy();
     expect(screen.getByText("保存只改全局推演偏好；案卷事实仍候主卷回批。")).toBeTruthy();
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/ai/settings/global")).toHaveLength(1);
     expect(document.querySelectorAll(".aiSettingsPanel")).toHaveLength(1);
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|raw prompt|data\/sessions|base URL/i);
+  });
+
+  it("renders S91.1 AI source fallback and no-key state without changing settings scope", async () => {
+    const sessionId = "93939393-9393-4939-8939-939393939393";
+    const fetchMock = vi.fn((url: string) => {
+      if (url === "/api/ai/settings/global") {
+        return Promise.resolve(new Response(JSON.stringify({
+          sessionId: "global",
+          scope: "global",
+          updatedAt: "2026-05-27T12:00:00.000Z",
+          aiSettingsView: {
+            preset: "balanced",
+            presets: [{ id: "balanced", label: "均衡" }],
+            providerOptions: [
+              { provider: "mock", available: true, requiresKey: false },
+              { provider: "openai", available: false, requiresKey: true },
+              { provider: "deepseek", available: true, requiresKey: true }
+            ],
+            taskRoutes: [
+              {
+                taskType: "narrator",
+                label: "叙事",
+                purpose: "普通叙事。",
+                provider: "mock",
+                providerAvailable: true,
+                requiresKey: false,
+                effectiveStatus: "active",
+                model: "mock",
+                maxOutputTokens: 900,
+                toolBudget: 1,
+                temperature: 0.35,
+                reviewerOnly: false,
+                mayUseTools: true,
+                mayRequestAdjudication: true
+              },
+              {
+                taskType: "domain_specialist",
+                label: "政务",
+                purpose: "呈看政务候复事项。",
+                provider: "openai",
+                providerAvailable: false,
+                requiresKey: true,
+                effectiveStatus: "missing_provider_key",
+                model: "gpt",
+                maxOutputTokens: 900,
+                toolBudget: 2,
+                temperature: 0.25,
+                reviewerOnly: false,
+                mayUseTools: true,
+                mayRequestAdjudication: true
+              }
+            ]
+          },
+          aiInvocationSummaryView: { safe: true }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({
+        source: "server_player_visible_state_projection",
+        sessionId,
+        worldState: { player: { name: "许慎", role: "scholar" } }
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/settings`);
+
+    const routePanel = await screen.findByRole("article", { name: "案头工具" });
+    fireEvent.click(within(routePanel).getByRole("button", { name: "打开推演设置" }));
+
+    await screen.findByText("本地样例可开卷");
+    const sourceReader = document.querySelector("[data-polish-ai-source='s91-1-ai-source-reader']");
+    expect(sourceReader).toBeTruthy();
+    expect(sourceReader?.textContent || "").toContain("没有外部来源时仍可完整游玩");
+    expect(sourceReader?.textContent || "").toContain("2 类来源可选");
+    expect(sourceReader?.textContent || "").toContain("1 类来源尚未接通；先改回本地样例或在本机接通后再保存。");
+    expect(sourceReader?.textContent || "").toContain("1 类分工待改");
+    expect(screen.getByText("1 类分工选择了尚未接通的来源，请改回本地样例或先在本机接通后再保存。")).toBeTruthy();
+    expect(screen.getAllByText("未接通").length).toBeGreaterThan(0);
+    expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|provider payload|raw prompt|data\/sessions|base URL|sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}/i);
   });
 
   it("cleans polluted S89.19 AI settings labels before rendering the matrix", async () => {

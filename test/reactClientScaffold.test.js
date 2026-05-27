@@ -2784,6 +2784,32 @@ test("S89.19 settings and route recovery states stay player-facing and local", (
   );
 });
 
+test("S91.1 AI settings source reader explains fallback without widening authority", () => {
+  const aiSettingsPanelSource = readText("client/src/components/AiSettingsPanel.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const styleSource = readText("client/src/styles/global.css");
+  const mobileStyleSource = readText("client/src/styles/responsive/mobile-layout.css");
+  const combined = stripSafeGuardPatterns(`${aiSettingsPanelSource}\n${styleSource}\n${mobileStyleSource}`);
+
+  assert.match(aiSettingsPanelSource, /buildSourceReaderRows/);
+  assert.match(aiSettingsPanelSource, /data-polish-ai-source="s91-1-ai-source-reader"/);
+  assert.match(aiSettingsPanelSource, /本地样例可开卷/);
+  assert.match(aiSettingsPanelSource, /没有外部来源时仍可完整游玩/);
+  assert.match(aiSettingsPanelSource, /不取连接凭据/);
+  assert.match(aiSettingsPanelSource, /未接通项不会伪装成可用/);
+  assert.match(aiSettingsPanelSource, /设置未载时只留候复提示/);
+  assert.match(styleSource, /\.aiSettingsSourceReader/);
+  assert.match(styleSource, /\.aiSettingsSourceCard/);
+  assert.match(mobileStyleSource, /\.aiSettingsSourceReader/);
+  assert.match(appTestSource, /renders S91\.1 AI source fallback/);
+  assert.match(clientSmokeSource, /s91-1-ai-source-reader/);
+  assert.doesNotMatch(
+    combined,
+    /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|hiddenNotes|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.20 CSS budget guard keeps polish styles compact and material-backed", () => {
   const styleSource = readText("client/src/styles/global.css");
 

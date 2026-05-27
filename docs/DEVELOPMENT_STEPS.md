@@ -117,32 +117,40 @@
 | S90.2 | DONE | route 空态一致性与跨页读法继续 polish | 已完成舆图读图/地点状态/路线暗示/tooltip 操作、人物/高清立绘/科举/皇榜读法、全局壳、右上角印匣/设置入口、`SurfaceHost` 专题层、错误/loading/empty 状态和基础控件反馈 polish；只消费安全 view 与本地草稿，不新增裁决权。 |
 | S90.4 | DONE | 囊箧、史册、朝议深层读卷 polish | 已完成囊箧“四读”账解索引、史册“由史册成题”归档读法、朝议“材料入席”读法和 `SurfaceHost` 专题层材料/证据/草稿读法；只消费现有安全 view、本地草稿和页面状态，不新增 route/API/schema/AI 权限/依赖/素材或服务器裁决能力。 |
 | S90.3 | DONE | S89/S90 前端 polish 专题归档 | 已将 S89.1-S89.68 与 S90.1/S90.2/S90.4 从 Git history、压缩索引和 brief 摘要整理为 [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)；避免重新引入逐项长流水。 |
+| S91.1 | DONE | 设置/AI 来源状态读法 polish | 已完成右上角印匣“推演设置”的来源三读：本地样例可开卷、真实来源接通/缺 key、分工候复边界；只改 React 前端读法、CSS、测试与文档，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S90.3：S89/S90 React 产品 polish 专题归档已完成，见 [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)。该归档只整理已完成前端 polish 的范围、边界、验证锚点和追溯入口，不改运行时代码或产品行为。
-- 最近运行时代码实现步骤仍为 S90.4：囊箧、史册、朝议深层读卷 polish 已完成。囊箧页新增“四读”账解索引，史册页新增“由史册成题”归档读法，朝议页新增“材料入席”专题读法，`SurfaceHost` 专题层新增材料/证据/草稿读法；样式分别落在囊箧、史册、朝议 route CSS 与共享专题层 CSS，source canary、Vitest 和 browser smoke 均已覆盖。
-- S90.3/S90.4 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费安全 view、已审核 runtime 资产引用、本地偏好/草稿和专题状态。
-- 最近完整运行态验证来自 S90.4：`npm run typecheck:client`、`npm run build:client`、`npm run budget:client`、`npm run qa:runtime-manifest`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、S90.4 串行 Vitest、`npm run check:docs-governance`、`git diff --check`、`npm test` 和 `npm run smoke:browser -- --screenshots artifacts/s90-4-polish-smoke` 均通过；详见本节记录与 Git history。
+- 最新实现步骤 S91.1：设置/AI 来源状态读法 polish 已完成。右上角印匣“推演设置”新增 `s91-1-ai-source-reader` 的来源三读，把本地样例可开卷、真实来源接通/缺 key、未保存改动与候复边界拆成可扫读三格；设置失败时只显示候载与固定中文提示，不补造外部来源或回显底层诊断。
+- S91.1 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费既有 `aiSettingsView.providerOptions`、`taskRoutes`、本地显示偏好/草稿和专题状态。
+- 最近完整运行态验证来自 S91.1：`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（102 tests）、S91.1 串行 Vitest（75 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run check:docs-governance`、`git diff --check`、`npm test`（1216 tests）和 `npm run smoke:browser -- --screenshots artifacts/s91-1-ai-source-reader-smoke` 均通过。首次 browser smoke 因新文案与既有“未保存”状态选择器冲突失败，已改为“尚待落印”并单独重跑通过。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S90.4：
+最新运行态完整验证锚点来自 S91.1：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（101 tests）
+- `node --test test/reactClientScaffold.test.js`（102 tests）
 - `npm run typecheck:client`
-- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 74 tests）
+- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 75 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
 - `npm run check:docs-governance`
 - `git diff --check`
-- `npm test`（1215 tests）
-- `npm run smoke:browser -- --screenshots artifacts/s90-4-polish-smoke`
+- `npm run smoke:browser -- --screenshots artifacts/s91-1-ai-source-reader-smoke`
+- `npm test`（1216 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S91.1 设置/AI 来源状态读法 polish 完成
+
+- 范围：右上角印匣“推演设置”面板新增 `data-polish-ai-source="s91-1-ai-source-reader"` 的来源三读，从既有 `aiSettingsView.providerOptions` 与 `taskRoutes` 派生“底本 / 接通 / 候复”三格，说明本地样例 no-key 可玩、真实来源接通或缺 key、未保存改动、分工可呈候复和工具辅佐次数；设置失败时显示“候载”与固定中文提示，不补造来源或回显底层诊断。
+- 边界：本步只改 React 前端读法、共享 overlay CSS、移动端单列规则、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决；浏览器仍只消费安全 settings view、本地偏好/草稿和专题状态。
+- 子代理：提交前只读复审代理 `019e690f-e043-7a01-ab07-787e14e514dc` 已复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为本轮污染词检查主要覆盖可见文本而非所有 DOM 属性、未载入/空来源口径仍保持粗粒度 fallback。
+- 验证：已通过 `node --test test/reactClientScaffold.test.js`（102 tests）、`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（75 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run check:docs-governance`、`git diff --check`、`npm test`（1216 tests）和 `npm run smoke:browser -- --screenshots artifacts/s91-1-ai-source-reader-smoke`。首次 browser smoke 因新文案包含“未保存”导致既有 Playwright 文本选择器严格匹配到两处而失败，改为“尚待落印”后重跑通过。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-27：S90.3 S89/S90 前端 polish 专题归档完成
 

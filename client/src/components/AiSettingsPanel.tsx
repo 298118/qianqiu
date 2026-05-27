@@ -196,6 +196,52 @@ function routeStatusLabel(route: TaskRouteForm) {
   return "生效";
 }
 
+function buildSourceReaderRows(input: {
+  readonly providerOptions: readonly ProviderOption[];
+  readonly routes: readonly TaskRouteForm[];
+  readonly unavailableRoutes: readonly TaskRouteForm[];
+  readonly dirty: boolean;
+  readonly loaded: boolean;
+}) {
+  const availableSourceCount = input.providerOptions.filter((option) => option.available).length;
+  const waitingConnectionCount = input.providerOptions.filter((option) => !option.available && option.requiresKey).length;
+  const mockReady = input.providerOptions.some((option) => option.provider === "mock" && option.available);
+  const adjudicationRouteCount = input.routes.filter((route) => route.mayRequestAdjudication).length;
+  const toolRouteCount = input.routes.filter((route) => route.mayUseTools && route.toolBudget > 0).length;
+  return [
+    {
+      key: "mock",
+      label: "底本",
+      title: mockReady || !input.loaded ? "本地样例可开卷" : "本地样例候载",
+      body: mockReady || !input.loaded
+        ? "没有外部来源时仍可完整游玩；试连只核可用，不取连接凭据。"
+        : "案头尚未载入本地样例状态；重新载入后再改分工。"
+    },
+    {
+      key: "connection",
+      label: "接通",
+      title: input.loaded ? availableSourceCount ? `${availableSourceCount} 类来源可选` : "暂无来源可选" : "来源候载",
+      body: !input.loaded
+        ? "案头设置暂未取回；本页不补造外部来源，也不回显连接细节。"
+        : waitingConnectionCount
+        ? `${waitingConnectionCount} 类来源尚未接通；先改回本地样例或在本机接通后再保存。`
+        : "当前可选来源均已标明可用；未接通项不会伪装成可用。"
+    },
+    {
+      key: "boundary",
+      label: "候复",
+      title: !input.loaded ? "分工候载" : input.unavailableRoutes.length ? `${input.unavailableRoutes.length} 类分工待改` : `${input.routes.length || 0} 类分工候用`,
+      body: !input.loaded
+        ? "设置未载时只留候复提示，不自行推断任务分工。"
+        : input.dirty
+        ? "当前改动尚待落印；保存后只改全局偏好，案卷事实仍待主卷回批。"
+        : adjudicationRouteCount
+          ? `${adjudicationRouteCount} 类分工可呈候复事项，${toolRouteCount} 类分工可用辅佐次数；结果仍看主卷回批。`
+          : "设置只铺排推演分工，不裁决行动、交易、任免或考试。"
+    }
+  ] as const;
+}
+
 function isSupersededRequestError(error: unknown) {
   return error instanceof Error && /旧请求/.test(error.message);
 }
@@ -255,6 +301,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
       : "案卷未载推演分工；本页只留空匣，不自行补造来源。";
   const redactedError = safeAiSettingsLine(localError || storeError, "推演设置暂不可用；请稍后重试。");
   const hasSettingsError = Boolean(localError || storeError);
+  const sourceReaderRows = buildSourceReaderRows({ providerOptions, routes: form.routes, unavailableRoutes, dirty, loaded: hasLoadedPayload });
   const stateLedgerRows = [
     {
       label: "分工",
@@ -447,6 +494,16 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
       {aiConnection ? <p className="statusLine">试连结果：{aiConnection.ok ? "可用" : "暂不可用"}（{providerLabels[String(aiConnection.provider || connectionProvider)] || "未知来源"}）</p> : null}
       {localNotice ? <p className="statusLine">{localNotice}</p> : null}
       {hasSettingsError ? <p className="statusLine" role="alert">{redactedError}</p> : null}
+
+      <section className="aiSettingsSourceReader" aria-label="推演来源读法" data-polish-ai-source="s91-1-ai-source-reader">
+        {sourceReaderRows.map((row) => (
+          <article className="aiSettingsSourceCard paperMotionSurface" key={row.key}>
+            <span>{row.label}</span>
+            <strong>{row.title}</strong>
+            <p>{row.body}</p>
+          </article>
+        ))}
+      </section>
 
       <dl className="surfaceSafetyList" aria-label="推演设置状态簿" data-polish-ai-settings-ledger="s89-19-ai-state-ledger">
         {stateLedgerRows.map((row) => (

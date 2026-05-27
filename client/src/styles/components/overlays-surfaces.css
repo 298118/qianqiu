@@ -422,6 +422,45 @@
   background: rgb(255 248 230 / .5);
 }
 
+.aiSettingsSourceReader {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.aiSettingsSourceCard {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid rgb(84 60 43 / .2);
+  background: rgb(255 252 238 / .62);
+}
+
+.aiSettingsSourceCard span {
+  justify-self: start;
+  border: 1px solid rgb(123 36 31 / .22);
+  padding: 2px 7px;
+  color: #7b241f;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.aiSettingsSourceCard strong {
+  color: #2d251d;
+  font-size: 0.96rem;
+  overflow-wrap: anywhere;
+}
+
+.aiSettingsSourceCard p {
+  margin: 0;
+  color: #5f4f3d;
+  font-size: 0.86rem;
+  line-height: 1.58;
+  overflow-wrap: anywhere;
+}
+
 .aiTaskMatrix {
   display: grid;
   gap: 12px;

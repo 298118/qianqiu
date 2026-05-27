@@ -2915,6 +2915,19 @@ async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
   await assertS8932HomeShellPolish(page, "S89.32 desktop inkbox", { drawer: true });
 
   await assertInkboxTab(page, drawer, "推演", "推演设置");
+  const sourceReaderSnapshot = await drawer.evaluate(() => {
+    const panel = document.querySelector("[data-polish-ai-source='s91-1-ai-source-reader']");
+    const text = panel?.textContent || "";
+    return {
+      hasReader: Boolean(panel),
+      hasMockFallback: text.includes("本地样例可开卷") && text.includes("没有外部来源时仍可完整游玩"),
+      hasConnectionBoundary: text.includes("不会伪装成可用") || text.includes("尚未接通"),
+      unsafeText: text.match(/player-state|exam-submit|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|\/Users|\/private|tp-[a-z0-9_-]{6,}|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
+    };
+  });
+  if (!sourceReaderSnapshot.hasReader || !sourceReaderSnapshot.hasMockFallback || !sourceReaderSnapshot.hasConnectionBoundary || sourceReaderSnapshot.unsafeText.length) {
+    throw new Error(`S91.1 AI source reader incomplete: ${JSON.stringify(sourceReaderSnapshot)}`);
+  }
   await assertS895MaterialFeedbackPolish(page, "S89.42 desktop inkbox static surfaces", { drawer: true, staticSurface: true, aiTaskRoute: true });
   const narratorRoute = drawer.locator(".aiTaskRoute").filter({ hasText: "叙事" }).first();
   await narratorRoute.waitFor({ timeout: 10000 });
