@@ -725,6 +725,61 @@
   filter: saturate(.9);
 }
 
+.courtReaderBand {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgb(84 60 43 / .22);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .7), rgb(225 211 182 / .46)),
+    var(--qq-material-xuan) center / 560px repeat;
+  padding: 14px;
+}
+
+.courtReaderBand .sectionTitleRow {
+  margin-bottom: 0;
+}
+
+.courtReaderBand .sectionTitleRow > span {
+  border: 1px solid rgb(142 47 39 / .34);
+  background: rgb(142 47 39 / .08);
+  color: #7b241f;
+  font-size: .78rem;
+  font-weight: 900;
+  padding: 5px 8px;
+}
+
+.courtReaderGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.courtReaderGrid div {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 252 238 / .58);
+  padding: 10px;
+}
+
+.courtReaderGrid dt {
+  color: #7a6048;
+  font-size: .74rem;
+  font-weight: 900;
+}
+
+.courtReaderGrid dd {
+  margin: 4px 0 0;
+  color: #514232;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.courtReaderGrid dd:first-of-type {
+  color: #7b241f;
+  font-weight: 900;
+}
+
 .courtSurfaceGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1964,4 +2019,10 @@
   border-color: #8e2f27;
   outline: 2px solid rgb(142 47 39 / .22);
   outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .courtReaderGrid {
+    grid-template-columns: 1fr;
+  }
 }

@@ -1815,6 +1815,68 @@ test("S90 map IA polish keeps markers draft-only and player-facing", () => {
   );
 });
 
+test("S90.4 inventory archive court readers stay safe-view-only and player-facing", () => {
+  const inventoryPageSource = readText("client/src/pages/InventoryPage.tsx");
+  const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
+  const courtPageSource = readText("client/src/pages/CourtPage.tsx");
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const peopleInventoryStyle = readClientStyleModule("routes/people-inventory.css");
+  const mapArchiveStyle = readClientStyleModule("routes/map-archive.css");
+  const gameStyle = readClientStyleModule("routes/game.css");
+  const overlaysStyle = readClientStyleModule("components/overlays-surfaces.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const runtimeCombined = stripSafeGuardPatterns(`${inventoryPageSource}\n${archivePageSource}\n${courtPageSource}\n${surfaceHostSource}`);
+
+  assert.match(inventoryPageSource, /data-polish-inventory-reader="s90-4-inventory-ledger-index"/);
+  assert.match(inventoryPageSource, /buildInventoryReaderRows/);
+  assert.match(inventoryPageSource, /economyTraceItemCount/);
+  assert.match(inventoryPageSource, /囊箧四读/);
+  assert.match(inventoryPageSource, /本页只整理呈请，不写成交、扣减、赠予、借用或关系回响/);
+  assert.match(archivePageSource, /data-polish-archive-flow="s90-4-archive-court-reader"/);
+  assert.match(archivePageSource, /buildArchiveFlowRows/);
+  assert.match(archivePageSource, /归档读法/);
+  assert.match(archivePageSource, /由史册成题/);
+  assert.match(archivePageSource, /资源、关系、任免与定罪仍不在本页定夺/);
+  assert.match(courtPageSource, /data-polish-court-reader="s90-4-archive-court-reader"/);
+  assert.match(courtPageSource, /buildCourtReaderRows/);
+  assert.match(courtPageSource, /专题读法/);
+  assert.match(courtPageSource, /材料入席/);
+  assert.match(courtPageSource, /资源、交易、关系、任免、罪名和战和结果仍回案卷回批/);
+  assert.match(surfaceHostSource, /data-polish-topic-reader="s90-4-archive-court-reader"/);
+  assert.match(surfaceHostSource, /buildTopicReadRows/);
+  assert.match(surfaceHostSource, /写入底部奏折只留案头草稿，不推进回合/);
+
+  assert.match(peopleInventoryStyle, /\.inventoryReadRail/);
+  assert.match(peopleInventoryStyle, /\.inventoryReadRows/);
+  assert.match(peopleInventoryStyle, /@media \(max-width: 760px\)[\s\S]*\.inventoryReadRows[\s\S]*grid-template-columns: 1fr/);
+  assert.match(mapArchiveStyle, /\.archiveFlowBand/);
+  assert.match(mapArchiveStyle, /\.archiveFlowGrid/);
+  assert.match(mapArchiveStyle, /@media \(max-width: 760px\)[\s\S]*\.archiveFlowGrid[\s\S]*grid-template-columns: 1fr/);
+  assert.match(gameStyle, /\.courtReaderBand/);
+  assert.match(gameStyle, /\.courtReaderGrid/);
+  assert.match(gameStyle, /@media \(max-width: 760px\)[\s\S]*\.courtReaderGrid[\s\S]*grid-template-columns: 1fr/);
+  assert.match(overlaysStyle, /\.topicSurfaceLayout > \.topicSurfaceReadRail/);
+  assert.match(overlaysStyle, /@media \(max-width: 760px\)[\s\S]*\.topicSurfaceLayout > \.topicSurfaceReadRail[\s\S]*grid-template-columns: 1fr/);
+  assert.doesNotMatch(mapArchiveStyle, /\.topicSurfaceReadRail/);
+  assert.doesNotMatch(gameStyle, /\.topicSurfaceReadRail/);
+
+  assert.match(appTestSource, /s90-4-inventory-ledger-index/);
+  assert.match(appTestSource, /s90-4-archive-court-reader/);
+  assert.match(appTestSource, /另有3条账解线索可查/);
+  assert.match(appTestSource, /由史册成题/);
+  assert.match(appTestSource, /材料入席/);
+  assert.match(clientSmokeSource, /S90\.4 desktop inventory reader/);
+  assert.match(clientSmokeSource, /S90\.4 archive flow reader/);
+  assert.match(clientSmokeSource, /S90\.4 court reader/);
+  assert.match(clientSmokeSource, /S90\.4 topic reader/);
+
+  assert.doesNotMatch(
+    runtimeCombined,
+    /submitTurn|\/api\/game\/turn|qianqiuApi|dangerouslySetInnerHTML|localStorage|sessionStorage|\/api\/game\/state|\/api\/dev\/session-diagnostics|data\/sessions|raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.22 main ledger reader stays player-facing and draft-status-only", () => {
   const gamePageSource = readText("client/src/pages/GamePage.tsx");
   const styleSource = readText("client/src/styles/global.css");

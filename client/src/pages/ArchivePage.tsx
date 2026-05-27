@@ -28,6 +28,12 @@ type ArchiveReaderRow = {
   readonly detail: string;
 };
 
+type ArchiveFlowRow = {
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
 const archiveVisibleItemLimit = 12;
 
 const unsafeArchiveFragments = [
@@ -222,6 +228,48 @@ function buildArchiveReaderRows(input: {
   ];
 }
 
+function buildArchiveFlowRows(input: {
+  readonly visibleItems: number;
+  readonly totalItems: number;
+  readonly domainCount: number;
+  readonly entityImpactCount: number;
+  readonly followUpCount: number;
+  readonly routeSessionSupported: boolean;
+  readonly status: string;
+}): ArchiveFlowRow[] {
+  const archiveCount = input.visibleItems || input.totalItems;
+  const sideEvidenceCount = input.domainCount + input.followUpCount + input.entityImpactCount;
+  const archiveValue = !input.routeSessionSupported
+    ? "案卷暂不可读"
+    : archiveCount
+    ? `${archiveCount} 条公开入册`
+    : input.status === "loading"
+    ? "正在翻检旧卷"
+    : "尚无公开入册";
+  return [
+    {
+      label: "归档",
+      value: archiveValue,
+      detail: input.routeSessionSupported ? "只列已经公开入册的史册条目。" : "请先从首页开卷或载入旧案。"
+    },
+    {
+      label: "旁证",
+      value: sideEvidenceCount ? `${sideEvidenceCount} 条可旁读` : "旁证候载",
+      detail: "公开后果、实体余波与来函线索只作读卷提示。"
+    },
+    {
+      label: "成题",
+      value: input.routeSessionSupported ? "可入朝议成题" : "暂不可成题",
+      detail: "入朝议页只整理专题材料，不在史册页定夺。"
+    },
+    {
+      label: "候复",
+      value: archiveCount ? "可据此拟稿" : "先候案卷回音",
+      detail: "草稿回主卷呈上；资源、关系、任免与定罪仍不在本页定夺。"
+    }
+  ];
+}
+
 export function ArchivePage() {
   const { sessionId = "s74-preview" } = useParams();
   const currentSession = useGameSessionStore((state) => state.currentSession);
@@ -259,6 +307,15 @@ export function ArchivePage() {
     followUpCount,
     canDraft,
     routeSessionSupported
+  });
+  const archiveFlowRows = buildArchiveFlowRows({
+    visibleItems: archiveItems.length,
+    totalItems,
+    domainCount,
+    entityImpactCount,
+    followUpCount,
+    routeSessionSupported,
+    status
   });
   const mapHref = routeSessionSupported ? `/game/${sessionId}/map` : "/";
   const peopleHref = routeSessionSupported ? `/game/${sessionId}/people` : "/";
@@ -412,6 +469,29 @@ export function ArchivePage() {
         <p className="statusLine" data-polish-archive-boundary="s89-29-evidence-boundary">
           主列看已入册公开条目，旁注看公开后果与来函线索；按钮只写案头草稿，仍回主卷候复。
         </p>
+      </section>
+      <section
+        className="archiveFlowBand paperMotionSurface"
+        aria-label="史册归档读法"
+        data-polish-archive-flow="s90-4-archive-court-reader"
+        data-archive-flow-state={crossTraceState}
+      >
+        <div className="sectionTitleRow">
+          <div>
+            <p className="eyebrow">归档读法</p>
+            <h2>由史册成题</h2>
+          </div>
+          <span>{crossTraceState === "ready" ? "可追索" : crossTraceState === "empty" ? "候入册" : "案卷未载"}</span>
+        </div>
+        <dl className="archiveFlowGrid">
+          {archiveFlowRows.map((row) => (
+            <div key={row.label}>
+              <dt>{row.label}</dt>
+              <dd>{row.value}</dd>
+              <dd>{row.detail}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
       <CrossPageTraceRail
         page="archive"

@@ -115,33 +115,41 @@
 | --- | --- | --- | --- |
 | S90.1 | DONE | CSS 物理拆文件第二阶段与预算恢复 | 首页、主卷、舆图/史册、人物/囊箧、科举/皇榜和对应移动端样式已迁到页面级 import，`global.css` 仅保留 token/base/shell/controls/overlay/motion/全局移动布局；source canary 继续读取产品样式全集保护既有 selector，并新增全局启动样式图预算守门。 |
 | S90.2 | DONE | route 空态一致性与跨页读法继续 polish | 已完成舆图读图/地点状态/路线暗示/tooltip 操作、人物/高清立绘/科举/皇榜读法、全局壳、右上角印匣/设置入口、`SurfaceHost` 专题层、错误/loading/empty 状态和基础控件反馈 polish；只消费安全 view 与本地草稿，不新增裁决权。 |
+| S90.4 | DONE | 囊箧、史册、朝议深层读卷 polish | 已完成囊箧“四读”账解索引、史册“由史册成题”归档读法、朝议“材料入席”读法和 `SurfaceHost` 专题层材料/证据/草稿读法；只消费现有安全 view、本地草稿和页面状态，不新增 route/API/schema/AI 权限/依赖/素材或服务器裁决能力。 |
 | S90.3 | TODO | S89 前端 polish 专题归档 | 如需要更完整追溯，可把 S89.1-S89.68 从 Git history 和压缩索引整理为独立专题归档；避免重新引入逐项长流水。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S90.1/S90.2：React 产品级前端 polish 与 CSS 启动预算恢复已完成。CSS 全局启动 import 图已从约 200 KiB 拆分到约 80 KiB，产品样式全集仍由 source canary 覆盖；体验 polish 覆盖舆图读图、地点/驿路/近事续卷、人物/立绘、科举/皇榜、全局壳、印匣/设置、专题层状态、错误空态和基础控件反馈。
-- S90.1/S90.2 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费安全 view、已审核 runtime 资产引用和本地偏好/草稿/专题状态。
-- 最近完整运行态验证来自 S90.1/S90.2：`npm run typecheck:client`、`npm run typecheck:server`、`npm run build:client`、`npm run budget:client`、`npm run qa:runtime-manifest`、`node --test test/reactClientScaffold.test.js`、串行 Vitest、`npm run check:docs-governance`、`npm test` 和 `npm run smoke:browser -- --screenshots artifacts/s90-polish-smoke` 均通过；详见本节记录与 Git history。
+- 最新实现步骤 S90.4：囊箧、史册、朝议深层读卷 polish 已完成。囊箧页新增“四读”账解索引，史册页新增“由史册成题”归档读法，朝议页新增“材料入席”专题读法，`SurfaceHost` 专题层新增材料/证据/草稿读法；样式分别落在囊箧、史册、朝议 route CSS 与共享专题层 CSS，source canary、Vitest 和 browser smoke 均已覆盖。
+- S90.4 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费安全 view、已审核 runtime 资产引用、本地偏好/草稿和专题状态。
+- 最近完整运行态验证来自 S90.4：`npm run typecheck:client`、`npm run build:client`、`npm run budget:client`、`npm run qa:runtime-manifest`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、S90.4 串行 Vitest、`npm run check:docs-governance`、`git diff --check`、`npm test` 和 `npm run smoke:browser -- --screenshots artifacts/s90-4-polish-smoke` 均通过；详见本节记录与 Git history。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S90.1/S90.2：
+最新运行态完整验证锚点来自 S90.4：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（100 tests）
+- `node --test test/reactClientScaffold.test.js`（101 tests）
 - `npm run typecheck:client`
-- `npm run typecheck:server`
-- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）
+- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 74 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
 - `npm run check:docs-governance`
 - `git diff --check`
-- `npm test`（1214 tests）
-- `npm run smoke:browser -- --screenshots artifacts/s90-polish-smoke`
+- `npm test`（1215 tests）
+- `npm run smoke:browser -- --screenshots artifacts/s90-4-polish-smoke`
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S90.4 囊箧、史册、朝议深层读卷 polish 完成
+
+- 范围：囊箧页新增 `data-polish-inventory-reader="s90-4-inventory-ledger-index"` 的“囊箧四读”，把资源、资产、凭证、账解、容器、物件分类和流转候批边界整理成可扫读索引；史册页新增 `data-polish-archive-flow="s90-4-archive-court-reader"` 的“由史册成题”，说明归档、旁证、成题与候复关系；朝议页新增 `data-polish-court-reader="s90-4-archive-court-reader"` 的“材料入席”，说明材料、人物、专题与不定终局边界；`SurfaceHost` 专题层新增同一 S90.4 标记的材料/证据/草稿读法。样式分别放入 `people-inventory.css`、`map-archive.css`、`game.css` 与共享 `overlays-surfaces.css`，移动端均单列。
+- 子代理：实施子代理 `019e686e-06c0-7a11-aa91-9e44529016d9` 已完成囊箧/史册/朝议/专题层 patch 与聚焦验证报告，未提交、未推送、未创建 PR。提交前只读复审会随最终 diff 和验证证据执行。
+- 边界：本步只改 React 前端读法、CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材，不请求完整 manifest，不硬编码本地路径，不改变 provider、prompt、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费安全 view、本地草稿和页面/专题状态，不裁决资源、交易、委派、NPC 行动、经济结果、考试晋级、官职任免、关系、婚姻、弹劾、定罪、背叛或 hidden 信息。
+- 验证：已通过 `node --test test/reactClientScaffold.test.js`（101 tests）、`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（74 tests）、`npm run build:client`、`npm run budget:client`、`npm run check:docs-governance`、`git diff --check`、`npm test`（1215 tests）和 `npm run smoke:browser -- --screenshots artifacts/s90-4-polish-smoke`。一次与全量 `npm test` 并行的 browser smoke 因首页 `networkidle` 超时失败，单独重跑同命令通过，失败未命中 S90.4 断言。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-27：S90.1/S90.2 React 产品级前端 polish 完成
 

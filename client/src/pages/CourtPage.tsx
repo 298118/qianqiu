@@ -48,6 +48,12 @@ const courtAgendaItems = [
   { label: "堂审军议", value: "证据与边患", note: "列明风险，不造判词战果。" }
 ] as const;
 
+type CourtReaderRow = {
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
 function recordValue(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
@@ -69,6 +75,43 @@ function countFollowUpEvidence(evidence: unknown) {
   return arrayLength(view.items) + arrayLength(view.people) + arrayLength(view.events) + arrayLength(view.economy);
 }
 
+function buildCourtReaderRows(input: {
+  readonly archiveCount: number;
+  readonly domainCount: number;
+  readonly followUpCount: number;
+  readonly threadCount: number;
+  readonly economyCount: number;
+  readonly routeSessionSupported: boolean;
+}): CourtReaderRow[] {
+  const publicEvidenceCount = input.archiveCount + input.domainCount + input.threadCount + input.economyCount;
+  return [
+    {
+      label: "材料",
+      value: input.routeSessionSupported
+        ? publicEvidenceCount
+          ? `${publicEvidenceCount} 条可读`
+          : "候公开材料"
+        : "案卷暂不可读",
+      detail: "章奏、后果、议题和月账解释只作读卷线索。"
+    },
+    {
+      label: "人物",
+      value: input.followUpCount ? `${input.followUpCount} 条来函` : "来函候载",
+      detail: "涉及拜会、请托或交游余波时，先回人物页核公开名册。"
+    },
+    {
+      label: "专题",
+      value: input.routeSessionSupported ? "六署可开" : "六署停开",
+      detail: "专题层负责整理材料、勾选线索和生成候复草稿。"
+    },
+    {
+      label: "候复",
+      value: "不定终局",
+      detail: "资源、交易、关系、任免、罪名和战和结果仍回案卷回批。"
+    }
+  ];
+}
+
 export function CourtPage() {
   const { sessionId = "s74-preview" } = useParams();
   const currentSession = useGameSessionStore((state) => state.currentSession);
@@ -85,6 +128,19 @@ export function CourtPage() {
   const threadCount = arrayLength(recordValue(sessionMatches ? currentSession?.worldThreadView : null).activeThreads);
   const economyCount = arrayLength(recordValue(sessionMatches ? currentSession?.economyTraceView : null).traceItems);
   const agendaState = routeSessionSupported ? "ready" : "unsupported";
+  const readerState = !routeSessionSupported
+    ? "unsupported"
+    : archiveCount || domainCount || followUpCount || threadCount || economyCount
+    ? "ready"
+    : "empty";
+  const courtReaderRows = buildCourtReaderRows({
+    archiveCount,
+    domainCount,
+    followUpCount,
+    threadCount,
+    economyCount,
+    routeSessionSupported
+  });
   const crossTraceItems: readonly CrossPageTraceItem[] = [
     {
       target: "people",
@@ -153,6 +209,29 @@ export function CourtPage() {
         items={crossTraceItems}
         summary="从六署专题读议题，从人物页查来人，从史册页看已留痕后果。"
       />
+      <section
+        className="courtReaderBand paperMotionSurface"
+        aria-label="朝议专题读法"
+        data-polish-court-reader="s90-4-archive-court-reader"
+        data-court-reader-state={readerState}
+      >
+        <div className="sectionTitleRow">
+          <div>
+            <p className="eyebrow">专题读法</p>
+            <h2>材料入席</h2>
+          </div>
+          <span>{readerState === "ready" ? "可筹议" : readerState === "empty" ? "候材料" : "案卷未载"}</span>
+        </div>
+        <dl className="courtReaderGrid">
+          {courtReaderRows.map((row) => (
+            <div key={row.label}>
+              <dt>{row.label}</dt>
+              <dd>{row.value}</dd>
+              <dd>{row.detail}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
       <div className="courtSurfaceGrid" aria-label="官署专题入口">
         {courtSurfaceGroups.map((group) => (
           <section key={group.title} className="courtSurfaceGroup" aria-label={group.title}>

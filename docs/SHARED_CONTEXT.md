@@ -21,7 +21,7 @@
 - Backend: Node.js + Express，当前以 CommonJS JavaScript 为主。S86/S87 已完成渐进 TypeScript 检查与 route/API response shape 首轮覆盖；`npm run typecheck:server` 覆盖契约、API/view 类型、安全 projection、AI schema/provider facade、storage adapter 和核心 resolver 的首批边界。不得为大型 route 一次性 whole-file `@ts-check`，也不得放宽 raw ledger 剥离、Ajv/runtime 校验或服务器裁决。
 - Storage: 默认 JSON session files under `data/sessions/`；可选 `STORAGE_ADAPTER=sqlite` 使用本地派生表、索引和审计。SQLite 派生行只从 `world_sessions.world_state_json` 单向修复，不是玩家 API、prompt 或服务器裁决的 raw truth source。
 - Roadmap status: S49-S88 已完成并归档；S89.1-S89.68 已从活动台账迁出并压缩到 `docs/ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md`。活动台账现在只保留当前边界、下一候选步骤和本轮文档维护记录。
-- Latest implementation: S90.1/S90.2 已完成 React 产品级前端 polish 与 CSS 启动预算恢复。CSS 全局启动 import 图已从约 200 KiB 拆分到约 80 KiB，route 样式改由对应页面入口导入，产品样式全集仍由 source canary 覆盖；前端 polish 覆盖舆图读图、地点/驿路/近事续卷、人物/立绘、科举/皇榜、全局壳、印匣/设置、专题层状态、错误空态和基础控件反馈。
+- Latest implementation: S90.4 已完成囊箧、史册、朝议深层读卷 polish。囊箧页新增“四读”账解索引，史册页新增“由史册成题”归档读法，朝议页新增“材料入席”专题读法，`SurfaceHost` 专题层新增材料/证据/草稿读法；仍不新增 route/API/schema/AI 权限/依赖/素材或服务器裁决能力。
 - Current collaboration: 2026-05-14 起停止 Gemini CLI 协作。后续开发、素材生成/审核、验证、文档同步和 Git 提交由 Codex 负责；用户已授权本仓库使用 Codex 子代理，实施子代理不得提交，提交前复审子代理必须只读。
 - Current local `.env`: 可能含用户 provider keys。`.env` 被 Git 忽略，不能打印、复制到文档或提交。
 
@@ -65,12 +65,14 @@
 
 ## Current Work Note
 
-2026-05-27：按用户要求完成 S90.1/S90.2 React 产品级前端 polish。首页、主卷、舆图/史册、人物/囊箧、科举/皇榜和对应移动端样式已迁到页面级 import，保留 `global.css` 作为 token/base/shell/controls/overlay/motion 启动样式图；`test/reactClientScaffold.test.js` 继续用产品样式全集守住历史 selector，同时新增全局启动样式预算守门。体验 polish 覆盖舆图读图指引、地点状态、路线暗示、掌中 tooltip 操作，人物详情“来函 / 礼法 / 交易 / 委派”读法、人物卡候回音提示、高清立绘“画卷三读”、科举入场-落墨-候批、皇榜题名-同年座师-授官过渡，以及右上角印匣/设置、专题层 loading/error/empty/selected 状态、错误空态和基础控件反馈。三个实施子代理均未提交、未推送、未创建 PR；主代理已整合并修复舆图类型谓词错误、立绘测试异步重渲染断言。提交前只读子代理复审已完成，无阻塞发现；复审代理只运行只读轻量检查并认可主代理完整验证证据。边界：不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费安全 view、已审核 runtime 资产引用和本地偏好/草稿/专题状态。已通过 `npm run typecheck:client`、`npm run typecheck:server`、`npm run build:client`、`npm run budget:client`、`npm run qa:runtime-manifest`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1`、`npm run check:docs-governance`、`git diff --check`、`npm test` 和 `npm run smoke:browser -- --screenshots artifacts/s90-polish-smoke`。最终提交仍待完成。
+2026-05-27：S90.4 囊箧、史册、朝议深层读卷 polish 已完成。囊箧页新增 `s90-4-inventory-ledger-index` 的“囊箧四读”，只从安全囊箧、资源、资产、凭证、经济 trace、容器与物件列表整理账面/仓储/物件/流转读法，并过滤污染账解；史册页新增 `s90-4-archive-court-reader` 的“由史册成题”，把归档、旁证、成题与候复边界放在公开追踪前；朝议页新增同标记的“材料入席”，提示材料、人物、专题与不定终局；`SurfaceHost` 专题层新增材料/证据/草稿读法，样式放在共享 overlay CSS 而非单一路由 CSS。实施子代理 `019e686e-06c0-7a11-aa91-9e44529016d9` 提交 patch 报告但未提交、未推送、未创建 PR；提交前只读复审代理 `019e68b1-028f-7bd1-961c-1be6b44bf40e` 已复审最终 diff 和验证证据，未发现阻塞问题。边界：不新增 route/API/schema/AI 权限/依赖/素材，不请求完整 manifest，不硬编码本地路径，不改变 provider、prompt、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费安全 view、本地草稿和页面/专题状态。已通过 `node --test test/reactClientScaffold.test.js`（101 tests）、`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（74 tests）、`npm run build:client`、`npm run budget:client`、`npm run check:docs-governance`、`git diff --check`、`npm test`（1215 tests）和 `npm run smoke:browser -- --screenshots artifacts/s90-4-polish-smoke`。一次与全量 `npm test` 并行的 browser smoke 因首页 `networkidle` 超时失败，单独重跑同命令通过，失败未命中 S90.4 断言。提交随本次 coherent change 完成，最终哈希见 Git history 和本轮回复。
+
+2026-05-27：S90.1/S90.2 React 产品级前端 polish 已完成并提交 `5d96bb4f`。首页、主卷、舆图/史册、人物/囊箧、科举/皇榜和对应移动端样式已迁到页面级 import，保留 `global.css` 作为 token/base/shell/controls/overlay/motion 启动样式图；`test/reactClientScaffold.test.js` 继续用产品样式全集守住历史 selector，同时新增全局启动样式预算守门。体验 polish 覆盖舆图读图指引、地点状态、路线暗示、掌中 tooltip 操作，人物详情“来函 / 礼法 / 交易 / 委派”读法、人物卡候回音提示、高清立绘“画卷三读”、科举入场-落墨-候批、皇榜题名-同年座师-授官过渡，以及右上角印匣/设置、专题层 loading/error/empty/selected 状态、错误空态和基础控件反馈。边界：不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费安全 view、已审核 runtime 资产引用和本地偏好/草稿/专题状态。S90.1/S90.2 已通过完整验证，记录见 `docs/DEVELOPMENT_STEPS.md` 和 Git history。
 
 2026-05-27：按用户要求压缩当前上下文并归档活动台账已完成项。本轮仅维护文档：`SHARED_CONTEXT.md` 改为接手摘要，`DEVELOPMENT_STEPS.md` 移出 S89.1-S89.68 的 DONE 长表与逐项流水，`ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md` 增加 S89 压缩归档。运行时代码、前端行为、后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 和服务器裁决均未改变。低风险纯文档改动，按项目规则跳过提交前子代理复审。已通过 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。
 
 ## Next Recommended Step
 
-若接手当前本地改动，只需暂存并提交。提交后可继续囊箧/史册/朝议更深层产品化、CSS 预算后续瘦身，或把 S89/S90 前端 polish 另写专题归档。
+S90.4 提交后可继续 CSS 预算后续瘦身，或把 S89/S90 前端 polish 另写专题归档。
 
 无论下一步是什么，都必须继续从安全 view 重建 evidence，保持 proposal-only、browser-draft-only 和服务器裁决，不让浏览器 task、地图 layout、visual-only effect、NPC anchor、runtime manifest 元数据、world entity impact/recent impact、交游 evidence、world thread 或 draftContext 变成真实任务队列、资源结算器、关系/婚姻/弹劾/定罪/背叛裁决器。

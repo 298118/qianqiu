@@ -876,6 +876,61 @@ li[data-draft-state="written"] {
   overflow-wrap: anywhere;
 }
 
+.archiveFlowBand {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgb(84 60 43 / .22);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .7), rgb(225 211 182 / .46)),
+    var(--qq-material-xuan) center / 560px repeat;
+  padding: 14px;
+}
+
+.archiveFlowBand .sectionTitleRow {
+  margin-bottom: 0;
+}
+
+.archiveFlowBand .sectionTitleRow > span {
+  border: 1px solid rgb(142 47 39 / .34);
+  background: rgb(142 47 39 / .08);
+  color: #7b241f;
+  font-size: .78rem;
+  font-weight: 900;
+  padding: 5px 8px;
+}
+
+.archiveFlowGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.archiveFlowGrid div {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 252 238 / .58);
+  padding: 10px;
+}
+
+.archiveFlowGrid dt {
+  color: #7a6048;
+  font-size: .74rem;
+  font-weight: 900;
+}
+
+.archiveFlowGrid dd {
+  margin: 4px 0 0;
+  color: #514232;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.archiveFlowGrid dd:first-of-type {
+  color: #7b241f;
+  font-weight: 900;
+}
+
 .archiveTraceGrid {
   display: grid;
   grid-template-columns: minmax(340px, 1.08fr) minmax(300px, 0.92fr);
@@ -1181,4 +1236,10 @@ li[data-draft-state="written"] {
 .mapRuntimeNote {
   margin: 0 0 14px;
   overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .archiveFlowGrid {
+    grid-template-columns: 1fr;
+  }
 }

@@ -697,6 +697,11 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector(".memorialComposer")).toBeFalsy();
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
     expect(screen.getByText("此案卷编号暂不可用于浏览器史册；请从首页开卷或载入旧案。")).toBeTruthy();
+    const archiveFlow = document.querySelector("[data-polish-archive-flow='s90-4-archive-court-reader']") as HTMLElement;
+    expect(archiveFlow).toBeTruthy();
+    expect(archiveFlow.getAttribute("data-archive-flow-state")).toBe("unsupported");
+    expect(archiveFlow.textContent || "").toContain("案卷暂不可读");
+    expect(archiveFlow.textContent || "").toContain("暂不可成题");
     const memorialButton = screen.getByRole("button", { name: "阅奏折" });
     expect(memorialButton).toHaveProperty("disabled", true);
     fireEvent.click(memorialButton);
@@ -728,6 +733,11 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector("[data-polish-court-agenda-band='s89-34-main-court-desk']")?.getAttribute("data-agenda-state")).toBe("unsupported");
     expect(document.body.textContent || "").toContain("官署议程");
     expect(document.body.textContent || "").toContain("案卷未载");
+    const courtReader = document.querySelector("[data-polish-court-reader='s90-4-archive-court-reader']") as HTMLElement;
+    expect(courtReader).toBeTruthy();
+    expect(courtReader.getAttribute("data-court-reader-state")).toBe("unsupported");
+    expect(courtReader.textContent || "").toContain("案卷暂不可读");
+    expect(courtReader.textContent || "").toContain("六署停开");
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBeNull());
     const courtButtons = ["奏折队列", "拟圣旨", "朝议", "堂审", "军议", "人物档案"].map((label) => screen.getByRole("button", { name: label }));
     for (const button of courtButtons) {
@@ -3277,6 +3287,14 @@ describe("S74.1 React client shell", () => {
     expect(agendaBand?.textContent || "").toContain("章奏");
     expect(agendaBand?.textContent || "").toContain("谕旨");
     expect(agendaBand?.textContent || "").toContain("堂审军议");
+    const courtReader = document.querySelector("[data-polish-court-reader='s90-4-archive-court-reader']") as HTMLElement;
+    expect(courtReader).toBeTruthy();
+    expect(courtReader.getAttribute("data-court-reader-state")).toBe("empty");
+    expect(courtReader.textContent || "").toContain("专题读法");
+    expect(courtReader.textContent || "").toContain("材料入席");
+    expect(courtReader.textContent || "").toContain("候公开材料");
+    expect(courtReader.textContent || "").toContain("六署可开");
+    expect(courtReader.textContent || "").toContain("资源、交易、关系、任免、罪名和战和结果仍回案卷回批。");
     const courtTrace = document.querySelector("[data-polish-cross-trace='s89-36-cross-page-trace'][data-cross-trace-page='court']") as HTMLElement;
     expect(courtTrace).toBeTruthy();
     expect(courtTrace.getAttribute("data-cross-trace-state")).toBe("ready");
@@ -3520,6 +3538,13 @@ describe("S74.1 React client shell", () => {
 
     const dialog = await screen.findByRole("dialog", { name: "朝议" });
     await waitFor(() => expect(screen.getAllByText("边饷催报").length).toBeGreaterThan(0));
+    const topicReader = dialog.querySelector("[data-polish-topic-reader='s90-4-archive-court-reader']") as HTMLElement;
+    expect(topicReader).toBeTruthy();
+    expect(topicReader.getAttribute("data-topic-reader-state")).toBe("ready");
+    expect(topicReader.textContent || "").toContain("1 条可阅");
+    await waitFor(() => expect(topicReader.textContent || "").toContain("1/4 已引"));
+    expect(topicReader.textContent || "").toContain("可写入底部奏折");
+    expect(topicReader.textContent || "").toContain("写入底部奏折只留案头草稿，不推进回合。");
     expect(dialog.textContent || "").toContain("材料");
     expect(dialog.textContent || "").toContain("筹议");
     expect(dialog.textContent || "").toContain("草稿");
@@ -5634,6 +5659,19 @@ describe("S74.1 React client shell", () => {
     expect(inventoryTraceSection.getByText("3 条")).toBeTruthy();
     expect(inventoryTraceSection.queryByText("污染账目")).toBeNull();
     expect(inventoryTraceSection.queryByText(/provider payload|hiddenNotes|data\/sessions|privateSignalTags|sk-test-secret/i)).toBeNull();
+    const inventoryReadRail = document.querySelector("[data-polish-inventory-reader='s90-4-inventory-ledger-index']");
+    expect(inventoryReadRail).toBeTruthy();
+    const inventoryReadRailText = inventoryReadRail?.textContent || "";
+    expect(inventoryReadRailText).toContain("囊箧四读");
+    expect(inventoryReadRailText).toContain("资源1笔 · 资产1项 · 凭证0件");
+    expect(inventoryReadRailText).toContain("另有3条账解线索可查。");
+    expect(inventoryReadRailText).toContain("2处容器，0处封存");
+    expect(inventoryReadRailText).toContain("当前读 书箧 · 1/10。");
+    expect(inventoryReadRailText).toContain("2件入卷，当前列2件");
+    expect(inventoryReadRailText).toContain("本栏分类：文书2件。");
+    expect(inventoryReadRailText).toContain("2件可呈请");
+    expect(inventoryReadRailText).toContain("本页只整理呈请，不写成交、扣减、赠予、借用或关系回响。");
+    expect(inventoryReadRailText).not.toMatch(/污染账目|provider payload|hiddenNotes|data\/sessions|privateSignalTags|sk-test-secret|draftContext|schema|manifest|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|服务器裁决|\/home\/|C:\\/i);
     expect(document.body.textContent || "").toContain("囊箧、仓库、器物、账约、绑定凭证和移转结果均候案卷回批复核。");
     expect(document.body.textContent || "").not.toMatch(/hidden\/raw|hidden\b|raw\b|服务器裁决|draftContext|manifest|schema|C:\\secret|\/home\/user/i);
     expect(inventoryTraceSection.getAllByRole("button", { name: "拟复核" })).toHaveLength(3);
@@ -6874,6 +6912,15 @@ describe("S74.1 React client shell", () => {
     expect(archivePanel.querySelector("[data-polish-archive-trace='s89-10-chronicle-density']")).toBeTruthy();
     expect(archivePanel.querySelector("[data-polish-archive-reader='s89-29-evidence-reader']")).toBeTruthy();
     expect(archivePanel.querySelector("[data-polish-archive-boundary='s89-29-evidence-boundary']")).toBeTruthy();
+    const archiveFlow = archivePanel.querySelector("[data-polish-archive-flow='s90-4-archive-court-reader']") as HTMLElement;
+    expect(archiveFlow).toBeTruthy();
+    expect(archiveFlow.getAttribute("data-archive-flow-state")).toBe("ready");
+    expect(archiveFlow.textContent || "").toContain("归档读法");
+    expect(archiveFlow.textContent || "").toContain("由史册成题");
+    expect(archiveFlow.textContent || "").toContain("12 条公开入册");
+    expect(archiveFlow.textContent || "").toContain("5 条可旁读");
+    expect(archiveFlow.textContent || "").toContain("可入朝议成题");
+    expect(archiveFlow.textContent || "").toContain("资源、关系、任免与定罪仍不在本页定夺。");
     expect(archivePanel.querySelector(".archiveEvidenceStack")).toBeTruthy();
     const archive = within(archivePanel);
 

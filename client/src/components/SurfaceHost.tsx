@@ -1514,6 +1514,54 @@ function topicEvidenceMeta(ref: TopicSurfaceEvidenceRef) {
   return source === "来函后续" ? `来函证据 · ${domain}` : domain || source;
 }
 
+type TopicReadRow = {
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
+function buildTopicReadRows(options: {
+  readonly draftStatus: "idle" | "loading" | "ready" | "error";
+  readonly draftText: string;
+  readonly materialState: "loading" | "error" | "ready" | "empty";
+  readonly selectedEvidenceRefs: readonly string[];
+  readonly topicView: TopicSurfaceView | null;
+}): TopicReadRow[] {
+  const materialCount = options.topicView?.items.length || 0;
+  const evidenceCount = options.topicView?.evidenceRefs.length || 0;
+  return [
+    {
+      label: "材料",
+      value: options.materialState === "loading"
+        ? "正在取材"
+        : options.materialState === "error"
+        ? "材料受阻"
+        : materialCount
+        ? `${materialCount} 条可阅`
+        : "案卷未载",
+      detail: "只读公开专题材料；未载内容不在此补造。"
+    },
+    {
+      label: "证据",
+      value: evidenceCount
+        ? `${options.selectedEvidenceRefs.length}/${evidenceCount} 已引`
+        : "证据候载",
+      detail: "勾选只作为草稿线索，回主卷后仍候案卷复核。"
+    },
+    {
+      label: "草稿",
+      value: options.draftStatus === "loading"
+        ? "待回音"
+        : options.draftStatus === "error"
+        ? "草稿候复"
+        : options.draftText.trim()
+        ? "可写入底部奏折"
+        : "草稿待拟",
+      detail: "写入底部奏折只留案头草稿，不推进回合。"
+    }
+  ];
+}
+
 function TopicSurfaceWorkbench({
   activeSurface,
   canLoad,
@@ -1558,10 +1606,17 @@ function TopicSurfaceWorkbench({
   const finalDraftText = draftText;
   const materialState = status === "loading" ? "loading" : status === "error" ? "error" : hasMaterials ? "ready" : "empty";
   const draftState = draftStatus === "loading" ? "loading" : draftStatus === "error" ? "error" : finalDraftText.trim() ? "ready" : "empty";
+  const topicReadRows = buildTopicReadRows({
+    draftStatus,
+    draftText: finalDraftText,
+    materialState,
+    selectedEvidenceRefs,
+    topicView
+  });
 
   if (!canLoad) {
     return (
-      <div className="topicSurfaceFallback" data-state="preview">
+      <div className="topicSurfaceFallback" data-state="preview" data-polish-topic-reader="s90-4-archive-court-reader">
         <p>预览案卷只显示专题模板；开卷后会载入公开材料、可引线索和候复草稿。</p>
         {entryDraft ? (
           <button className="paperButton" type="button" onClick={onWriteDraft}>
@@ -1574,6 +1629,20 @@ function TopicSurfaceWorkbench({
 
   return (
     <div className="topicSurfaceLayout" data-surface-id={activeSurface} data-material-state={materialState} data-draft-state={draftState}>
+      <dl
+        className="surfaceSafetyList topicSurfaceReadRail"
+        aria-label="专题层读法"
+        data-polish-topic-reader="s90-4-archive-court-reader"
+        data-topic-reader-state={materialState}
+      >
+        {topicReadRows.map((row) => (
+          <div className="surfaceSafetyRow paperMotionSurface" key={row.label}>
+            <dt>{row.label}</dt>
+            <dd>{row.value}</dd>
+            <dd>{row.detail}</dd>
+          </div>
+        ))}
+      </dl>
       <section className="topicSurfaceColumn paperMotionSurface" aria-label="材料栏" data-state={materialState} aria-busy={status === "loading"}>
         <div className="topicSurfaceColumnHeader">
           <h3>材料</h3>

@@ -38,6 +38,7 @@ const unsafeInventoryTextFragments = [
   "data" + "\\" + "sessions",
   "file" + "://",
   "raw",
+  "private",
   "prov" + "ider",
   "pro" + "mpt",
   "hid" + "den",
@@ -98,6 +99,102 @@ function transferReadinessLabel(options: {
   if (!options.transferItem) return "暂无可流转物件";
   if (!options.selectedTargetContainer) return "暂无可入容器";
   return "可呈请候批";
+}
+
+type InventoryReaderRow = {
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
+function isSafeInventoryScalar(value: unknown) {
+  if (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean") return true;
+  const text = String(value).replace(/\s+/g, " ").trim();
+  if (!text) return true;
+  const lowered = text.toLowerCase();
+  return !localInventoryPathPattern.test(text) &&
+    !/sk-[a-z0-9_-]{6,}|tp-[a-z0-9_-]{6,}/i.test(text) &&
+    !unsafeInventoryTextFragments.some((fragment) => lowered.includes(fragment.toLowerCase()));
+}
+
+function economyTraceItemCount(traceView: { readonly traceItems?: readonly unknown[] } | null | undefined) {
+  return (Array.isArray(traceView?.traceItems) ? traceView.traceItems : [])
+    .filter((entry) => {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) return false;
+      const record = entry as Record<string, unknown>;
+      const affectedLabels = Array.isArray(record.affectedLabels) ? record.affectedLabels : [];
+      const visibleFields = [
+        record.title,
+        record.publicSummary,
+        record.summary,
+        record.groupLabel,
+        record.statusLabel,
+        ...affectedLabels
+      ];
+      const hasContent = visibleFields.some((value) => typeof value === "string" && value.trim());
+      return hasContent && visibleFields.every(isSafeInventoryScalar);
+    }).length;
+}
+
+function inventoryCategorySummary(items: readonly InventoryItemView[]) {
+  const counts = new Map<string, number>();
+  for (const item of items) {
+    const label = safeLabel(item.category || item.subtype, "物件", 16);
+    counts.set(label, (counts.get(label) || 0) + 1);
+  }
+  const entries = [...counts.entries()]
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], "zh-Hans-CN"))
+    .slice(0, 3);
+  return entries.length
+    ? entries.map(([label, count]) => `${label}${count}件`).join("、")
+    : "暂无分类";
+}
+
+function buildInventoryReaderRows(input: {
+  readonly routeSessionSupported: boolean;
+  readonly resourceAccountCount: number;
+  readonly assetCount: number;
+  readonly credentialCount: number;
+  readonly economyTraceCount: number;
+  readonly containerCount: number;
+  readonly lockedContainerCount: number;
+  readonly itemCount: number;
+  readonly visibleItemCount: number;
+  readonly transferableItemCount: number;
+  readonly selectedContainerLabel: string;
+  readonly categorySummary: string;
+  readonly transferLedgerStatus: string;
+}): InventoryReaderRow[] {
+  if (!input.routeSessionSupported) {
+    return [
+      { label: "账面", value: "案卷暂不可读", detail: "请从首页开卷或载入旧案。" },
+      { label: "流转", value: "断卷不可移置", detail: "本页不会保存移置选择。" },
+      { label: "边界", value: "只读公开账目", detail: "资源、成交、赠予、借用和人情回响仍候主卷回音。" }
+    ];
+  }
+
+  return [
+    {
+      label: "账面",
+      value: `资源${input.resourceAccountCount}笔 · 资产${input.assetCount}项 · 凭证${input.credentialCount}件`,
+      detail: input.economyTraceCount ? `另有${input.economyTraceCount}条账解线索可查。` : "暂无可见账解线索。"
+    },
+    {
+      label: "仓储",
+      value: input.containerCount ? `${input.containerCount}处容器，${input.lockedContainerCount}处封存` : "暂无容器",
+      detail: input.containerCount ? `当前读 ${input.selectedContainerLabel}。` : "容器未入卷时不补造仓储。"
+    },
+    {
+      label: "物件",
+      value: input.itemCount ? `${input.itemCount}件入卷，当前列${input.visibleItemCount}件` : "暂无物件",
+      detail: input.itemCount ? `本栏分类：${input.categorySummary}。` : "无物件时仍可查看资源、资产和凭证。"
+    },
+    {
+      label: "流转",
+      value: `${input.transferableItemCount}件可呈请`,
+      detail: `${input.transferLedgerStatus}；本页只整理呈请，不写成交、扣减、赠予、借用或关系回响。`
+    }
+  ];
 }
 
 export function InventoryPage() {
@@ -192,6 +289,8 @@ export function InventoryPage() {
   const resourceAccountCount = resourceLedgerView?.accounts?.length ?? 0;
   const assetCount = assetLedgerView?.assets?.length ?? 0;
   const credentialCount = inventoryView?.importantCredentials?.length ?? 0;
+  const economyCount = economyTraceItemCount(economyTraceView);
+  const lockedContainerCount = containers.filter((container) => container.locked).length;
   const transferLedgerStatus = transferReadinessLabel({
     routeSessionSupported,
     runnable,
@@ -204,6 +303,21 @@ export function InventoryPage() {
     : transferItem
       ? `${itemLabel(transferItem)}：暂无可入容器。`
       : "本卷暂无可呈请流转的物件。";
+  const inventoryReaderRows = buildInventoryReaderRows({
+    routeSessionSupported,
+    resourceAccountCount,
+    assetCount,
+    credentialCount,
+    economyTraceCount: economyCount,
+    containerCount: containers.length,
+    lockedContainerCount,
+    itemCount: items.length,
+    visibleItemCount: visibleItems.length,
+    transferableItemCount: transferableItems.length,
+    selectedContainerLabel: containerLabel(containersById.get(selectedContainer)),
+    categorySummary: inventoryCategorySummary(visibleItems.length ? visibleItems : items),
+    transferLedgerStatus
+  });
 
   useEffect(() => {
     if (containers[0] && (!activeSelectedContainerId || !containersById.has(activeSelectedContainerId))) {
@@ -412,6 +526,31 @@ export function InventoryPage() {
         runnable={runnable}
         onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
       />
+
+      <section
+        className="inventoryReadRail paperMotionSurface"
+        aria-labelledby="inventory-reader-title"
+        data-polish-inventory-reader="s90-4-inventory-ledger-index"
+      >
+        <div className="sectionTitleRow">
+          <div>
+            <p className="eyebrow">账解索引</p>
+            <h2 id="inventory-reader-title">囊箧四读</h2>
+          </div>
+          <span>{routeSessionSupported ? "只读公开账" : "断卷"}</span>
+        </div>
+        <dl className="inventoryReadRows" aria-label="囊箧四读">
+          {inventoryReaderRows.map((row) => (
+            <div className="paperMotionSurface" key={row.label}>
+              <dt>{row.label}</dt>
+              <dd>
+                <strong>{row.value}</strong>
+                <span>{row.detail}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       {inventoryView?.authorityBoundary ? (
         <p className="statusLine">

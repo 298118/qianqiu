@@ -1004,6 +1004,14 @@
   margin-top: 18px;
 }
 
+.topicSurfaceLayout > .topicSurfaceReadRail {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
 .topicSurfaceColumn {
   min-width: 0;
   display: grid;
@@ -1164,4 +1172,10 @@
   display: grid;
   gap: 12px;
   margin-top: 16px;
+}
+
+@media (max-width: 760px) {
+  .topicSurfaceLayout > .topicSurfaceReadRail {
+    grid-template-columns: 1fr;
+  }
 }

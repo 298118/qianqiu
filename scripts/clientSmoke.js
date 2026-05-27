@@ -838,6 +838,7 @@ async function assertArchiveDigestPolish(page, label) {
     const digest = document.querySelector(".archiveDigestBand");
     const reader = document.querySelector("[data-polish-archive-reader='s89-29-evidence-reader']");
     const readerBoundary = reader?.querySelector("[data-polish-archive-boundary]");
+    const flow = document.querySelector("[data-polish-archive-flow='s90-4-archive-court-reader']");
     const crossTrace = document.querySelector("[data-polish-cross-trace='s89-36-cross-page-trace'][data-cross-trace-page='archive']");
     const crossTraceCard = crossTrace?.querySelector(".crossPageTraceGrid article");
     const crossTraceCardStyle = crossTraceCard ? window.getComputedStyle(crossTraceCard) : null;
@@ -858,6 +859,9 @@ async function assertArchiveDigestPolish(page, label) {
       readerRows: reader ? reader.querySelectorAll(".surfaceSafetyList > div").length : 0,
       readerBoundaryMarker: readerBoundary?.getAttribute("data-polish-archive-boundary") || "",
       readerBoundaryText: readerBoundary?.textContent || "",
+      flowMarker: flow?.getAttribute("data-polish-archive-flow") || "",
+      flowState: flow?.getAttribute("data-archive-flow-state") || "",
+      flowText: flow?.textContent || "",
       shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
       reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       hasCrossTrace: Boolean(crossTrace),
@@ -893,6 +897,15 @@ async function assertArchiveDigestPolish(page, label) {
   }
   if (!snapshot.readerBoundaryText.includes("按钮只写案头草稿") || !snapshot.readerBoundaryText.includes("回主卷候复")) {
     failures.push(`archive reader lacked draft boundary copy: ${snapshot.readerBoundaryText.slice(0, 120)}`);
+  }
+  if (
+    snapshot.flowMarker !== "s90-4-archive-court-reader" ||
+    !/^(ready|empty)$/.test(snapshot.flowState) ||
+    !snapshot.flowText.includes("归档读法") ||
+    !snapshot.flowText.includes("由史册成题") ||
+    !snapshot.flowText.includes("不在本页定夺")
+  ) {
+    failures.push(`S90.4 archive flow reader missing: ${JSON.stringify({ marker: snapshot.flowMarker, state: snapshot.flowState, text: snapshot.flowText.slice(0, 160) })}`);
   }
   if (!snapshot.hasCrossTrace || !/^(ready|empty)$/.test(snapshot.crossTraceState)) {
     failures.push(`missing S89.36 archive cross trace: ${JSON.stringify({ hasCrossTrace: snapshot.hasCrossTrace, crossTraceState: snapshot.crossTraceState })}`);
@@ -3310,6 +3323,7 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     const bodyText = document.body.innerText || "";
     const agendaBand = document.querySelector('[data-polish-court-agenda-band="s89-34-main-court-desk"]');
     const crossTrace = document.querySelector('[data-polish-cross-trace="s89-36-cross-page-trace"][data-cross-trace-page="court"]');
+    const courtReader = document.querySelector('[data-polish-court-reader="s90-4-archive-court-reader"]');
     const crossTraceCard = crossTrace?.querySelector(".crossPageTraceGrid article");
     const crossTraceCardStyle = crossTraceCard ? window.getComputedStyle(crossTraceCard) : null;
     const agendaStyle = agendaBand ? window.getComputedStyle(agendaBand) : null;
@@ -3333,6 +3347,9 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
       agendaBandMarker: agendaBand?.getAttribute("data-polish-court-agenda-band") || "",
       agendaState: agendaBand?.getAttribute("data-agenda-state") || "",
       agendaText: agendaBand?.textContent || "",
+      courtReaderMarker: courtReader?.getAttribute("data-polish-court-reader") || "",
+      courtReaderState: courtReader?.getAttribute("data-court-reader-state") || "",
+      courtReaderText: courtReader?.textContent || "",
       agendaAnimation: agendaStyle?.animationName || "",
       agendaSealAnimation: agendaSealStyle?.animationName || "",
       agendaStepAnimation: agendaStepStyle?.animationName || "",
@@ -3369,6 +3386,15 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
   if (initialSnapshot.agendaState !== "ready") failures.push(`unexpected S89.34 court agenda state: ${initialSnapshot.agendaState}`);
   for (const requiredCopy of ["官署议程", "御案传签", "章奏", "谕旨", "朝议", "堂审军议", "六署可查"]) {
     if (!initialSnapshot.agendaText.includes(requiredCopy)) failures.push(`S89.34 court agenda lacked ${requiredCopy}`);
+  }
+  if (
+    initialSnapshot.courtReaderMarker !== "s90-4-archive-court-reader" ||
+    !/^(ready|empty)$/.test(initialSnapshot.courtReaderState) ||
+    !initialSnapshot.courtReaderText.includes("专题读法") ||
+    !initialSnapshot.courtReaderText.includes("材料入席") ||
+    !initialSnapshot.courtReaderText.includes("不定终局")
+  ) {
+    failures.push(`S90.4 court reader missing: ${JSON.stringify({ marker: initialSnapshot.courtReaderMarker, state: initialSnapshot.courtReaderState, text: initialSnapshot.courtReaderText.slice(0, 160) })}`);
   }
   if (initialSnapshot.shellMotion !== "reduced" && !initialSnapshot.reducedMotion) {
     if (!initialSnapshot.agendaAnimation.includes("mainCourtDeskPaperUnroll")) failures.push(`S89.60 court agenda animation was ${initialSnapshot.agendaAnimation}`);
@@ -3433,10 +3459,14 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     await page.getByRole("dialog", { name: label }).waitFor({ timeout: 10000 });
     const dialogSnapshot = await page.evaluate(({ expectedLabel, tokens }) => {
       const dialog = document.querySelector(".localSurfacePanel");
+      const topicReader = dialog?.querySelector("[data-polish-topic-reader='s90-4-archive-court-reader']");
       const bodyText = document.body.innerText || "";
       const dialogText = dialog?.textContent || "";
       return {
         dialogText,
+        topicReaderMarker: topicReader?.getAttribute("data-polish-topic-reader") || "",
+        topicReaderState: topicReader?.getAttribute("data-topic-reader-state") || "",
+        topicReaderText: topicReader?.textContent || "",
         hasTitle: dialogText.includes(expectedLabel),
         hasLedgerSource: dialogText.includes("卷宗取材"),
         hasMaterials: dialogText.includes("材料"),
@@ -3463,6 +3493,15 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     if (!dialogSnapshot.hasDeliberation) perSurfaceFailures.push("missing deliberation column");
     if (!dialogSnapshot.hasDraft) perSurfaceFailures.push("missing draft column");
     if (dialogSnapshot.topicSurfaceColumnCount < 3) perSurfaceFailures.push(`S89.43 topic surface columns lacked static paper hook: ${dialogSnapshot.topicSurfaceColumnCount}`);
+    if (
+      dialogSnapshot.topicReaderMarker !== "s90-4-archive-court-reader" ||
+      !/^(ready|empty|loading|error)$/.test(dialogSnapshot.topicReaderState) ||
+      !dialogSnapshot.topicReaderText.includes("材料") ||
+      !dialogSnapshot.topicReaderText.includes("证据") ||
+      !dialogSnapshot.topicReaderText.includes("草稿")
+    ) {
+      perSurfaceFailures.push(`S90.4 topic reader missing: ${JSON.stringify({ marker: dialogSnapshot.topicReaderMarker, state: dialogSnapshot.topicReaderState, text: dialogSnapshot.topicReaderText.slice(0, 160) })}`);
+    }
     if (!dialogSnapshot.hasReplyBoundary) perSurfaceFailures.push("missing player-facing reply boundary");
     if (dialogSnapshot.hiddenLeaks.length) perSurfaceFailures.push(`hidden text leaked: ${dialogSnapshot.hiddenLeaks.join(", ")}`);
     if (dialogSnapshot.playerFacingLeaks.length) perSurfaceFailures.push(`player-facing topic terms leaked: ${dialogSnapshot.playerFacingLeaks.join(", ")}`);
@@ -4072,6 +4111,8 @@ async function runClientSmoke(options = {}) {
         transferLedgerMarker: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.getAttribute("data-polish-inventory") || "",
         transferBoundaryMarker: document.querySelector("[data-polish-inventory-boundary='s89-23-transfer-boundary']")?.getAttribute("data-polish-inventory-boundary") || "",
         transferLedgerText: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.textContent || "",
+        inventoryReaderMarker: document.querySelector("[data-polish-inventory-reader='s90-4-inventory-ledger-index']")?.getAttribute("data-polish-inventory-reader") || "",
+        inventoryReaderText: document.querySelector("[data-polish-inventory-reader='s90-4-inventory-ledger-index']")?.textContent || "",
         horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
         forbiddenText: text.match(inventoryLeakPattern) || []
       };
@@ -4093,6 +4134,14 @@ async function runClientSmoke(options = {}) {
       !inventorySnapshot.transferLedgerText.includes("主卷回音")
     ) {
       throw new Error(`S89.23 desktop inventory transfer reader missing: ${JSON.stringify(inventorySnapshot)}`);
+    }
+    if (
+      inventorySnapshot.inventoryReaderMarker !== "s90-4-inventory-ledger-index" ||
+      !inventorySnapshot.inventoryReaderText.includes("囊箧四读") ||
+      !inventorySnapshot.inventoryReaderText.includes("只读公开账") ||
+      !inventorySnapshot.inventoryReaderText.includes("本页只整理呈请")
+    ) {
+      throw new Error(`S90.4 desktop inventory reader missing: ${JSON.stringify(inventorySnapshot)}`);
     }
     if (inventorySnapshot.horizontalOverflow) {
       throw new Error(`S89.2 desktop inventory caused horizontal overflow: ${JSON.stringify(inventorySnapshot)}`);
@@ -4292,6 +4341,8 @@ async function runClientSmoke(options = {}) {
         transferLedgerMarker: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.getAttribute("data-polish-inventory") || "",
         transferBoundaryMarker: document.querySelector("[data-polish-inventory-boundary='s89-23-transfer-boundary']")?.getAttribute("data-polish-inventory-boundary") || "",
         transferLedgerText: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.textContent || "",
+        inventoryReaderMarker: document.querySelector("[data-polish-inventory-reader='s90-4-inventory-ledger-index']")?.getAttribute("data-polish-inventory-reader") || "",
+        inventoryReaderText: document.querySelector("[data-polish-inventory-reader='s90-4-inventory-ledger-index']")?.textContent || "",
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
         forbiddenText: text.match(inventoryLeakPattern) || []
       };
@@ -4313,6 +4364,14 @@ async function runClientSmoke(options = {}) {
       !mobileInventory.transferLedgerText.includes("主卷回音")
     ) {
       throw new Error(`S89.23 mobile inventory transfer reader missing: ${JSON.stringify(mobileInventory)}`);
+    }
+    if (
+      mobileInventory.inventoryReaderMarker !== "s90-4-inventory-ledger-index" ||
+      !mobileInventory.inventoryReaderText.includes("囊箧四读") ||
+      !mobileInventory.inventoryReaderText.includes("只读公开账") ||
+      !mobileInventory.inventoryReaderText.includes("本页只整理呈请")
+    ) {
+      throw new Error(`S90.4 mobile inventory reader missing: ${JSON.stringify(mobileInventory)}`);
     }
     if (mobileInventory.horizontalOverflow) {
       throw new Error(`S89.2 mobile inventory caused horizontal overflow: ${JSON.stringify(mobileInventory)}`);
