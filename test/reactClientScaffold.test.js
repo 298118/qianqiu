@@ -3391,6 +3391,86 @@ test("S89.67 home opening and save shelf states use semantic tokens", () => {
   assert.doesNotMatch(tokenizedBlocks, /#3b271d|#5e4a37|#7a6048|#2f261f|#765b43|#7b241f|#9e3029|#7c6045|#987245|#6f1f1a|#5e4936|rgb\(84 60 43 \/ \.18\)|rgb\(84 60 43 \/ \.2\)|rgb\(84 60 43 \/ \.22\)|rgb\(142 47 39 \/ \.16\)|rgb\(142 47 39 \/ \.22\)|rgb\(142 47 39 \/ \.32\)|rgb\(142 47 39 \/ \.36\)|rgb\(204 156 72 \/ \.32\)|rgb\(165 58 47 \/ \.08\)|rgb\(255 252 238 \/ \.52\)|rgb\(255 252 238 \/ \.58\)|rgb\(255 252 238 \/ \.68\)|rgb\(255 248 230 \/ \.78\)|rgb\(220 199 165 \/ \.46\)|rgb\(42 29 20 \/ \.08\)|rgb\(42 29 20 \/ \.1\)|rgb\(42 29 20 \/ \.12\)|rgb\(158 48 41 \/ \.12\)/);
 });
 
+test("S89.68 home identity and portrait choices reuse semantic tokens", () => {
+  const tokensSource = readClientStyleModule("tokens/tokens.css");
+  const homeSource = readClientStyleModule("routes/home.css");
+  const runtimeSource = readClientStyleSource();
+  const readRuleBlock = (selector) => {
+    const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const rulePattern = new RegExp(`(?:^|\\n)${escapedSelector} \\{`, "g");
+    let match;
+    while ((match = rulePattern.exec(homeSource))) {
+      const lineStart = match.index + (match[0].startsWith("\n") ? 1 : 0);
+      const previousLineStart = homeSource.lastIndexOf("\n", Math.max(0, lineStart - 2));
+      const previousLine = homeSource.slice(previousLineStart + 1, lineStart).trim();
+      if (!previousLine.endsWith(",")) {
+        const end = homeSource.indexOf("\n}", lineStart);
+        assert.notEqual(end, -1, `unterminated CSS rule ${selector}`);
+        return homeSource.slice(lineStart, end + 2);
+      }
+    }
+    assert.fail(`missing standalone CSS rule ${selector}`);
+  };
+  const readCombinedRuleBlock = (selector) => {
+    const start = homeSource.indexOf(selector);
+    assert.notEqual(start, -1, `missing combined CSS rule ${selector}`);
+    const end = homeSource.indexOf("\n}", start);
+    assert.notEqual(end, -1, `unterminated combined CSS rule ${selector}`);
+    return homeSource.slice(start, end + 2);
+  };
+
+  const labelBlock = readRuleBlock("label");
+  const legendBlock = readRuleBlock("legend");
+  const choicePillBlock = readRuleBlock(".choicePill");
+  const hiddenInputBlock = readCombinedRuleBlock(".choicePill input,");
+  const selectedChoiceBlock = readCombinedRuleBlock(".choicePill:has(input:checked),");
+  const selectedChoiceTextBlock = readRuleBlock(".choicePill:has(input:checked)");
+  const focusChoiceBlock = readCombinedRuleBlock(".choicePill:has(input:focus-visible),");
+  const roleNoteBlock = readRuleBlock(".roleNote");
+  const portraitCardBlock = readRuleBlock(".portraitChoiceCard");
+  const portraitCaptionBlock = readRuleBlock(".portraitChoiceCard span");
+  const portraitSelectedBlock = readRuleBlock(".portraitChoiceCard:has(input:checked)");
+
+  assert.match(tokensSource, /--qq-color-control-border: rgb\(84 60 43 \/ \.34\)/);
+  assert.match(tokensSource, /--qq-color-paper-light: rgb\(255 252 238 \/ \.72\)/);
+  assert.match(tokensSource, /--qq-color-vermilion-border-strong: rgb\(142 47 39 \/ \.62\)/);
+  assert.match(tokensSource, /--qq-color-state-red-bg: rgb\(165 58 47 \/ \.1\)/);
+  assert.ok(runtimeSource.length < 200_000);
+
+  assert.match(labelBlock, /color: var\(--qq-color-ink\)/);
+  assert.match(legendBlock, /color: var\(--qq-color-ink\)/);
+  assert.match(choicePillBlock, /border: 1px solid var\(--qq-color-control-border\)/);
+  assert.match(choicePillBlock, /background: var\(--qq-color-paper-light\)/);
+  assert.match(choicePillBlock, /color: var\(--qq-color-ink\)/);
+  assert.match(hiddenInputBlock, /\.portraitChoiceCard input/);
+  assert.match(selectedChoiceBlock, /border-color: var\(--qq-color-vermilion-border-strong\)/);
+  assert.match(selectedChoiceBlock, /background: var\(--qq-color-state-red-bg\)/);
+  assert.match(selectedChoiceTextBlock, /color: var\(--qq-color-vermilion-dark\)/);
+  assert.match(focusChoiceBlock, /outline: 2px solid var\(--qq-color-vermilion-glow-outline\)/);
+  assert.match(roleNoteBlock, /border: 1px solid var\(--qq-color-disabled-border\)/);
+  assert.match(roleNoteBlock, /background: var\(--qq-color-paper-inset-soft\)/);
+  assert.match(roleNoteBlock, /color: var\(--qq-color-muted\)/);
+  assert.match(portraitCardBlock, /border: 1px solid var\(--qq-color-border-medium\)/);
+  assert.match(portraitCardBlock, /background: var\(--qq-color-paper-light\)/);
+  assert.match(portraitCaptionBlock, /color: var\(--qq-color-muted\)/);
+  assert.match(portraitSelectedBlock, /box-shadow: inset 0 0 0 1px var\(--qq-color-status-surface-border\)/);
+
+  const tokenizedBlocks = [
+    labelBlock,
+    legendBlock,
+    choicePillBlock,
+    hiddenInputBlock,
+    selectedChoiceBlock,
+    selectedChoiceTextBlock,
+    focusChoiceBlock,
+    roleNoteBlock,
+    portraitCardBlock,
+    portraitCaptionBlock,
+    portraitSelectedBlock
+  ].join("\n");
+  assert.doesNotMatch(tokenizedBlocks, /#3a2b21|#7b241f|#6d5844|#7a6048|rgb\(84 60 43 \/ \.(?:3|22|26)\)|rgb\(255 252 238 \/ \.(?:78|74)\)|rgb\(255 248 230 \/ \.54\)|rgb\(142 47 39 \/ \.(?:78|24|18)\)|rgb\(165 58 47 \/ \.12\)/);
+});
+
 test("S89.51 shared paper state surfaces reuse semantic color tokens", () => {
   const tokensSource = readClientStyleModule("tokens/tokens.css");
   const polishSource = readClientStyleModule("utilities/polish-surfaces.css");

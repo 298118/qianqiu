@@ -553,7 +553,7 @@ h2 {
 label {
   display: grid;
   gap: 6px;
-  color: #3a2b21;
+  color: var(--qq-color-ink);
   font-size: 0.88rem;
 }
 
@@ -566,7 +566,7 @@ fieldset {
 
 legend {
   margin-bottom: 6px;
-  color: #3a2b21;
+  color: var(--qq-color-ink);
   font-size: 0.88rem;
 }
 
@@ -588,36 +588,42 @@ legend {
   display: grid;
   min-height: 40px;
   place-items: center;
-  border: 1px solid rgb(84 60 43 / .3);
-  background: rgb(255 252 238 / .78);
-  color: #3a2b21;
+  border: 1px solid var(--qq-color-control-border);
+  background: var(--qq-color-paper-light);
+  color: var(--qq-color-ink);
   cursor: pointer;
 }
 
-.choicePill input {
+.choicePill input,
+.portraitChoiceCard input {
   position: absolute;
   width: 1px;
   height: 1px;
   opacity: 0;
 }
 
+.choicePill:has(input:checked),
+.portraitChoiceCard:has(input:checked) {
+  border-color: var(--qq-color-vermilion-border-strong);
+  background: var(--qq-color-state-red-bg);
+}
+
 .choicePill:has(input:checked) {
-  border-color: rgb(142 47 39 / .78);
-  background: rgb(165 58 47 / .12);
-  color: #7b241f;
+  color: var(--qq-color-vermilion-dark);
   font-weight: 800;
 }
 
-.choicePill:has(input:focus-visible) {
-  outline: 2px solid rgb(142 47 39 / .24);
+.choicePill:has(input:focus-visible),
+.portraitChoiceCard:has(input:focus-visible) {
+  outline: 2px solid var(--qq-color-vermilion-glow-outline);
   outline-offset: 2px;
 }
 
 .roleNote {
   margin: 0;
-  border: 1px solid rgb(84 60 43 / .22);
-  background: rgb(255 248 230 / .54);
-  color: #6d5844;
+  border: 1px solid var(--qq-color-disabled-border);
+  background: var(--qq-color-paper-inset-soft);
+  color: var(--qq-color-muted);
   line-height: 1.65;
   padding: 10px;
 }
@@ -639,16 +645,9 @@ legend {
   gap: 6px;
   min-width: 0;
   padding: 7px;
-  border: 1px solid rgb(84 60 43 / .26);
-  background: rgb(255 252 238 / .74);
+  border: 1px solid var(--qq-color-border-medium);
+  background: var(--qq-color-paper-light);
   cursor: pointer;
-}
-
-.portraitChoiceCard input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
 }
 
 .portraitChoiceCard .portraitFrame {
@@ -656,19 +655,12 @@ legend {
 }
 
 .portraitChoiceCard span {
-  color: #7a6048;
+  color: var(--qq-color-muted);
   font-size: 0.72rem;
   line-height: 1.25;
   text-align: center;
 }
 
 .portraitChoiceCard:has(input:checked) {
-  border-color: rgb(142 47 39 / .78);
-  background: rgb(165 58 47 / .12);
-  box-shadow: inset 0 0 0 1px rgb(142 47 39 / .18);
-}
-
-.portraitChoiceCard:has(input:focus-visible) {
-  outline: 2px solid rgb(142 47 39 / .24);
-  outline-offset: 2px;
+  box-shadow: inset 0 0 0 1px var(--qq-color-status-surface-border);
 }
