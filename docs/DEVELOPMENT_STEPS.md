@@ -157,7 +157,7 @@
 - 边界：本步只改 React 前端读法、科举/皇榜 route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决；浏览器不得凭同名、评语、荣誉摘要、本地细读选择或前端文案补认榜次、关系、官职或 hidden 信息。
 - 验证：已通过 `node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（108 tests）、`npm run typecheck:client`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-7-ranking-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1222 tests）；首次 source canary 因 S91.6/S91.7 移动端 CSS selector 合并破坏旧正则守门失败，已拆回独立规则后通过；首次 App Vitest 因新增“授官”读法让旧 `getByText("授官")` 变多匹配失败，已改为数量断言后通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
 - 子代理：提交前只读复审代理 `019e6acd-3e5a-7f00-85b2-269545fa87cc` 已复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为提交前把复审待执行文案改为已完成，已采纳。首次复审提示只禁止 `git add/commit/push/PR`，代理运行了 `git status/diff` 等只读 Git 命令；主代理随后发起同一代理的无 Git 补充复审，明确禁止任何 Git 命令，代理确认未运行 Git、未编辑文件，并再次未发现阻塞问题。
-- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
+- 提交：S91.7 实现提交 `77504ecd`（`Polish ranking outcome reader`）；本哈希记录随纯文档后续提交补入台账。
 
 ### 2026-05-27：S91.6 科举落墨校阅与候榜状态 polish 完成
 
