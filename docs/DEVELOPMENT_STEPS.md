@@ -119,31 +119,40 @@
 | S90.3 | DONE | S89/S90 前端 polish 专题归档 | 已将 S89.1-S89.68 与 S90.1/S90.2/S90.4 从 Git history、压缩索引和 brief 摘要整理为 [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)；避免重新引入逐项长流水。 |
 | S91.1 | DONE | 设置/AI 来源状态读法 polish | 已完成右上角印匣“推演设置”的来源三读：本地样例可开卷、真实来源接通/缺 key、分工候复边界；只改 React 前端读法、CSS、测试与文档，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.2 | DONE | 首页开卷校阅与旧案入口 polish | 已完成首页“开卷校阅”四读，从现有表单状态、runtime 画像 registry、旧案目录和本地 loading/error 派生题名、立绘、自定背景字数、旧案架和朱印候复边界；并修正人物/囊箧移动端按钮内部 overflow 守门，不新增 route/API/schema/AI 权限/依赖/素材、存档字段或服务器裁决。 |
+| S91.3 | DONE | 主卷行止校阅与快捷建议状态 polish | 已完成主卷“行止校阅”四读，从现有 route/session 状态、quick action 状态、上一回批和本地草稿长度派生身份、草稿、快捷建议与回批边界；草稿只显示来源与字数，不回显全文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.2：首页开卷校阅与旧案入口 polish 已完成。首页开卷表单新增 `s91-2-home-opening-reader` 的“题名 / 立绘 / 旧案 / 朱印”四读校阅，把朝代年份、姓名、身份/书生家境、立绘册状态、已选立绘、自定背景字数、旧案目录状态和朱印候复边界拆成可扫读信息；自定背景不回显玩家输入全文，旧案只读公开案卷目录。
-- S91.2 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有 React 表单状态、安全旧案目录、runtime 画像 registry 和本地页面状态。
-- 最近完整运行态验证来自 S91.2：`node --test test/reactClientScaffold.test.js`（103 tests）、`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、S91.2 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client` 和 `node scripts/clientSmoke.js --screenshots artifacts/s91-2-home-opening-reader-smoke` 均通过。一次完整 `npm run smoke:browser -- --screenshots artifacts/s91-2-home-opening-reader-smoke` 因 360 秒外层超时中断，随后直接重跑同一 browser smoke 脚本本体通过；移动端囊箧内部 overflow 由人物/囊箧按钮装饰伪元素造成，已用移动端样式与 source canary 修正。
+- 最新实现步骤 S91.3：主卷行止校阅与快捷建议状态 polish 已完成。主卷案桌新增 `s91-3-main-turn-reader` 的“身份 / 草稿 / 快捷 / 回批”四读，把案主身份、当前场景、已载公开卷宗、本地草稿来源与字数、quick action 状态/条数、上一回批和候复边界集中成可扫读状态；快捷建议写入后仍只显示草稿来源与字数，不回显草稿全文。
+- S91.3 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全 view、route/session 状态、本地草稿和页面状态。
+- 最近完整运行态验证来自 S91.3：`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（104 tests）、`node --check scripts/clientSmoke.js`、S91.3 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm test`（1218 tests）和 `node scripts/clientSmoke.js --screenshots artifacts/s91-3-main-turn-reader-smoke` 均通过。初次 source canary 暴露新增 CSS 命中重复预算守门，已将读法网格间距调整并复跑通过。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.2：
+最新运行态完整验证锚点来自 S91.3：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（103 tests）
+- `node --test test/reactClientScaffold.test.js`（104 tests）
 - `npm run typecheck:client`
 - `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 76 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-2-home-opening-reader-smoke`
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-3-main-turn-reader-smoke`
 - `npm run check:docs-governance`
 - `git diff --check`
-- `npm test`（1217 tests）
+- `npm test`（1218 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S91.3 主卷行止校阅与快捷建议状态 polish 完成
+
+- 范围：主卷案桌新增 `data-polish-game-turn-reader="s91-3-main-turn-reader"` 的“身份 / 草稿 / 快捷 / 回批”四读，从现有 route/session 状态、案主身份、场景、已载公开卷宗计数、quick action 状态/条数、上一回批和本地草稿派生；本地草稿只显示来源与字数，不回显草稿全文。
+- 体验修正：玩家在主卷上可直接确认当前身份、草稿是否已入底部奏折、快捷建议是否可用、呈上后仍回主卷候复；快捷建议写入草稿后的读法由 browser smoke 检查不会自动提交、不会回显行动全文。
+- 边界：本步只改 React 前端读法、route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决；浏览器仍只消费现有安全 view、本地草稿和页面状态。
+- 验证：已通过 `npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（104 tests）、`node --check scripts/clientSmoke.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm test`（1218 tests）和 `node scripts/clientSmoke.js --screenshots artifacts/s91-3-main-turn-reader-smoke`。初次 `node --test test/reactClientScaffold.test.js` 因新增 `.gameTurnReader dl` 命中既有 CSS duplicate budget 失败，已调开网格间距后复跑通过。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-27：S91.2 首页开卷校阅与旧案入口 polish 完成
 

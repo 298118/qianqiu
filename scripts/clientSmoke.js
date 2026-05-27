@@ -1990,8 +1990,49 @@ async function startMockGameThroughHome(page, screenshotsDir) {
   if (failures.length) {
     throw new Error(`Default entry session links are not bound to the started Mock session: ${failures.join("; ")}`);
   }
+  await assertS913MainTurnReaderPolish(page, "S91.3 main turn reader");
 
   return { sessionId, screenshot };
+}
+
+async function assertS913MainTurnReaderPolish(page, label, options = {}) {
+  const snapshot = await page.evaluate(() => {
+    const reader = document.querySelector("[data-polish-game-turn-reader='s91-3-main-turn-reader']");
+    const text = reader?.textContent || "";
+    const rowLabels = reader ? [...reader.querySelectorAll("dt")].map((node) => node.textContent?.trim() || "") : [];
+    const readerGrid = reader?.querySelector("dl");
+    return {
+      exists: Boolean(reader),
+      marker: reader?.getAttribute("data-polish-game-turn-reader") || "",
+      text,
+      rowLabels,
+      rowCount: reader?.querySelectorAll("dl > div").length || 0,
+      gridTemplateColumns: readerGrid ? getComputedStyle(readerGrid).gridTemplateColumns : "",
+      horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 4,
+      forbiddenText: text.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|\/api\/game\/state|\/api\/dev\/session-diagnostics|draftContext|schema|manifest|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|ledger|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || []
+    };
+  });
+  const failures = [];
+  if (!snapshot.exists) failures.push("missing S91.3 main turn reader");
+  if (snapshot.marker !== "s91-3-main-turn-reader") failures.push(`main turn reader marker was ${snapshot.marker}`);
+  if (snapshot.rowCount !== 4) failures.push(`main turn reader row count was ${snapshot.rowCount}`);
+  for (const labelText of ["身份", "草稿", "快捷", "回批"]) {
+    if (!snapshot.rowLabels.includes(labelText)) failures.push(`main turn reader lacked row ${labelText}`);
+  }
+  for (const requiredText of ["行止校阅", "呈上前先看身份", "写入后仍只是案头草稿", "不在案头结算资源"]) {
+    if (!snapshot.text.includes(requiredText)) failures.push(`main turn reader lacked ${requiredText}`);
+  }
+  if (options.expectDraft && (!snapshot.text.includes("已入奏折") || !snapshot.text.includes("草稿约"))) {
+    failures.push(`main turn reader did not show draft length/source: ${snapshot.text.slice(0, 220)}`);
+  }
+  if (options.forbiddenDraftText && snapshot.text.includes(options.forbiddenDraftText)) {
+    failures.push("main turn reader echoed the draft text");
+  }
+  if (snapshot.horizontalOverflow) failures.push("main turn reader caused horizontal overflow");
+  if (snapshot.forbiddenText.length) failures.push(`forbidden main turn reader text: ${snapshot.forbiddenText.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`${label} polish failed: ${failures.join("; ")}`);
+  }
 }
 
 async function assertScholarPanel(page, sessionId, screenshotsDir) {
@@ -2873,6 +2914,10 @@ async function assertReturnHomeContinueAndTurn(page, sessionId, screenshotsDir) 
   if (!quickDraft.trim() || /provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥/i.test(quickDraft)) {
     throw new Error(`S75.9 quick action did not write a safe draft: ${quickDraft}`);
   }
+  await assertS913MainTurnReaderPolish(page, "S91.3 continued turn reader", {
+    expectDraft: true,
+    forbiddenDraftText: quickDraft
+  });
   const turnResponse = page.waitForResponse((response) => {
     try {
       const url = new URL(response.url());

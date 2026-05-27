@@ -6612,6 +6612,14 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
     expect(screen.getByRole("button", { name: "可行事" }).getAttribute("aria-expanded")).toBe("true");
     await screen.findByRole("button", { name: /温书 本地推演 写入草稿/ });
+    const turnReader = document.querySelector("[data-polish-game-turn-reader='s91-3-main-turn-reader']");
+    expect(turnReader).toBeTruthy();
+    expect(turnReader?.textContent || "").toContain("行止校阅");
+    expect(turnReader?.textContent || "").toContain("顾衡 · 书生");
+    expect(turnReader?.textContent || "").toContain("尚未落稿");
+    expect(turnReader?.textContent || "").toContain("已有 1 条快捷建议可写入草稿。");
+    expect(turnReader?.textContent || "").toContain("写入后仍只是案头草稿");
+    expect(turnReader?.textContent || "").toContain("不在案头结算资源、官职、考试、关系或未公开事实。");
     const quickCallsAfterLoad = fetchMock.mock.calls.filter(([url]) => url === `/api/ai/quick-actions/${sessionId}`).length;
     fireEvent.change(screen.getByLabelText("本回合行动"), { target: { value: "先自拟一段行动，不刷新快捷建议。" } });
     await new Promise((resolve) => window.setTimeout(resolve, 0));
@@ -6622,6 +6630,13 @@ describe("S74.1 React client shell", () => {
       source: "role-surface",
       targetPage: "game",
       text: "温习经义，择一篇旧文重加点窜。"
+    });
+    await waitFor(() => {
+      const readerText = document.querySelector("[data-polish-game-turn-reader='s91-3-main-turn-reader']")?.textContent || "";
+      expect(readerText).toContain("案头摘录已入奏折");
+      expect(readerText).toMatch(/草稿约 \d+ 字，只在本地候呈。/);
+      expect(readerText).not.toContain("温习经义，择一篇旧文重加点窜。");
+      expect(readerText).not.toMatch(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|draftContext|schema|manifest/i);
     });
     expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/turn")).toHaveLength(0);
 

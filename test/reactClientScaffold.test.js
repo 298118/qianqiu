@@ -1975,6 +1975,48 @@ test("S89.34 main desk and court agenda material polish stays safe-view-only", (
   );
 });
 
+test("S91.3 main turn reader stays local, player-facing, and draft-only", () => {
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const gameStyleSource = readClientStyleModule("routes/game.css");
+  const mobileLayoutSource = readClientStyleModule("responsive/mobile-layout.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = gamePageSource.indexOf("data-polish-game-turn-reader={mainTurnReaderPolishId}");
+  const readerEnd = gamePageSource.indexOf('<p className="statusLine gameDeskBoundary"', readerStart);
+  const readerBlock = readerStart >= 0 && readerEnd > readerStart
+    ? gamePageSource.slice(readerStart, readerEnd)
+    : "";
+  const runtimeCombined = stripSafeGuardPatterns(`${gamePageSource}\n${gameStyleSource}`);
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.match(gamePageSource, /const mainTurnReaderPolishId = "s91-3-main-turn-reader"/);
+  assert.match(gamePageSource, /getMainTurnReaderRows/);
+  assert.match(gamePageSource, /getQuickActionReaderText/);
+  assert.match(gamePageSource, /getActionDraftLength/);
+  assert.match(gamePageSource, /activeQuickActionSuggestions/);
+  assert.match(gamePageSource, /quickSuggestionCount: activeQuickActionSuggestions\?\.length \?\? 0/);
+  assert.match(gamePageSource, /aria-label="本旬行止校阅"/);
+  assert.match(gamePageSource, /呈上前先看身份、草稿、快捷建议与回批边界/);
+  assert.match(gamePageSource, /草稿约 \$\{input\.draftLength\} 字，只在本地候呈/);
+  assert.match(gamePageSource, /写入后仍只是案头草稿，不会自动呈递/);
+  assert.match(gamePageSource, /不在案头结算资源、官职、考试、关系或未公开事实/);
+  assert.doesNotMatch(readerBlock, /activeActionDraft\?\.text|activeActionDraft\.text|submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|ledger/);
+
+  assert.match(gameStyleSource, /\.gameTurnReader \{/);
+  assert.match(gameStyleSource, /\.gameTurnReaderHeader/);
+  assert.match(gameStyleSource, /\.gameTurnReader dl \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(gameStyleSource, /@media \(max-width: 760px\)[\s\S]*\.gameTurnReader dl \{[\s\S]*grid-template-columns: 1fr/);
+  assert.doesNotMatch(mobileLayoutSource, /\.gameTurnReader/);
+  assert.match(appTestSource, /s91-3-main-turn-reader/);
+  assert.match(appTestSource, /案头摘录已入奏折/);
+  assert.match(clientSmokeSource, /assertS913MainTurnReaderPolish/);
+  assert.match(clientSmokeSource, /S91\.3 main turn reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.60 main and court desk keyframes use semantic names", () => {
   const keyframesSource = readText("client/src/styles/motion/keyframes.css");
   const gameStyleSource = readText("client/src/styles/routes/game.css");

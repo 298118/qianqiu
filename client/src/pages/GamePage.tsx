@@ -13,7 +13,7 @@ import { ScholarPanel } from "../components/ScholarPanel";
 import { routeCatalog } from "../routes/routeCatalog";
 import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
-import { useUiStateStore, type LocalSurface } from "../state/uiState";
+import { useUiStateStore, type ActionDraft, type LocalSurface } from "../state/uiState";
 import { getPlayerIdentityLabel } from "../text/playerLabels";
 
 const unsafeGameShellFragments = [
@@ -116,6 +116,7 @@ const gameTabs = [
 const independentSessionRouteIds = new Set(["people", "inventory", "archive", "exam", "ranking", "court", "settings"]);
 const roleCycleRouteIds = new Set(["game", ...gameTabs.map((tab) => tab.id)]);
 const mainCourtDeskPolishId = "s89-34-main-court-desk";
+const mainTurnReaderPolishId = "s91-3-main-turn-reader";
 const gameDeskGroups = [
   { label: "行旅", items: ["舆图", "史册", "局势", "后果"] },
   { label: "人物", items: ["人物", "来函", "身份"] },
@@ -152,6 +153,68 @@ function getActionDraftSourceLabel(source: unknown) {
     exam: "科举草稿"
   };
   return typeof source === "string" && labels[source] ? labels[source] : "本地草稿";
+}
+
+function getActionDraftLength(draft: ActionDraft | null) {
+  const text = typeof draft?.text === "string" ? draft.text.trim() : "";
+  return text.length;
+}
+
+function getQuickActionReaderText(status: "idle" | "loading" | "ready" | "error", count: number) {
+  if (status === "loading") return "快捷建议正在候成；可先手写行动。";
+  if (status === "error") return "快捷建议暂不可取；仍可手写行动。";
+  if (status === "ready" && count > 0) return `已有 ${count} 条快捷建议可写入草稿。`;
+  if (status === "ready") return "暂无可用快捷建议；可手写行动。";
+  return "快捷建议候启；可先手写行动。";
+}
+
+function getMainTurnReaderRows(input: {
+  readonly playerName: string;
+  readonly identityLine: string;
+  readonly sceneTitle: string;
+  readonly safeViewCount: number;
+  readonly safeViewTotal: number;
+  readonly draft: ActionDraft | null;
+  readonly draftLength: number;
+  readonly quickActionStatus: "idle" | "loading" | "ready" | "error";
+  readonly quickSuggestionCount: number;
+  readonly routeIsLoading: boolean;
+  readonly hasRouteError: boolean;
+  readonly hasLastTurn: boolean;
+}) {
+  const draftSource = input.draft ? getActionDraftSourceLabel(input.draft.source) : "未起稿";
+  return [
+    {
+      label: "身份",
+      value: `${input.playerName} · ${input.identityLine}`,
+      detail: `${input.sceneTitle}；已载 ${input.safeViewCount} / ${input.safeViewTotal} 类公开卷宗。`
+    },
+    {
+      label: "草稿",
+      value: input.draft ? `${draftSource}已入奏折` : "尚未落稿",
+      detail: input.draft
+        ? `草稿约 ${input.draftLength} 字，只在本地候呈。`
+        : "可从底部奏折、身份行动或快捷建议起稿。"
+    },
+    {
+      label: "快捷",
+      value: getQuickActionReaderText(input.quickActionStatus, input.quickSuggestionCount),
+      detail: "写入后仍只是案头草稿，不会自动呈递。"
+    },
+    {
+      label: "回批",
+      value: input.hasRouteError
+        ? "主卷读取暂阻。"
+        : input.routeIsLoading
+        ? "主卷候载。"
+        : input.hasLastTurn
+        ? "上一回批已入本纪。"
+        : "呈上后候主卷回批。",
+      detail: input.hasRouteError
+        ? "显示固定错误，不补造后果。"
+        : "不在案头结算资源、官职、考试、关系或未公开事实。"
+    }
+  ];
 }
 
 function getSafeViewReading(items: readonly { readonly label: string; readonly ready: boolean }[]) {
@@ -194,6 +257,7 @@ export function GamePage() {
   const activeLastTurn = routeSessionSupported && lastTurn?.sessionId === sessionId ? lastTurn : null;
   const activePlayerPayload = routeSessionSupported && currentPlayerPayload?.sessionId === sessionId ? currentPlayerPayload : null;
   const activeActionDraft = routeSessionSupported && actionDraft?.sessionId === sessionId ? actionDraft : null;
+  const activeQuickActionSuggestions = quickActions?.sessionId === sessionId ? quickActions.quickActionSuggestions : null;
   const player = activeSession?.worldState?.player;
   const runnable = isRunnableSessionId(sessionId);
   const routeIsLoading = status === "loading" || (runnable && !activeSession);
@@ -235,6 +299,7 @@ export function GamePage() {
   const activeSafeViewCount = safeViewItems.filter((item) => item.ready).length;
   const actionDraftStateLabel = activeActionDraft ? "已有本地草稿" : "暂无草稿";
   const actionDraftSourceLabel = activeActionDraft ? getActionDraftSourceLabel(activeActionDraft.source) : "未起稿";
+  const actionDraftLength = getActionDraftLength(activeActionDraft);
   const safeViewReading = getSafeViewReading(safeViewItems);
   const readySafeViewLabels = new Set(safeViewItems.filter((item) => item.ready).map((item) => item.label));
   const deskState = routeIsLoading ? "loading" : activeActionDraft ? "draft" : activeSafeViewCount > 0 ? "ready" : "quiet";
@@ -252,6 +317,20 @@ export function GamePage() {
       totalCount: group.items.length,
       ready: readyCount > 0
     };
+  });
+  const turnReaderRows = getMainTurnReaderRows({
+    playerName,
+    identityLine,
+    sceneTitle: scene.title,
+    safeViewCount: activeSafeViewCount,
+    safeViewTotal: safeViewItems.length,
+    draft: activeActionDraft,
+    draftLength: actionDraftLength,
+    quickActionStatus,
+    quickSuggestionCount: activeQuickActionSuggestions?.length ?? 0,
+    routeIsLoading,
+    hasRouteError: Boolean(routeError),
+    hasLastTurn: Boolean(activeLastTurn)
   });
   const isIndependentMapRoute = location.pathname.endsWith("/map");
   const independentRouteId = getIndependentSessionRouteId(location.pathname);
@@ -377,6 +456,23 @@ export function GamePage() {
             </article>
           ))}
         </div>
+        <section className="gameTurnReader" aria-label="本旬行止校阅" data-polish-game-turn-reader={mainTurnReaderPolishId}>
+          <div className="gameTurnReaderHeader">
+            <p className="eyebrow">行止校阅</p>
+            <strong>呈上前先看身份、草稿、快捷建议与回批边界。</strong>
+          </div>
+          <dl>
+            {turnReaderRows.map((row) => (
+              <div key={row.label}>
+                <dt>{row.label}</dt>
+                <dd>
+                  <strong>{row.value}</strong>
+                  <span>{row.detail}</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
         <p className="statusLine gameDeskBoundary">未载不补造；行动仍回主卷候复。</p>
       </section>
       <nav className="sessionNav gameFeatureTabs" aria-label="案卷功能页签">
@@ -561,7 +657,7 @@ export function GamePage() {
         actionDraft={activeActionDraft}
         player={activePlayerPayload?.player ?? player}
         routeViews={activePlayerPayload?.routeViews}
-        aiSuggestions={quickActions?.sessionId === sessionId ? quickActions.quickActionSuggestions : null}
+        aiSuggestions={activeQuickActionSuggestions}
         quickActionStatus={quickActionStatus}
         runnable={runnable}
         loading={routeIsLoading}

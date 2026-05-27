@@ -521,6 +521,76 @@
     linear-gradient(135deg, rgb(255 252 238 / .74), rgb(142 47 39 / .08));
 }
 
+.gameTurnReader {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgb(84 60 43 / .2);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .68), rgb(238 226 197 / .48)),
+    var(--qq-material-xuan) center / 520px repeat;
+  padding: 12px;
+}
+
+.gameTurnReaderHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.gameTurnReaderHeader .eyebrow,
+.gameTurnReaderHeader strong {
+  margin: 0;
+}
+
+.gameTurnReaderHeader strong {
+  color: #5e382d;
+  font-size: .88rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.gameTurnReader dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.gameTurnReader dl > div {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 252 238 / .58);
+  padding: 9px;
+}
+
+.gameTurnReader dt {
+  color: #7a6048;
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+.gameTurnReader dd {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.gameTurnReader dd strong {
+  color: #3e2b1f;
+  font-size: .84rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.gameTurnReader dd span {
+  color: #5f4d3b;
+  font-size: .76rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .safeViewGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2022,6 +2092,15 @@
 }
 
 @media (max-width: 760px) {
+  .gameTurnReaderHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .gameTurnReader dl {
+    grid-template-columns: 1fr;
+  }
+
   .courtReaderGrid {
     grid-template-columns: 1fr;
   }
