@@ -118,31 +118,41 @@
 | S90.4 | DONE | 囊箧、史册、朝议深层读卷 polish | 已完成囊箧“四读”账解索引、史册“由史册成题”归档读法、朝议“材料入席”读法和 `SurfaceHost` 专题层材料/证据/草稿读法；只消费现有安全 view、本地草稿和页面状态，不新增 route/API/schema/AI 权限/依赖/素材或服务器裁决能力。 |
 | S90.3 | DONE | S89/S90 前端 polish 专题归档 | 已将 S89.1-S89.68 与 S90.1/S90.2/S90.4 从 Git history、压缩索引和 brief 摘要整理为 [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)；避免重新引入逐项长流水。 |
 | S91.1 | DONE | 设置/AI 来源状态读法 polish | 已完成右上角印匣“推演设置”的来源三读：本地样例可开卷、真实来源接通/缺 key、分工候复边界；只改 React 前端读法、CSS、测试与文档，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.2 | DONE | 首页开卷校阅与旧案入口 polish | 已完成首页“开卷校阅”四读，从现有表单状态、runtime 画像 registry、旧案目录和本地 loading/error 派生题名、立绘、自定背景字数、旧案架和朱印候复边界；并修正人物/囊箧移动端按钮内部 overflow 守门，不新增 route/API/schema/AI 权限/依赖/素材、存档字段或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.1：设置/AI 来源状态读法 polish 已完成。右上角印匣“推演设置”新增 `s91-1-ai-source-reader` 的来源三读，把本地样例可开卷、真实来源接通/缺 key、未保存改动与候复边界拆成可扫读三格；设置失败时只显示候载与固定中文提示，不补造外部来源或回显底层诊断。
-- S91.1 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费既有 `aiSettingsView.providerOptions`、`taskRoutes`、本地显示偏好/草稿和专题状态。
-- 最近完整运行态验证来自 S91.1：`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（102 tests）、S91.1 串行 Vitest（75 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`npm run check:docs-governance`、`git diff --check`、`npm test`（1216 tests）和 `npm run smoke:browser -- --screenshots artifacts/s91-1-ai-source-reader-smoke` 均通过。首次 browser smoke 因新文案与既有“未保存”状态选择器冲突失败，已改为“尚待落印”并单独重跑通过。
+- 最新实现步骤 S91.2：首页开卷校阅与旧案入口 polish 已完成。首页开卷表单新增 `s91-2-home-opening-reader` 的“题名 / 立绘 / 旧案 / 朱印”四读校阅，把朝代年份、姓名、身份/书生家境、立绘册状态、已选立绘、自定背景字数、旧案目录状态和朱印候复边界拆成可扫读信息；自定背景不回显玩家输入全文，旧案只读公开案卷目录。
+- S91.2 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有 React 表单状态、安全旧案目录、runtime 画像 registry 和本地页面状态。
+- 最近完整运行态验证来自 S91.2：`node --test test/reactClientScaffold.test.js`（103 tests）、`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、S91.2 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client` 和 `node scripts/clientSmoke.js --screenshots artifacts/s91-2-home-opening-reader-smoke` 均通过。一次完整 `npm run smoke:browser -- --screenshots artifacts/s91-2-home-opening-reader-smoke` 因 360 秒外层超时中断，随后直接重跑同一 browser smoke 脚本本体通过；移动端囊箧内部 overflow 由人物/囊箧按钮装饰伪元素造成，已用移动端样式与 source canary 修正。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.1：
+最新运行态完整验证锚点来自 S91.2：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（102 tests）
+- `node --test test/reactClientScaffold.test.js`（103 tests）
 - `npm run typecheck:client`
-- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 75 tests）
+- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 76 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-2-home-opening-reader-smoke`
 - `npm run check:docs-governance`
 - `git diff --check`
-- `npm run smoke:browser -- --screenshots artifacts/s91-1-ai-source-reader-smoke`
-- `npm test`（1216 tests）
+- `npm test`（1217 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S91.2 首页开卷校阅与旧案入口 polish 完成
+
+- 范围：首页开卷表单新增 `data-polish-home-reader="s91-2-home-opening-reader"` 的“题名 / 立绘 / 旧案 / 朱印”四读校阅，从现有朝代年份、姓名、身份、书生家境、自定背景字数、runtime 画像 registry、已选立绘、旧案目录状态、开局 loading/error 和年份校验派生玩家可扫读摘要；自定背景只呈字数，不回显全文。
+- 移动端验证修正：browser smoke 暴露既有人物/囊箧移动端仓储按钮内部 overflow；根因是页面级样式导入顺序和移动端按钮装饰伪元素会影响按钮滚动尺寸。已让 `PeoplePage` / `InventoryPage` 先导入 route 样式再导入 mobile override，并在窄屏关闭 `.npcListButton::after` / `.inventoryContainerButton::after`、允许仓储标签换行，source canary 守住顺序与规则。
+- 边界：本步只改 React 前端读法、CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决；浏览器仍只消费现有安全 view、本地表单/草稿和页面状态。
+- 子代理：提交前只读复审代理 `019e69c3-4e58-7680-852f-41db1761356d` 已复审最终 diff 与验证证据，未发现新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力、服务器裁决越界或自定背景全文回显；非阻塞提醒为 browser smoke 读取 `gridTemplateColumns` 但未显式断言移动端单列，当前已有移动端横向 overflow smoke 与 source canary 守住规则。
+- 验证：已通过 `node --test test/reactClientScaffold.test.js`（103 tests）、`npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-2-home-opening-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1217 tests）。一次完整 `npm run smoke:browser -- --screenshots artifacts/s91-2-home-opening-reader-smoke` 因 360 秒外层超时中断，随后直接重跑同一 browser smoke 脚本本体通过。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-27：S91.1 设置/AI 来源状态读法 polish 完成
 

@@ -33,6 +33,16 @@
     grid-template-columns: 20px minmax(0, 1fr);
   }
 
+  .inventoryContainerButton span {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .npcListButton::after,
+  .inventoryContainerButton::after {
+    display: none;
+  }
+
   .npcTradeForm .paperButton,
   .npcCommandForm .paperButton,
   .inventoryTransferPanel .paperButton {

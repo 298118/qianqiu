@@ -2889,6 +2889,13 @@ test("S89.38 CSS module entry keeps stable Vite import order", () => {
   assert.match(readText("client/src/pages/InventoryPage.tsx"), /styles\/responsive\/mobile-people-inventory\.css/);
   assert.match(readText("client/src/pages/ExamPage.tsx"), /styles\/responsive\/mobile-exam-ranking\.css/);
   assert.match(readText("client/src/pages/RankingPage.tsx"), /styles\/responsive\/mobile-exam-ranking\.css/);
+  for (const sourcePath of ["client/src/pages/PeoplePage.tsx", "client/src/pages/InventoryPage.tsx"]) {
+    const source = readText(sourcePath);
+    assert.ok(
+      source.indexOf('styles/routes/people-inventory.css') < source.indexOf('styles/responsive/mobile-people-inventory.css'),
+      `${sourcePath} must import people/inventory route styles before mobile overrides`
+    );
+  }
   assert.match(
     fs.readFileSync(path.join(rootDir, "client", "src", "styles", "responsive", "global-responsive.css"), "utf8"),
     /^@import "\.\/mobile-layout\.css";\s*$/
@@ -3121,6 +3128,7 @@ test("S89.44 map and archive static ledgers use paper surface utilities", () => 
 test("S89.45 inventory and economy ledgers use paper surface utilities", () => {
   const inventorySource = readText("client/src/pages/InventoryPage.tsx");
   const economySource = readText("client/src/components/EconomyTraceSection.tsx");
+  const mobileInventorySource = readClientStyleModule("responsive/mobile-people-inventory.css");
   const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
   const clientSmokeSource = readText("scripts/clientSmoke.js");
 
@@ -3134,6 +3142,9 @@ test("S89.45 inventory and economy ledgers use paper surface utilities", () => {
   assert.doesNotMatch(polishSource, /\.inventoryContainerList|\.inventoryItemList|\.inventoryLedgerBlock|\.inventoryTransferPanel|\.economyTraceSection/);
   assert.doesNotMatch(`${inventorySource}\n${economySource}`, /className="(?=[^"]*(?:inventoryContainerList|inventoryItemList|inventoryLedgerBlock|inventoryTransferPanel|economyTraceSection))(?=[^"]*paperMotion(?:Card|Panel))[^"]*"/);
   assert.doesNotMatch(economySource, /submitTurn|transferInventoryItem|\/api\/game\/turn|dangerouslySetInnerHTML/);
+  assert.match(mobileInventorySource, /\.inventoryContainerButton span \{[\s\S]*white-space: normal/);
+  assert.match(mobileInventorySource, /\.inventoryContainerButton span \{[\s\S]*word-break: break-word/);
+  assert.match(mobileInventorySource, /\.npcListButton::after,\s*\.inventoryContainerButton::after \{[\s\S]*display: none/);
 
   assert.match(clientSmokeSource, /inventorySurfaceCount: document\.querySelectorAll\("\.inventoryContainerList\.paperMotionSurface, \.inventoryItemList\.paperMotionSurface, \.inventoryLedgerBlock\.paperMotionSurface, \.inventoryTransferPanel\.paperMotionSurface, \.economyTraceSection\.paperMotionSurface"\)\.length/);
   assert.match(clientSmokeSource, /S89\.45 desktop inventory static surfaces/);
@@ -3619,6 +3630,70 @@ test("S89.68 home identity and portrait choices reuse semantic tokens", () => {
     portraitSelectedBlock
   ].join("\n");
   assert.doesNotMatch(tokenizedBlocks, /#3a2b21|#7b241f|#6d5844|#7a6048|rgb\(84 60 43 \/ \.(?:3|22|26)\)|rgb\(255 252 238 \/ \.(?:78|74)\)|rgb\(255 248 230 \/ \.54\)|rgb\(142 47 39 \/ \.(?:78|24|18)\)|rgb\(165 58 47 \/ \.12\)/);
+});
+
+test("S91.2 home opening reader stays derived from existing front-end state", () => {
+  const homePageSource = readText("client/src/pages/HomePage.tsx");
+  const homeSource = readClientStyleModule("routes/home.css");
+  const mobileLayoutSource = readClientStyleModule("responsive/mobile-layout.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const runtimeCombined = stripSafeGuardPatterns(`${homePageSource}\n${homeSource}\n${mobileLayoutSource}`);
+  const readRuleBlock = (selector) => {
+    const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const rulePattern = new RegExp(`(?:^|\\n)${escapedSelector} \\{`, "g");
+    let match;
+    while ((match = rulePattern.exec(homeSource))) {
+      const lineStart = match.index + (match[0].startsWith("\n") ? 1 : 0);
+      const previousLineStart = homeSource.lastIndexOf("\n", Math.max(0, lineStart - 2));
+      const previousLine = homeSource.slice(previousLineStart + 1, lineStart).trim();
+      if (!previousLine.endsWith(",")) {
+        const end = homeSource.indexOf("\n}", lineStart);
+        assert.notEqual(end, -1, `unterminated CSS rule ${selector}`);
+        return homeSource.slice(lineStart, end + 2);
+      }
+    }
+    assert.fail(`missing standalone CSS rule ${selector}`);
+  };
+
+  const readerBlock = readRuleBlock(".homeOpeningReader");
+  const readerHeaderBlock = readRuleBlock(".homeOpeningReaderHeader");
+  const readerGridBlock = readRuleBlock(".homeOpeningReader dl");
+  const readerCellBlock = readRuleBlock(".homeOpeningReader dl > div");
+  const readerLabelBlock = readRuleBlock(".homeOpeningReader dt");
+  const readerValueBlock = readRuleBlock(".homeOpeningReader dd strong");
+  const readerDetailBlock = readRuleBlock(".homeOpeningReader dd span");
+
+  assert.match(homePageSource, /const homeOpeningReaderPolishId = "s91-2-home-opening-reader"/);
+  assert.match(homePageSource, /buildHomeOpeningReaderRows/);
+  assert.match(homePageSource, /data-polish-home-reader=\{homeOpeningReaderPolishId\}/);
+  assert.match(homePageSource, /开卷校阅/);
+  assert.match(homePageSource, /落印前先看四处：题名、立绘、旧案、朱印/);
+  assert.match(homePageSource, /旧案只从公开案卷目录读取/);
+  assert.match(homePageSource, /案头只呈开卷草案，不定夺后续命数/);
+  assert.match(homePageSource, /自定背景已记 \$\{backgroundLength\} 字/);
+  assert.match(homePageSource, /customBackground\.trim\(\)\.length/);
+  assert.match(homePageSource, /saveShelfState/);
+  assert.match(homePageSource, /selectedPortrait/);
+  assert.match(homePageSource, /portraitChoices\.length/);
+  assert.match(readerBlock, /border: 1px solid var\(--qq-color-home-sample-link-border\)/);
+  assert.match(readerBlock, /background: var\(--qq-surface-home-sample-link\)/);
+  assert.match(readerHeaderBlock, /display: grid/);
+  assert.match(readerGridBlock, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(readerCellBlock, /border: 1px solid var\(--qq-color-status-surface-border\)/);
+  assert.match(readerCellBlock, /background: var\(--qq-color-paper-inset-medium\)/);
+  assert.match(readerLabelBlock, /color: var\(--qq-color-seal-status\)/);
+  assert.match(readerValueBlock, /color: var\(--qq-color-ink-soft\)/);
+  assert.match(readerDetailBlock, /color: var\(--qq-color-muted-strong\)/);
+  assert.match(mobileLayoutSource, /\.homeOpeningReader dl,/);
+  assert.match(appTestSource, /s91-2-home-opening-reader/);
+  assert.match(clientSmokeSource, /assertS912HomeOpeningReaderPolish/);
+  assert.match(clientSmokeSource, /S91\.2 desktop home/);
+  assert.match(clientSmokeSource, /S91\.2 mobile home/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|hiddenNotes|完整提示词|本地路径|密钥|AI read scope|proposal boundary|server adjudication|draftContext|schema/
+  );
 });
 
 test("S89.51 shared paper state surfaces reuse semantic color tokens", () => {

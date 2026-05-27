@@ -832,6 +832,39 @@ async function assertHomeSaveShelfPolish(page, label) {
   }
 }
 
+async function assertS912HomeOpeningReaderPolish(page, label) {
+  const snapshot = await page.evaluate(() => {
+    const reader = document.querySelector("[data-polish-home-reader='s91-2-home-opening-reader']");
+    const text = reader?.textContent || "";
+    const rowLabels = reader ? [...reader.querySelectorAll("dt")].map((node) => node.textContent?.trim() || "") : [];
+    const readerGrid = reader?.querySelector("dl");
+    const gridTemplateColumns = readerGrid ? getComputedStyle(readerGrid).gridTemplateColumns : "";
+    return {
+      exists: Boolean(reader),
+      marker: reader?.getAttribute("data-polish-home-reader") || "",
+      text,
+      rowLabels,
+      gridTemplateColumns,
+      horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 4,
+      forbiddenText: text.match(/provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|data\/sessions|hidden\/raw|(?:^|\b)hidden\b|(?:^|\b)raw\b|服务器裁决|\/api\/game\/state|\/api\/dev\/session-diagnostics|draftContext|schema|manifest|safe view|resolver|sourceRef|relatedRefs|scopeRefs|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || []
+    };
+  });
+  const failures = [];
+  if (!snapshot.exists) failures.push("missing S91.2 home opening reader");
+  if (snapshot.marker !== "s91-2-home-opening-reader") failures.push(`home opening reader marker was ${snapshot.marker}`);
+  for (const labelText of ["题名", "立绘", "旧案", "朱印"]) {
+    if (!snapshot.rowLabels.includes(labelText)) failures.push(`home opening reader lacked row ${labelText}`);
+  }
+  for (const requiredText of ["开卷校阅", "落印前先看四处", "主卷回批", "旧案只从公开案卷目录读取", "不定夺后续命数"]) {
+    if (!snapshot.text.includes(requiredText)) failures.push(`home opening reader lacked ${requiredText}`);
+  }
+  if (snapshot.horizontalOverflow) failures.push("home opening reader caused horizontal overflow");
+  if (snapshot.forbiddenText.length) failures.push(`forbidden home opening reader text: ${snapshot.forbiddenText.join(", ")}`);
+  if (failures.length) {
+    throw new Error(`${label} S91.2 home opening reader polish failed: ${failures.join("; ")}`);
+  }
+}
+
 async function assertArchiveDigestPolish(page, label) {
   const snapshot = await page.evaluate(() => {
     const panel = document.querySelector(".archiveRoutePanel");
@@ -3614,6 +3647,7 @@ async function runClientSmoke(options = {}) {
     await assertS8932HomeShellPolish(page, "S89.32 desktop home", { home: true });
     await assertHomeStartSealTypography(page, "S89.2 desktop home");
     await assertHomeSaveShelfPolish(page, "S89.4 desktop home");
+    await assertS912HomeOpeningReaderPolish(page, "S91.2 desktop home");
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 desktop home backdrop");
     await assertClientResourceBudget(page, "S77.5 desktop home", CLIENT_RESOURCE_BUDGETS.home);
     await assertManifestRuntimeSafety(baseUrl);
@@ -4531,6 +4565,7 @@ async function runClientSmoke(options = {}) {
     await assertS8932HomeShellPolish(page, "S89.32 mobile home", { home: true });
     await assertHomeStartSealTypography(page, "S89.2 mobile home");
     await assertHomeSaveShelfPolish(page, "S89.4 mobile home");
+    await assertS912HomeOpeningReaderPolish(page, "S91.2 mobile home");
     await assertReviewedBackgroundVisual(page, ".homeBackdrop", "S77.3 mobile home backdrop");
     await assertBrowserStorageSafety(page, "S77.4 final mobile context");
     screenshots.push(...(await assertBrowserLevelReducedMotion(browser, baseUrl, options.screenshotsDir)));

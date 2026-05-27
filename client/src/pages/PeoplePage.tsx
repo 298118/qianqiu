@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
-import "../styles/responsive/mobile-people-inventory.css";
 import "../styles/routes/people-inventory.css";
+import "../styles/responsive/mobile-people-inventory.css";
 import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import type { DelegatedTaskRecordView, NpcActiveRequestFollowUpTaskView, NpcActiveRequestItemView, NpcActiveRequestResponseOptionView, NpcDetailView, NpcRosterItem, PlayerSummary, TradeRecordView, WorldPeopleNpc, WorldPeopleRelationship } from "../api";

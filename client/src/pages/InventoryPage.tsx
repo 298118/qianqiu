@@ -2,8 +2,8 @@ import { ArrowRightLeft, Briefcase, Landmark, Package, ScrollText } from "lucide
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useParams } from "react-router";
-import "../styles/responsive/mobile-people-inventory.css";
 import "../styles/routes/people-inventory.css";
+import "../styles/responsive/mobile-people-inventory.css";
 import type { InventoryContainerView, InventoryItemView } from "../api";
 import { EconomyTraceSection } from "../components/EconomyTraceSection";
 import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";

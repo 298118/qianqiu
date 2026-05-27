@@ -45,6 +45,8 @@ const openingPathItems = [
   { title: "候复", text: "新卷开启后，行动仍回主卷落笔候复。" }
 ] as const;
 
+const homeOpeningReaderPolishId = "s91-2-home-opening-reader";
+
 const sourceLabels: Record<string, string> = {
   start: "新卷",
   "player-state": "读档",
@@ -99,6 +101,85 @@ function getPlayerPortraitChoices(registry: AssetRegistry | null, role: GameRole
     identityTags: ["player"],
     preferHighResOverridesForFeminine: true
   }, { limit: 6 });
+}
+
+function getPortraitChoiceText(input: {
+  readonly hasRegistry: boolean;
+  readonly selectedPortrait: RuntimePortraitAsset | null;
+  readonly portraitChoiceCount: number;
+}) {
+  if (!input.hasRegistry) return "画像册候载，仍可先题名开卷。";
+  if (!input.portraitChoiceCount) return "此身份暂无可选立绘；新卷可不题画像。";
+  if (!input.selectedPortrait) return "案主立绘候选中，开卷前可再点选。";
+  const label = safeHomeSummaryText(input.selectedPortrait.roleLabel ?? "案主立绘", "案主立绘");
+  return input.selectedPortrait.hasHighResOverride ? `${label} · 高清重制` : `${label} · 原图入谱`;
+}
+
+function getSealBoundaryText(input: {
+  readonly isStarting: boolean;
+  readonly hasError: boolean;
+  readonly yearIsValid: boolean;
+}) {
+  if (input.isStarting) return "朱印已落，候主卷回声。";
+  if (input.hasError || !input.yearIsValid) return "先校正案头信息，再落朱印。";
+  return "只开新卷；身份、资源与后续仍由主卷回批。";
+}
+
+function buildHomeOpeningReaderRows(input: {
+  readonly dynasty: string;
+  readonly year: string;
+  readonly playerName: string;
+  readonly role: GameRole;
+  readonly scholarFamily: ScholarFamilyBackground;
+  readonly customBackground: string;
+  readonly saveShelfState: "loading" | "error" | "ready" | "empty";
+  readonly saveCount: number;
+  readonly hasRegistry: boolean;
+  readonly selectedPortrait: RuntimePortraitAsset | null;
+  readonly portraitChoiceCount: number;
+  readonly isStarting: boolean;
+  readonly hasError: boolean;
+  readonly yearIsValid: boolean;
+}) {
+  const cleanName = safeHomeSummaryText(input.playerName.trim(), "无名");
+  const roleLabel = getGameRoleLabel(input.role) || "未题身份";
+  const yearLabel = input.yearIsValid ? `${input.year}年` : "年份待校";
+  const familyLabel = scholarFamilyOptions.find((option) => option.value === input.scholarFamily)?.label || "普通";
+  const identityDetail = input.role === "scholar" ? `书生家境已题为${familyLabel}。` : `${roleLabel}开卷取向已入题名。`;
+  const backgroundLength = input.customBackground.trim().length;
+  const backgroundText = backgroundLength
+    ? `自定背景已记 ${backgroundLength} 字，随开卷交主卷取材。`
+    : "自定背景可留空，不补造身世。";
+  const saveText = input.saveShelfState === "loading"
+    ? "旧案架正在翻检，新卷可先开。"
+    : input.saveShelfState === "error"
+    ? "旧案架暂不可取，新卷不受影响。"
+    : input.saveShelfState === "ready"
+    ? `案架有 ${input.saveCount} 卷，可读旧案。`
+    : "案架暂空，新卷保存后列入此处。";
+
+  return [
+    {
+      label: "题名",
+      value: `${input.dynasty}${yearLabel} · ${cleanName} · ${roleLabel}`,
+      detail: identityDetail
+    },
+    {
+      label: "立绘",
+      value: getPortraitChoiceText(input),
+      detail: backgroundText
+    },
+    {
+      label: "旧案",
+      value: saveText,
+      detail: "旧案只从公开案卷目录读取。"
+    },
+    {
+      label: "朱印",
+      value: getSealBoundaryText(input),
+      detail: "案头只呈开卷草案，不定夺后续命数。"
+    }
+  ];
 }
 
 type CurrentPlayerPayload = NonNullable<ReturnType<typeof useUiStateStore.getState>["currentPlayerPayload"]>;
@@ -166,6 +247,38 @@ export function HomePage() {
     () => portraitChoices.find((portrait) => portrait.portraitRef === selectedPortraitRef) ?? null,
     [portraitChoices, selectedPortraitRef]
   );
+  const openingReaderRows = useMemo(() => buildHomeOpeningReaderRows({
+    dynasty,
+    year,
+    playerName,
+    role,
+    scholarFamily,
+    customBackground,
+    saveShelfState,
+    saveCount: saves.length,
+    hasRegistry: Boolean(assetRegistry),
+    selectedPortrait,
+    portraitChoiceCount: portraitChoices.length,
+    isStarting,
+    hasError: Boolean(startError || formError),
+    yearIsValid
+  }), [
+    dynasty,
+    year,
+    playerName,
+    role,
+    scholarFamily,
+    customBackground,
+    saveShelfState,
+    saves.length,
+    assetRegistry,
+    selectedPortrait,
+    portraitChoices.length,
+    isStarting,
+    startError,
+    formError,
+    yearIsValid
+  ]);
 
   useEffect(() => {
     void refreshSaves();
@@ -376,6 +489,23 @@ export function HomePage() {
                   </li>
                 ))}
               </ol>
+            </section>
+            <section className="homeOpeningReader" aria-label="开卷校阅" data-polish-home-reader={homeOpeningReaderPolishId}>
+              <div className="homeOpeningReaderHeader">
+                <p className="eyebrow">开卷校阅</p>
+                <strong>落印前先看四处：题名、立绘、旧案、朱印。</strong>
+              </div>
+              <dl>
+                {openingReaderRows.map((row) => (
+                  <div key={row.label}>
+                    <dt>{row.label}</dt>
+                    <dd>
+                      <strong>{row.value}</strong>
+                      <span>{row.detail}</span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </section>
             <button
               className={`sealButton homeStartSeal${sealFeedback === "stamping" ? " isStamping" : ""}${sealFeedback === "error" ? " isSealError" : ""}`}

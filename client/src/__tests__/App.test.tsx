@@ -159,6 +159,14 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByLabelText("自定背景")).toBeTruthy();
     expect(screen.getByText("开卷路径")).toBeTruthy();
     expect(screen.getByText("先题名，再入世，诸事候复。")).toBeTruthy();
+    expect(screen.getByText("开卷校阅")).toBeTruthy();
+    const openingReader = document.querySelector("[data-polish-home-reader='s91-2-home-opening-reader']");
+    expect(openingReader).toBeTruthy();
+    const openingReaderText = openingReader?.textContent || "";
+    expect(openingReaderText).toContain("明1600年 · 沈知微 · 书生");
+    expect(openingReaderText).toContain("画像册候载，仍可先题名开卷。");
+    expect(openingReaderText).toContain("旧案架正在翻检，新卷可先开。");
+    expect(openingReaderText).toContain("只开新卷；身份、资源与后续仍由主卷回批。");
     expect(document.querySelector(".homeDesk .startDesk")).toBeTruthy();
     expect(document.querySelector("[data-polish-home='s89-32-home-entry-scroll']")).toBeTruthy();
     expect(document.querySelector("[data-polish-home-path='s89-32-opening-path']")).toBeTruthy();
@@ -168,6 +176,74 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector("[data-client-entry='react']")).toBeTruthy();
     expect(document.querySelector("[data-router-mode='data']")).toBeTruthy();
     expect(document.querySelector("[data-shell-version='s75-9']")).toBeTruthy();
+    expect(openingReaderText).not.toMatch(/provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|raw audit|draftContext|schema|manifest/i);
+  });
+
+  it("updates the S91.2 home opening reader from existing form, portrait, and save shelf state", async () => {
+    const fetchMock = vi.fn(async (url: string, _options?: RequestInit) => {
+      if (url === "/assets/ui/ink-ui-runtime-manifest.json") {
+        return new Response(JSON.stringify(buildMockAssetManifest()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      if (url === "/api/game/saves") {
+        return new Response(JSON.stringify({
+          saves: [{
+            sessionId: "55555555-5555-4555-8555-555555555555",
+            playerName: "旧案书生",
+            role: "scholar",
+            dynasty: "明",
+            year: 1600,
+            month: 1,
+            tenDayPeriod: 1,
+            turnCount: 2,
+            summary: "旧案公开摘要。",
+            updatedAt: "2026-05-27T12:00:00.000Z"
+          }],
+          skipped: []
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      return new Response(JSON.stringify({
+        sessionId: "22222222-2222-4222-8222-222222222222",
+        narrative: "起卷",
+        worldState: { player: { name: "陆清远", role: "magistrate" } }
+      }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" }
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute("/");
+
+    await waitFor(() => {
+      expect(document.querySelector("[data-polish-home-reader='s91-2-home-opening-reader']")).toBeTruthy();
+      expect(document.querySelectorAll("input[name='player-portrait']").length).toBeGreaterThan(0);
+      expect(screen.getByText("案架上有 1 卷可读旧案。")).toBeTruthy();
+    });
+
+    fireEvent.change(screen.getByLabelText("朝代"), { target: { value: "宋" } });
+    fireEvent.change(screen.getByLabelText("年份"), { target: { value: "1086" } });
+    fireEvent.change(screen.getByLabelText("身份"), { target: { value: "magistrate" } });
+    fireEvent.change(screen.getByLabelText("姓名"), { target: { value: "陆清远" } });
+    fireEvent.change(screen.getByLabelText("自定背景"), { target: { value: "少时寄居书院，熟读经义。" } });
+
+    await waitFor(() => {
+      const readerText = document.querySelector("[data-polish-home-reader='s91-2-home-opening-reader']")?.textContent || "";
+      expect(readerText).toContain("宋1086年 · 陆清远 · 县令");
+      expect(readerText).toContain("县令开卷取向已入题名。");
+      expect(readerText).toContain("自定背景已记 12 字，随开卷交主卷取材。");
+      expect(readerText).toContain("案架有 1 卷，可读旧案。");
+      expect(readerText).toContain("只开新卷；身份、资源与后续仍由主卷回批。");
+      expect(readerText).toMatch(/案主立绘|书生|女官|高清重制|原图入谱/);
+      expect(readerText).not.toContain("少时寄居书院");
+      expect(readerText).not.toMatch(/provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|raw audit|draftContext|schema|manifest/i);
+    });
   });
 
   it("posts the S75.2 opening form through the safe start endpoint", async () => {
