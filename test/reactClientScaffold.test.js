@@ -3291,6 +3291,106 @@ test("S89.66 home seal and sample entry states use semantic tokens", () => {
   assert.doesNotMatch(tokenizedBlocks, /#9e3029|#fff3e3|#674f3c|#5f1815|#6f1f1a|rgb\(84 60 43 \/ \.2\)|rgb\(255 252 238 \/ \.58\)|rgb\(230 211 178 \/ \.4\)|rgb\(142 47 39 \/ \.78\)|rgb\(142 47 39 \/ \.12\)|rgb\(101 31 27 \/ \.2\)|rgb\(255 238 215 \/ \.46\)|rgb\(101 31 27 \/ \.26\)|rgb\(123 36 31 \/ \.26\)|rgb\(142 47 39 \/ \.16\)|rgb\(255 236 211 \/ \.34\)/);
 });
 
+test("S89.67 home opening and save shelf states use semantic tokens", () => {
+  const tokensSource = readClientStyleModule("tokens/tokens.css");
+  const homeSource = readClientStyleModule("routes/home.css");
+  const readRuleBlock = (selector) => {
+    const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const rulePattern = new RegExp(`(?:^|\\n)${escapedSelector} \\{`, "g");
+    let match;
+    while ((match = rulePattern.exec(homeSource))) {
+      const lineStart = match.index + (match[0].startsWith("\n") ? 1 : 0);
+      const previousLineStart = homeSource.lastIndexOf("\n", Math.max(0, lineStart - 2));
+      const previousLine = homeSource.slice(previousLineStart + 1, lineStart).trim();
+      if (!previousLine.endsWith(",")) {
+        const end = homeSource.indexOf("\n}", lineStart);
+        assert.notEqual(end, -1, `unterminated CSS rule ${selector}`);
+        return homeSource.slice(lineStart, end + 2);
+      }
+    }
+    assert.fail(`missing standalone CSS rule ${selector}`);
+  };
+
+  const openingPathBlock = readRuleBlock(".homeOpeningPath");
+  const openingDividerBlock = readRuleBlock(".homeOpeningPath::after");
+  const openingTitleBlock = readRuleBlock(".homeOpeningPath strong");
+  const openingStepBlock = readRuleBlock(".homeOpeningPath li");
+  const openingBadgeBlock = readRuleBlock(".homeOpeningPath span");
+  const openingCopyBlock = readRuleBlock(".homeOpeningPath p");
+  const saveShelfBlock = readRuleBlock(".saveShelf");
+  const continueShelfBlock = readRuleBlock(".continueShelf");
+  const continueMetaLabelBlock = readRuleBlock(".continueMeta dt");
+  const continueMetaValueBlock = readRuleBlock(".continueMeta dd");
+  const saveStatBlock = readRuleBlock(".saveShelfStats div");
+  const saveStatLabelBlock = readRuleBlock(".saveShelfStats dt");
+  const saveStatValueBlock = readRuleBlock(".saveShelfStats dd");
+  const saveStatusBlock = readRuleBlock(".saveShelfStatus");
+  const saveStatusMarkerBlock = readRuleBlock(".saveShelfStatus > span");
+  const saveStatusLoadingBlock = readRuleBlock('.saveShelfStatus[data-tone="loading"] > span');
+  const saveStatusEmptyBlock = readRuleBlock('.saveShelfStatus[data-tone="empty"] > span');
+  const saveStatusErrorBlock = readRuleBlock('.saveShelfStatus[data-tone="error"] > span');
+  const saveStatusTextBlock = readRuleBlock(".saveShelfStatus p");
+
+  assert.match(tokensSource, /--qq-surface-home-opening-path:[\s\S]*var\(--qq-material-silk\) center \/ 500px repeat/);
+  assert.match(tokensSource, /--qq-shadow-home-opening-path:[\s\S]*0 10px 24px rgb\(42 29 20 \/ \.08\)/);
+  assert.match(tokensSource, /--qq-shadow-home-save-shelf: 0 14px 36px rgb\(42 29 20 \/ \.12\)/);
+  assert.match(tokensSource, /--qq-shadow-home-save-status-marker: 0 0 0 3px rgb\(158 48 41 \/ \.12\)/);
+
+  assert.match(openingPathBlock, /border: 1px solid var\(--qq-color-home-entry-border\)/);
+  assert.match(openingPathBlock, /background: var\(--qq-surface-home-opening-path\)/);
+  assert.match(openingPathBlock, /box-shadow: var\(--qq-shadow-home-opening-path\)/);
+  assert.match(openingDividerBlock, /background: var\(--qq-surface-shell-divider\)/);
+  assert.match(openingTitleBlock, /color: var\(--qq-color-ink-soft\)/);
+  assert.match(openingStepBlock, /border: 1px solid var\(--qq-color-status-surface-border\)/);
+  assert.match(openingStepBlock, /background: var\(--qq-color-paper-inset-medium\)/);
+  assert.match(openingBadgeBlock, /border: 1px solid var\(--qq-color-vermilion-glow-outline\)/);
+  assert.match(openingBadgeBlock, /background: var\(--qq-color-state-red-bg\)/);
+  assert.match(openingBadgeBlock, /color: var\(--qq-color-vermilion-dark\)/);
+  assert.match(openingCopyBlock, /color: var\(--qq-color-muted-strong\)/);
+  assert.match(saveShelfBlock, /border: 1px solid var\(--qq-color-disabled-border\)/);
+  assert.match(saveShelfBlock, /box-shadow: var\(--qq-shadow-home-save-shelf\)/);
+  assert.match(continueShelfBlock, /border: 1px solid var\(--qq-color-home-entry-border-loading\)/);
+  assert.match(continueShelfBlock, /background: var\(--qq-color-state-gold-bg\)/);
+  assert.match(continueShelfBlock, /box-shadow: var\(--qq-shadow-home-save-shelf\)/);
+  assert.match(continueMetaLabelBlock, /color: var\(--qq-color-seal-status\)/);
+  assert.match(continueMetaValueBlock, /color: var\(--qq-color-ink-soft\)/);
+  assert.match(saveStatBlock, /border: 1px solid var\(--qq-color-home-sample-link-border\)/);
+  assert.match(saveStatBlock, /background: var\(--qq-color-paper-inset-medium\)/);
+  assert.match(saveStatLabelBlock, /color: var\(--qq-color-muted\)/);
+  assert.match(saveStatValueBlock, /color: var\(--qq-color-vermilion-dark\)/);
+  assert.match(saveStatusBlock, /border: 1px solid var\(--qq-color-home-entry-border\)/);
+  assert.match(saveStatusBlock, /background: var\(--qq-color-paper-inset-medium\)/);
+  assert.match(saveStatusMarkerBlock, /background: var\(--qq-color-seal\)/);
+  assert.match(saveStatusMarkerBlock, /box-shadow: var\(--qq-shadow-home-save-status-marker\)/);
+  assert.match(saveStatusLoadingBlock, /background: var\(--qq-color-seal-status\)/);
+  assert.match(saveStatusEmptyBlock, /background: var\(--qq-color-state-gold\)/);
+  assert.match(saveStatusErrorBlock, /background: var\(--qq-color-home-start-seal-error-border\)/);
+  assert.match(saveStatusTextBlock, /color: var\(--qq-color-muted-strong\)/);
+
+  const tokenizedBlocks = [
+    openingPathBlock,
+    openingDividerBlock,
+    openingTitleBlock,
+    openingStepBlock,
+    openingBadgeBlock,
+    openingCopyBlock,
+    saveShelfBlock,
+    continueShelfBlock,
+    continueMetaLabelBlock,
+    continueMetaValueBlock,
+    saveStatBlock,
+    saveStatLabelBlock,
+    saveStatValueBlock,
+    saveStatusBlock,
+    saveStatusMarkerBlock,
+    saveStatusLoadingBlock,
+    saveStatusEmptyBlock,
+    saveStatusErrorBlock,
+    saveStatusTextBlock
+  ].join("\n");
+  assert.doesNotMatch(tokenizedBlocks, /#3b271d|#5e4a37|#7a6048|#2f261f|#765b43|#7b241f|#9e3029|#7c6045|#987245|#6f1f1a|#5e4936|rgb\(84 60 43 \/ \.18\)|rgb\(84 60 43 \/ \.2\)|rgb\(84 60 43 \/ \.22\)|rgb\(142 47 39 \/ \.16\)|rgb\(142 47 39 \/ \.22\)|rgb\(142 47 39 \/ \.32\)|rgb\(142 47 39 \/ \.36\)|rgb\(204 156 72 \/ \.32\)|rgb\(165 58 47 \/ \.08\)|rgb\(255 252 238 \/ \.52\)|rgb\(255 252 238 \/ \.58\)|rgb\(255 252 238 \/ \.68\)|rgb\(255 248 230 \/ \.78\)|rgb\(220 199 165 \/ \.46\)|rgb\(42 29 20 \/ \.08\)|rgb\(42 29 20 \/ \.1\)|rgb\(42 29 20 \/ \.12\)|rgb\(158 48 41 \/ \.12\)/);
+});
+
 test("S89.51 shared paper state surfaces reuse semantic color tokens", () => {
   const tokensSource = readClientStyleModule("tokens/tokens.css");
   const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
