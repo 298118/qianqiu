@@ -33,6 +33,12 @@ type AftermathContact = {
   readonly summary: string;
 };
 
+type RankingOutcomeReaderRow = {
+  readonly label: string;
+  readonly value: string;
+  readonly text: string;
+};
+
 const unsafeRankingFragments = [
   "/api/game/" + "state",
   "/api/dev/" + "session-diagnostics",
@@ -230,6 +236,7 @@ export function RankingPage() {
   const antiCheatFlags = readAntiCheat(authenticityCheck);
   const sameYearContacts = readAftermathContacts(examAftermathView.sameYearContacts, "同年");
   const examinerContacts = readAftermathContacts(examAftermathView.examinerContacts, "座师");
+  const publicContactCount = sameYearContacts.length + examinerContacts.length;
   const aftermathActions = readAftermathActions(examAftermathView.nextActions);
   const rankingCeremonyState = !routeSessionSupported ? "unsupported" : rows.length ? "posted" : "pending";
   const latestHonor = asRecord(examHonorView.latestHonor || examHonorView.currentHonor || latestHistory.examHonor);
@@ -321,7 +328,7 @@ export function RankingPage() {
     },
     {
       label: "同年座师",
-      value: `${sameYearContacts.length + examinerContacts.length} 人`,
+      value: `${publicContactCount} 人`,
       text: sameYearContacts.length || examinerContacts.length ? "已公开往来可在本页细读；未入卷的师友不补造。" : "同年座师待榜后整理，案卷未载者不补写关系。"
     },
     {
@@ -330,6 +337,36 @@ export function RankingPage() {
       text: "授官、差遣与入仕首月仍候主卷回音；本页只作榜后提示。"
     }
   ] as const;
+  const rankingOutcomeReaderRows: RankingOutcomeReaderRow[] = [
+    {
+      label: "榜文",
+      value: rows.length ? `${rows.length} 名` : "未张榜",
+      text: rows.length
+        ? "只数已经张挂的公开榜行；荣誉摘要不补成正榜。"
+        : routeSessionSupported
+          ? "榜文尚未张挂；候评阅、复核与案卷回批。"
+          : unsupportedRouteMessage
+    },
+    {
+      label: "我名",
+      value: playerRankingEntry ? (playerRankingEntry.honorTitle || playerRankingEntry.rankLabel || "在榜") : "未见我名",
+      text: playerRankingEntry
+        ? `${playerRankingEntry.name}只按案卷标记的本人榜行呈现。`
+        : "同名榜行、本地细读与评语都不补认本人。"
+    },
+    {
+      label: "细读",
+      value: selectedEntry ? selectedEntry.name : "未选榜名",
+      text: selectedEntry
+        ? `当前细读只切换本页榜名详情；同年座师公开 ${publicContactCount} 人，不改名次、关系或官职。`
+        : `暂无榜名可细读；同年座师公开 ${publicContactCount} 人，案卷未载者不补造。`
+    },
+    {
+      label: "授官",
+      value: appointmentHint,
+      text: `${passedText}；授官、差遣与入仕首月仍候主卷回音。`
+    }
+  ];
   const sceneAsset = useMemo(
     () => registry?.getAssets({ category: "scene", usage: "ranking_page", scene: "ranking_wall" }).at(0),
     [registry]
@@ -412,6 +449,23 @@ export function RankingPage() {
           </div>
         ))}
       </dl>
+      <section className="rankingOutcomeReader" aria-label="题名校阅" data-polish-ranking-reader="s91-7-ranking-reader">
+        <div className="rankingOutcomeReaderHeader">
+          <p className="eyebrow">题名校阅</p>
+          <strong>榜文、我名、细读与授官候复分开看。</strong>
+        </div>
+        <dl>
+          {rankingOutcomeReaderRows.map((row) => (
+            <div key={row.label}>
+              <dt>{row.label}</dt>
+              <dd>
+                <strong>{row.value}</strong>
+                <span>{row.text}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
         {showGoldenNotice ? (
           <section className="rankingGoldenNotice" aria-label="金榜题名">

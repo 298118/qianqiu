@@ -2145,6 +2145,52 @@ test("S91.6 exam writing reader stays local-count-only and frontend-only", () =>
   );
 });
 
+test("S91.7 ranking outcome reader stays selection-only and frontend-only", () => {
+  const rankingPageSource = readText("client/src/pages/RankingPage.tsx");
+  const examStyleSource = readClientStyleModule("routes/exam-ranking.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = rankingPageSource.indexOf('data-polish-ranking-reader="s91-7-ranking-reader"');
+  const readerEnd = rankingPageSource.indexOf("{showGoldenNotice", readerStart);
+  const readerMarkup = readerStart >= 0 && readerEnd > readerStart
+    ? rankingPageSource.slice(readerStart, readerEnd)
+    : "";
+  const readerDataStart = rankingPageSource.indexOf("const rankingOutcomeReaderRows");
+  const readerDataEnd = rankingPageSource.indexOf("const sceneAsset", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? rankingPageSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const rankingWithoutGuard = rankingPageSource.replace(/const unsafeRankingFragments[\s\S]*?\] as const;\r?\n/, "");
+  const runtimeCombined = stripSafeGuardPatterns(`${rankingWithoutGuard}\n${examStyleSource}`);
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.match(rankingPageSource, /type RankingOutcomeReaderRow/);
+  assert.match(rankingPageSource, /const publicContactCount = sameYearContacts\.length \+ examinerContacts\.length/);
+  assert.match(rankingPageSource, /const rankingOutcomeReaderRows: RankingOutcomeReaderRow\[\]/);
+  assert.match(rankingPageSource, /aria-label="题名校阅"/);
+  assert.match(readerDataBlock, /只数已经张挂的公开榜行/);
+  assert.match(readerDataBlock, /荣誉摘要不补成正榜/);
+  assert.match(readerDataBlock, /同名榜行、本地细读与评语都不补认本人/);
+  assert.match(readerDataBlock, /不改名次、关系或官职/);
+  assert.match(readerDataBlock, /授官、差遣与入仕首月仍候主卷回音/);
+  assert.match(readerDataBlock, /selectedEntry/);
+  assert.doesNotMatch(readerMarkup, /submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|score|examinerComment/);
+
+  assert.match(examStyleSource, /\.rankingOutcomeReader \{/);
+  assert.match(examStyleSource, /\.rankingOutcomeReader \{[\s\S]*grid-template-columns: minmax\(150px, 0\.34fr\) minmax\(0, 1fr\)/);
+  assert.match(examStyleSource, /\.rankingOutcomeReader dl \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(examStyleSource, /@media \(max-width: 760px\)[\s\S]*\.rankingOutcomeReader,[\s\S]*\.rankingOutcomeReader dl \{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(appTestSource, /s91-7-ranking-reader/);
+  assert.match(appTestSource, /同名榜行、本地细读与评语都不补认本人/);
+  assert.match(clientSmokeSource, /s91-7-ranking-reader/);
+  assert.match(clientSmokeSource, /S91\.7 ranking outcome reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.60 main and court desk keyframes use semantic names", () => {
   const keyframesSource = readText("client/src/styles/motion/keyframes.css");
   const gameStyleSource = readText("client/src/styles/routes/game.css");

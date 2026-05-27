@@ -123,31 +123,41 @@
 | S91.4 | DONE | 人物往来校阅与本地草稿状态 polish | 已完成人物详情工作台“往来校阅”四读：从当前安全人物 view、当前页签、四类本地输入字数、近次公开回批和当前人物明确绑定的公开记录数量派生照面、本地稿、回批与留痕；不回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.5 | DONE | 囊箧移置校阅与候批状态 polish | 已完成囊箧页“移置校阅”四读：只从当前安全囊箧 view、本地移置选择、既有候批 readiness 和当前案卷本地回执提示派生物件、去处、候批与回执状态；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.6 | DONE | 科举落墨校阅与候榜状态 polish | 已完成科举页“落墨校阅”四读：只从现有安全考试 view、本地文章字数、route 支持状态、交卷 readiness 和本案卷近次交卷评定派生试别、草稿、交卷与候榜状态；不回显文章正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.7 | DONE | 皇榜题名校阅与授官候复状态 polish | 已完成皇榜“题名校阅”四读：只从现有公开榜行、案主榜行、本地细读选择、同年座师公开计数和授官提示派生榜文、我名、细读与授官候复；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.6：科举落墨校阅与候榜状态 polish 已完成。科举页新增 `s91-6-exam-writing-reader` 的“试别 / 草稿 / 交卷 / 候榜”四读，把当前安全考试 view、本地文章字数、route 支持状态、交卷 readiness 和本案卷近次交卷评定集中成可扫读状态；文章只显示字数，不回显正文，交卷后显示“已呈卷”与清洗后的分数摘要，不退回成未启封题纸。
-- S91.6 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全考试 view、本地文章字数、route 状态和交卷回执，不裁决评分、舞弊、放榜、晋级、授官、同年座师或 hidden 信息。
-- 最近完整运行态验证来自 S91.6：`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（107 tests）、`npm run typecheck:client`、S91.6 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-6-exam-writing-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1221 tests）已通过；提交前只读复审代理 `019e6998-28f8-7072-8af8-84bcad3b1ee4` 未发现阻塞问题。
+- 最新实现步骤 S91.7：皇榜题名校阅与授官候复状态 polish 已完成。皇榜页新增 `s91-7-ranking-reader` 的“榜文 / 我名 / 细读 / 授官”四读，把已张挂公开榜行、案主榜行、本地细读选择、公开同年座师计数和授官提示集中成可扫读状态；同名榜行、本地细读、评语和荣誉摘要都不补认本人、名次、关系或官职。
+- S91.7 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全皇榜/科举公开 view 和本地榜名选择，不裁决放榜、晋级、授官、同年座师、关系或 hidden 信息。
+- 最近完整运行态验证来自 S91.7：`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（108 tests）、`npm run typecheck:client`、S91.7 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-7-ranking-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1222 tests）已通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning；提交前只读复审代理 `019e6acd-3e5a-7f00-85b2-269545fa87cc` 未发现阻塞问题。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.6：
+最新运行态完整验证锚点来自 S91.7：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（107 tests）
+- `node --test test/reactClientScaffold.test.js`（108 tests）
 - `npm run typecheck:client`
 - `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 76 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-6-exam-writing-reader-smoke`
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-7-ranking-reader-smoke`
 - `npm run check:docs-governance`
-- `git diff --check`
-- `npm test`（1221 tests）
+- `git diff --check`（仅既有 CRLF warning）
+- `npm test`（1222 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S91.7 皇榜题名校阅与授官候复状态 polish 完成
+
+- 范围：皇榜页新增 `data-polish-ranking-reader="s91-7-ranking-reader"` 的“题名校阅”四读，集中显示已张榜行数、案主榜行、本地细读选择、公开同年座师计数和授官候复提示；仍只读取现有安全皇榜/科举公开 view 与浏览器本地选择状态。
+- 体验修正：榜文格只数已经张挂的公开榜行，荣誉摘要不补成正榜；我名格只按服务器标记的本人榜行呈现；细读格随本页榜名选择更新，但明确不改名次、关系或官职；授官格只显示已清洗授官提示和主卷候复边界。App Vitest 覆盖 posted、empty、同名未标记三种状态，污染榜名切换后只显示清洗 fallback。
+- 边界：本步只改 React 前端读法、科举/皇榜 route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决；浏览器不得凭同名、评语、荣誉摘要、本地细读选择或前端文案补认榜次、关系、官职或 hidden 信息。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（108 tests）、`npm run typecheck:client`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-7-ranking-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1222 tests）；首次 source canary 因 S91.6/S91.7 移动端 CSS selector 合并破坏旧正则守门失败，已拆回独立规则后通过；首次 App Vitest 因新增“授官”读法让旧 `getByText("授官")` 变多匹配失败，已改为数量断言后通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
+- 子代理：提交前只读复审代理 `019e6acd-3e5a-7f00-85b2-269545fa87cc` 已复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为提交前把复审待执行文案改为已完成，已采纳。首次复审提示只禁止 `git add/commit/push/PR`，代理运行了 `git status/diff` 等只读 Git 命令；主代理随后发起同一代理的无 Git 补充复审，明确禁止任何 Git 命令，代理确认未运行 Git、未编辑文件，并再次未发现阻塞问题。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-27：S91.6 科举落墨校阅与候榜状态 polish 完成
 

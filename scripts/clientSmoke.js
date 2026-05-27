@@ -2375,6 +2375,7 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
     const bodyText = document.body.innerText || "";
     const background = hero ? getComputedStyle(hero).backgroundImage : "";
     const band = document.querySelector("[data-polish-ranking-ceremony-band='s89-33-ranking-golden-board']");
+    const reader = document.querySelector("[data-polish-ranking-reader='s91-7-ranking-reader']");
     const selectedRow = document.querySelector(".rankingList button[aria-pressed='true'][data-selected='true']");
     const heroGlowStyle = hero ? getComputedStyle(hero, "::after") : null;
     const bandStyle = band ? getComputedStyle(band) : null;
@@ -2390,11 +2391,15 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
       boardMarker: board?.getAttribute("data-polish-ranking-board") || "",
       ceremonyBandMarker: band?.getAttribute("data-polish-ranking-ceremony-band") || "",
       ceremonyBandState: band?.getAttribute("data-ranking-state") || "",
+      readerMarker: reader?.getAttribute("data-polish-ranking-reader") || "",
+      readerLabel: reader?.getAttribute("aria-label") || "",
       shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
       reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       heroGlowAnimation: heroGlowStyle?.animationName || "",
       ceremonyBandAnimation: bandStyle?.animationName || "",
       hasCeremonyBandCopy: text.includes("金榜仪轨") && text.includes("张榜") && text.includes("我名") && text.includes("同年") && text.includes("授官"),
+      hasOutcomeReaderCopy: Boolean(reader) && (reader.textContent || "").includes("题名校阅") && (reader.textContent || "").includes("榜文") && (reader.textContent || "").includes("我名") && (reader.textContent || "").includes("细读") && (reader.textContent || "").includes("授官") && (reader.textContent || "").includes("仍候主卷回音"),
+      hasOutcomeReaderBoundary: Boolean(reader) && ((reader.textContent || "").includes("只数已经张挂的公开榜行") || (reader.textContent || "").includes("榜文尚未张挂")) && ((reader.textContent || "").includes("不改名次、关系或官职") || (reader.textContent || "").includes("案卷未载者不补造")),
       hasSelectedRow: Boolean(selectedRow),
       selectedAnimation: selectedStyle?.animationName || "",
       hasTopThree: Boolean(document.querySelector(".rankingTopThree")),
@@ -2427,6 +2432,7 @@ async function assertRankingFullScreen(page, sessionId, screenshotsDir, screensh
   if (snapshot.heroMarker !== "s89-33-ranking-golden-board") failures.push(`missing S89.33 ranking hero marker: ${snapshot.heroMarker}`);
   if (snapshot.boardMarker !== "s89-33-ranking-golden-board") failures.push(`missing S89.33 ranking board marker: ${snapshot.boardMarker}`);
   if (snapshot.ceremonyBandMarker !== "s89-33-ranking-golden-board" || !snapshot.hasCeremonyBandCopy) failures.push("missing S89.33 ranking ceremony band copy");
+  if (snapshot.readerMarker !== "s91-7-ranking-reader" || snapshot.readerLabel !== "题名校阅" || !snapshot.hasOutcomeReaderCopy || !snapshot.hasOutcomeReaderBoundary) failures.push("missing S91.7 ranking outcome reader");
   if (snapshot.hasPlayerRow && snapshot.ceremonyBandState !== "posted") failures.push(`unexpected S89.33 ranking ceremony state: ${snapshot.ceremonyBandState}`);
   if (snapshot.hasPlayerRow && !snapshot.hasSelectedRow) failures.push("missing S89.33 selected ranking row state");
   if (snapshot.shellMotion !== "reduced" && !snapshot.reducedMotion) {
