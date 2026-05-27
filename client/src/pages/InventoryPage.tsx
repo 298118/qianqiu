@@ -107,6 +107,12 @@ type InventoryReaderRow = {
   readonly detail: string;
 };
 
+type InventoryTransferReaderRow = {
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
 function isSafeInventoryScalar(value: unknown) {
   if (typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean") return true;
   const text = String(value).replace(/\s+/g, " ").trim();
@@ -303,6 +309,38 @@ export function InventoryPage() {
     : transferItem
       ? `${itemLabel(transferItem)}：暂无可入容器。`
       : "本卷暂无可呈请流转的物件。";
+  const hasCurrentTransferNotice = localStateIsCurrent && Boolean(transferNotice);
+  const currentTransferNotice = hasCurrentTransferNotice
+    ? safeLabel(transferNotice, "本地回执暂不可读。", 96)
+    : "暂无本地回执";
+  const transferReaderRows: readonly InventoryTransferReaderRow[] = [
+    {
+      label: "物件",
+      value: transferItem ? itemLabel(transferItem) : "暂无可流转物件",
+      detail: transferItem
+        ? `现处 ${containerLabel(transferItem.containerId ? containersById.get(transferItem.containerId) : undefined)}；只读公开物件题签。`
+        : "可流转物件未入卷时不补造物件。"
+    },
+    {
+      label: "去处",
+      value: selectedTargetContainerView ? containerLabel(selectedTargetContainerView) : "暂无可入容器",
+      detail: selectedTargetContainerView
+        ? "只记录当前下拉选择；封存、容量和官物限制仍候回批。"
+        : "没有可用去处时，按钮只保持不可呈。"
+    },
+    {
+      label: "候批",
+      value: transferLedgerStatus,
+      detail: "呈请后仍等案卷回批；浏览器不写成交、扣减、赠予、借用或关系回响。"
+    },
+    {
+      label: "回执",
+      value: currentTransferNotice,
+      detail: hasCurrentTransferNotice
+        ? "这里仅显示本页本地提示；真实账目以后续安全卷宗为准。"
+        : "暂无本地回执；不会补造入账、移置或人情结果。"
+    }
+  ];
   const inventoryReaderRows = buildInventoryReaderRows({
     routeSessionSupported,
     resourceAccountCount,
@@ -354,7 +392,7 @@ export function InventoryPage() {
       if (latestSessionIdRef.current !== requestSessionId || payload.sessionId !== requestSessionId) return;
       if (!isLatestTransferSelection(requestItemId, requestTargetContainerId)) return;
       setLocalInventorySessionId(requestSessionId);
-      setTransferNotice(payload.accepted ? "案卷已复核并更新物件位置。" : `暂未准行：${payload.reason || "规则不许"}`);
+      setTransferNotice(payload.accepted ? "案卷已复核并更新物件位置。" : `暂未准行：${safeLabel(payload.reason, "规则不许", 64)}`);
       setSelectedContainerId(requestTargetContainerId);
       setSelectedItemId("");
       setTargetContainerId("");
@@ -487,6 +525,17 @@ export function InventoryPage() {
           呈请移置
         </button>
         {localStateIsCurrent && transferNotice ? <p className="statusLine" role="status">{transferNotice}</p> : null}
+        <dl className="inventoryTransferReader" aria-label="移置校阅" data-polish-inventory-transfer-reader="s91-5-inventory-transfer-reader">
+          {transferReaderRows.map((row) => (
+            <div key={row.label}>
+              <dt>{row.label}</dt>
+              <dd>
+                <strong>{row.value}</strong>
+                <span>{row.detail}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <section

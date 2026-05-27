@@ -4210,6 +4210,9 @@ async function runClientSmoke(options = {}) {
         transferLedgerMarker: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.getAttribute("data-polish-inventory") || "",
         transferBoundaryMarker: document.querySelector("[data-polish-inventory-boundary='s89-23-transfer-boundary']")?.getAttribute("data-polish-inventory-boundary") || "",
         transferLedgerText: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.textContent || "",
+        transferReaderMarker: document.querySelector("[data-polish-inventory-transfer-reader='s91-5-inventory-transfer-reader']")?.getAttribute("data-polish-inventory-transfer-reader") || "",
+        transferReaderLabel: document.querySelector("[data-polish-inventory-transfer-reader='s91-5-inventory-transfer-reader']")?.getAttribute("aria-label") || "",
+        transferReaderText: document.querySelector("[data-polish-inventory-transfer-reader='s91-5-inventory-transfer-reader']")?.textContent || "",
         inventoryReaderMarker: document.querySelector("[data-polish-inventory-reader='s90-4-inventory-ledger-index']")?.getAttribute("data-polish-inventory-reader") || "",
         inventoryReaderText: document.querySelector("[data-polish-inventory-reader='s90-4-inventory-ledger-index']")?.textContent || "",
         horizontalOverflow: html.scrollWidth > html.clientWidth + 4,
@@ -4233,6 +4236,17 @@ async function runClientSmoke(options = {}) {
       !inventorySnapshot.transferLedgerText.includes("主卷回音")
     ) {
       throw new Error(`S89.23 desktop inventory transfer reader missing: ${JSON.stringify(inventorySnapshot)}`);
+    }
+    if (
+      inventorySnapshot.transferReaderMarker !== "s91-5-inventory-transfer-reader" ||
+      inventorySnapshot.transferReaderLabel !== "移置校阅" ||
+      !inventorySnapshot.transferReaderText.includes("物件") ||
+      !inventorySnapshot.transferReaderText.includes("去处") ||
+      !inventorySnapshot.transferReaderText.includes("候批") ||
+      !inventorySnapshot.transferReaderText.includes("回执") ||
+      !inventorySnapshot.transferReaderText.includes("不写成交")
+    ) {
+      throw new Error(`S91.5 desktop inventory transfer reader missing: ${JSON.stringify(inventorySnapshot)}`);
     }
     if (
       inventorySnapshot.inventoryReaderMarker !== "s90-4-inventory-ledger-index" ||
@@ -4440,6 +4454,9 @@ async function runClientSmoke(options = {}) {
         transferLedgerMarker: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.getAttribute("data-polish-inventory") || "",
         transferBoundaryMarker: document.querySelector("[data-polish-inventory-boundary='s89-23-transfer-boundary']")?.getAttribute("data-polish-inventory-boundary") || "",
         transferLedgerText: document.querySelector("[data-polish-inventory='s89-23-inventory-ledger-reader']")?.textContent || "",
+        transferReaderMarker: document.querySelector("[data-polish-inventory-transfer-reader='s91-5-inventory-transfer-reader']")?.getAttribute("data-polish-inventory-transfer-reader") || "",
+        transferReaderLabel: document.querySelector("[data-polish-inventory-transfer-reader='s91-5-inventory-transfer-reader']")?.getAttribute("aria-label") || "",
+        transferReaderText: document.querySelector("[data-polish-inventory-transfer-reader='s91-5-inventory-transfer-reader']")?.textContent || "",
         inventoryReaderMarker: document.querySelector("[data-polish-inventory-reader='s90-4-inventory-ledger-index']")?.getAttribute("data-polish-inventory-reader") || "",
         inventoryReaderText: document.querySelector("[data-polish-inventory-reader='s90-4-inventory-ledger-index']")?.textContent || "",
         horizontalOverflow: html.scrollWidth > html.clientWidth + 2,
@@ -4463,6 +4480,17 @@ async function runClientSmoke(options = {}) {
       !mobileInventory.transferLedgerText.includes("主卷回音")
     ) {
       throw new Error(`S89.23 mobile inventory transfer reader missing: ${JSON.stringify(mobileInventory)}`);
+    }
+    if (
+      mobileInventory.transferReaderMarker !== "s91-5-inventory-transfer-reader" ||
+      mobileInventory.transferReaderLabel !== "移置校阅" ||
+      !mobileInventory.transferReaderText.includes("物件") ||
+      !mobileInventory.transferReaderText.includes("去处") ||
+      !mobileInventory.transferReaderText.includes("候批") ||
+      !mobileInventory.transferReaderText.includes("回执") ||
+      !mobileInventory.transferReaderText.includes("不写成交")
+    ) {
+      throw new Error(`S91.5 mobile inventory transfer reader missing: ${JSON.stringify(mobileInventory)}`);
     }
     if (
       mobileInventory.inventoryReaderMarker !== "s90-4-inventory-ledger-index" ||

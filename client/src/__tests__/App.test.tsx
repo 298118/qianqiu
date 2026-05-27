@@ -5829,6 +5829,21 @@ describe("S74.1 React client shell", () => {
     expect(transferLedger?.querySelector("[data-polish-inventory-boundary='s89-23-transfer-boundary']")).toBeTruthy();
     expect(transferLedgerText).not.toMatch(/item:ledger|bag|store|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|服务器裁决|\/home\/|C:\\/i);
     expect(document.body.textContent || "").not.toMatch(/draftContext schema|\/home\/user\/\.env/i);
+    const transferReader = document.querySelector("[data-polish-inventory-transfer-reader='s91-5-inventory-transfer-reader']") as HTMLElement;
+    expect(transferReader).toBeTruthy();
+    expect(transferReader.getAttribute("aria-label")).toBe("移置校阅");
+    const transferReaderScope = within(transferReader);
+    expect(transferReaderScope.getByText("物件")).toBeTruthy();
+    expect(transferReaderScope.getByText("清丈册 · 1册")).toBeTruthy();
+    expect(transferReaderScope.getByText("去处")).toBeTruthy();
+    expect(transferReaderScope.getByText("县署库房 · 0/20")).toBeTruthy();
+    expect(transferReaderScope.getByText("候批")).toBeTruthy();
+    expect(transferReaderScope.getByText("可呈请候批")).toBeTruthy();
+    expect(transferReaderScope.getByText("回执")).toBeTruthy();
+    expect(transferReaderScope.getByText("暂无本地回执")).toBeTruthy();
+    const transferReaderText = transferReader.textContent || "";
+    expect(transferReaderText).toContain("浏览器不写成交、扣减、赠予、借用或关系回响。");
+    expect(transferReaderText).not.toMatch(/item:ledger|bag|store|污染单位札|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|服务器裁决|\/home\/|C:\\/i);
     const inventoryTraceHeading = await screen.findByText("账本为何变化");
     const inventoryTraceSection = within(inventoryTraceHeading.closest("section") as HTMLElement);
     expect(inventoryTraceSection.getByText("交易议价留痕")).toBeTruthy();
@@ -6088,7 +6103,9 @@ describe("S74.1 React client shell", () => {
     const transferButton = screen.getByRole("button", { name: "呈请移置" });
     await waitFor(() => expect(transferButton).toHaveProperty("disabled", false));
     fireEvent.click(transferButton);
-    await screen.findByText("案卷已复核并更新物件位置。");
+    await waitFor(() => expect(screen.getAllByText("案卷已复核并更新物件位置。")).toHaveLength(2));
+    const transferReader = document.querySelector("[data-polish-inventory-transfer-reader='s91-5-inventory-transfer-reader']") as HTMLElement;
+    expect(transferReader?.textContent || "").toContain("案卷已复核并更新物件位置。");
 
     await act(async () => {
       await router.navigate(`/game/${secondSessionId}/inventory`);

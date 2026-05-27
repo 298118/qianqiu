@@ -121,31 +121,41 @@
 | S91.2 | DONE | 首页开卷校阅与旧案入口 polish | 已完成首页“开卷校阅”四读，从现有表单状态、runtime 画像 registry、旧案目录和本地 loading/error 派生题名、立绘、自定背景字数、旧案架和朱印候复边界；并修正人物/囊箧移动端按钮内部 overflow 守门，不新增 route/API/schema/AI 权限/依赖/素材、存档字段或服务器裁决。 |
 | S91.3 | DONE | 主卷行止校阅与快捷建议状态 polish | 已完成主卷“行止校阅”四读，从现有 route/session 状态、quick action 状态、上一回批和本地草稿长度派生身份、草稿、快捷建议与回批边界；草稿只显示来源与字数，不回显全文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.4 | DONE | 人物往来校阅与本地草稿状态 polish | 已完成人物详情工作台“往来校阅”四读：从当前安全人物 view、当前页签、四类本地输入字数、近次公开回批和当前人物明确绑定的公开记录数量派生照面、本地稿、回批与留痕；不回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.5 | DONE | 囊箧移置校阅与候批状态 polish | 已完成囊箧页“移置校阅”四读：只从当前安全囊箧 view、本地移置选择、既有候批 readiness 和当前案卷本地回执提示派生物件、去处、候批与回执状态；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.4：人物往来校阅与本地草稿状态 polish 已完成。人物详情工作台新增 `s91-4-people-workbench-reader` 的“照面 / 本地稿 / 回批 / 留痕”四读，把当前人物、工作台页签、对话/交易/委派/礼法四类本地输入字数、近次公开回批和当前人物明确绑定的公开记录数量集中成可扫读状态；本地稿只显示字数，不回显草稿正文。
-- S91.4 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全 view、本地输入状态和公开记录。
-- 最近完整运行态验证来自 S91.4：`npm run typecheck:client`、`node --test test/reactClientScaffold.test.js`（105 tests）、`node --check scripts/clientSmoke.js`、S91.4 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-4-people-workbench-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1219 tests）均通过；提交前只读复审代理 `019e6a1d-9405-72a3-9cfb-b0593b67ce2f` 未发现阻塞问题，非阻塞建议为空 NPC 标识时留痕计数返回 0，已采纳并补 source canary。
+- 最新实现步骤 S91.5：囊箧移置校阅与候批状态 polish 已完成。囊箧“移置物件”面板新增 `s91-5-inventory-transfer-reader` 的“物件 / 去处 / 候批 / 回执”四读，把当前可流转物件、目标容器、本地候批 readiness 和当前案卷本地回执提示集中成可扫读状态；回执只显示本页本案卷提示，换案卷后不串旧案回执。
+- S91.5 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全囊箧 view、本地选择状态和回执提示，不裁决成交、扣减、赠予、借用、关系回响或真实账目。
+- 最近完整运行态验证来自 S91.5：`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（106 tests）、`npm run typecheck:client`、S91.5 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-5-inventory-transfer-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1220 tests）已通过；提交前只读复审代理 `019e6a71-cd5e-7090-a695-d2619e49f025` 未发现阻塞问题。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.4：
+最新运行态完整验证锚点来自 S91.5：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（105 tests）
+- `node --test test/reactClientScaffold.test.js`（106 tests）
 - `npm run typecheck:client`
 - `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 76 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-4-people-workbench-reader-smoke`
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-5-inventory-transfer-reader-smoke`
 - `npm run check:docs-governance`
 - `git diff --check`
-- `npm test`（1219 tests）
+- `npm test`（1220 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S91.5 囊箧移置校阅与候批状态 polish 完成
+
+- 范围：囊箧“移置物件”面板新增 `data-polish-inventory-transfer-reader="s91-5-inventory-transfer-reader"` 的“物件 / 去处 / 候批 / 回执”四读，集中显示当前可流转物件、现处、目标容器、候批 readiness 和当前案卷本地回执提示；不显示 raw ledger、隐藏字段、完整 provider/prompt 信息或本地路径。
+- 体验修正：成功回执现在既保留原有状态行，也进入移置校阅读法的“回执”格，便于玩家复核最近本地提示；App Vitest 同步断言双处显示，并继续验证换案卷后旧案物件、容器和回执不会串入新案卷。拒绝原因经 `safeLabel(payload.reason, "规则不许", 64)` 清洗后再进入提示。
+- 边界：本步只改 React 前端读法、人物/囊箧 route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决；浏览器仍只消费现有安全囊箧 view、本地选择状态和回执提示，不裁决成交、扣减、赠予、借用、关系回响或真实账目。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（106 tests）、`npm run typecheck:client`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-5-inventory-transfer-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1220 tests）；首次 App Vitest 因旧断言未适配双处显示失败，已调整后通过；首次 browser smoke 在首页 `networkidle` 超时，单独重跑通过且未命中 S91.5 断言。
+- 子代理：提交前只读复审代理 `019e6a71-cd5e-7090-a695-d2619e49f025` 已复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为提交前将本条“复审待完成”文案改为已完成，已采纳，代理未编辑文件、未运行 Git 命令。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-27：S91.4 人物往来校阅与本地草稿状态 polish 完成
 

@@ -2058,6 +2058,48 @@ test("S91.4 people workbench reader stays current-NPC, local-count-only, and fro
   );
 });
 
+test("S91.5 inventory transfer reader stays local-selection-only and frontend-only", () => {
+  const inventoryPageSource = readText("client/src/pages/InventoryPage.tsx");
+  const peopleStyleSource = readClientStyleModule("routes/people-inventory.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = inventoryPageSource.indexOf('data-polish-inventory-transfer-reader="s91-5-inventory-transfer-reader"');
+  const readerEnd = inventoryPageSource.indexOf("</section>", readerStart);
+  const readerMarkup = readerStart >= 0 && readerEnd > readerStart
+    ? inventoryPageSource.slice(readerStart, readerEnd)
+    : "";
+  const readerDataStart = inventoryPageSource.indexOf("const hasCurrentTransferNotice");
+  const readerDataEnd = inventoryPageSource.indexOf("const inventoryReaderRows", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? inventoryPageSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const runtimeCombined = stripSafeGuardPatterns(`${inventoryPageSource}\n${peopleStyleSource}`);
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.match(inventoryPageSource, /type InventoryTransferReaderRow/);
+  assert.match(inventoryPageSource, /hasCurrentTransferNotice/);
+  assert.match(inventoryPageSource, /currentTransferNotice/);
+  assert.match(inventoryPageSource, /safeLabel\(payload\.reason, "规则不许", 64\)/);
+  assert.match(readerDataBlock, /只记录当前下拉选择/);
+  assert.match(readerDataBlock, /浏览器不写成交、扣减、赠予、借用或关系回响/);
+  assert.match(readerDataBlock, /真实账目以后续安全卷宗为准/);
+  assert.match(readerDataBlock, /暂无本地回执/);
+  assert.doesNotMatch(readerMarkup, /submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload/);
+
+  assert.match(peopleStyleSource, /\.inventoryTransferReader \{/);
+  assert.match(peopleStyleSource, /\.inventoryTransferReader \{[\s\S]*grid-template-columns: minmax\(0, 0\.9fr\) minmax\(0, 1fr\)/);
+  assert.match(peopleStyleSource, /@media \(max-width: 760px\)[\s\S]*\.inventoryTransferReader \{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(appTestSource, /s91-5-inventory-transfer-reader/);
+  assert.match(appTestSource, /暂无本地回执/);
+  assert.match(clientSmokeSource, /S91\.5 desktop inventory transfer reader/);
+  assert.match(clientSmokeSource, /S91\.5 mobile inventory transfer reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.60 main and court desk keyframes use semantic names", () => {
   const keyframesSource = readText("client/src/styles/motion/keyframes.css");
   const gameStyleSource = readText("client/src/styles/routes/game.css");
