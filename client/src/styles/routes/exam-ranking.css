@@ -259,6 +259,71 @@
   color: #2d251d;
 }
 
+.examWritingReader {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.34fr) minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .24);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .82), rgb(233 216 188 / .62)),
+    var(--qq-material-xuan) center / 520px repeat;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 252 238 / .5),
+    0 14px 26px rgb(68 42 26 / .08);
+  padding: clamp(12px, 2vw, 18px);
+}
+
+.examWritingReaderHeader {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-width: 0;
+}
+
+.examWritingReaderHeader strong {
+  color: #35271d;
+  font-family: var(--qq-font-art-heading);
+  font-size: clamp(1rem, 1.7vw, 1.24rem);
+  font-weight: 400;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.examWritingReader dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+}
+
+.examWritingReader dl > div {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 248 230 / .56);
+  padding: 9px 10px;
+}
+
+.examWritingReader dt {
+  color: #8e2f27;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.examWritingReader dd {
+  display: grid;
+  gap: 4px;
+  margin: 3px 0 0;
+  color: #514232;
+  line-height: 1.48;
+  overflow-wrap: anywhere;
+}
+
+.examWritingReader dd strong {
+  color: #2d251d;
+}
+
 .examImmersiveLayout {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(270px, 0.62fr);
@@ -1052,6 +1117,11 @@
 @media (max-width: 760px) {
   .examTransitionRail,
   .rankingTransitionRail {
+    grid-template-columns: 1fr;
+  }
+
+  .examWritingReader,
+  .examWritingReader dl {
     grid-template-columns: 1fr;
   }
 }

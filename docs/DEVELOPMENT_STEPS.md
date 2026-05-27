@@ -122,31 +122,41 @@
 | S91.3 | DONE | 主卷行止校阅与快捷建议状态 polish | 已完成主卷“行止校阅”四读，从现有 route/session 状态、quick action 状态、上一回批和本地草稿长度派生身份、草稿、快捷建议与回批边界；草稿只显示来源与字数，不回显全文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.4 | DONE | 人物往来校阅与本地草稿状态 polish | 已完成人物详情工作台“往来校阅”四读：从当前安全人物 view、当前页签、四类本地输入字数、近次公开回批和当前人物明确绑定的公开记录数量派生照面、本地稿、回批与留痕；不回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.5 | DONE | 囊箧移置校阅与候批状态 polish | 已完成囊箧页“移置校阅”四读：只从当前安全囊箧 view、本地移置选择、既有候批 readiness 和当前案卷本地回执提示派生物件、去处、候批与回执状态；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.6 | DONE | 科举落墨校阅与候榜状态 polish | 已完成科举页“落墨校阅”四读：只从现有安全考试 view、本地文章字数、route 支持状态、交卷 readiness 和本案卷近次交卷评定派生试别、草稿、交卷与候榜状态；不回显文章正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.5：囊箧移置校阅与候批状态 polish 已完成。囊箧“移置物件”面板新增 `s91-5-inventory-transfer-reader` 的“物件 / 去处 / 候批 / 回执”四读，把当前可流转物件、目标容器、本地候批 readiness 和当前案卷本地回执提示集中成可扫读状态；回执只显示本页本案卷提示，换案卷后不串旧案回执。
-- S91.5 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全囊箧 view、本地选择状态和回执提示，不裁决成交、扣减、赠予、借用、关系回响或真实账目。
-- 最近完整运行态验证来自 S91.5：`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（106 tests）、`npm run typecheck:client`、S91.5 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-5-inventory-transfer-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1220 tests）已通过；提交前只读复审代理 `019e6a71-cd5e-7090-a695-d2619e49f025` 未发现阻塞问题。
+- 最新实现步骤 S91.6：科举落墨校阅与候榜状态 polish 已完成。科举页新增 `s91-6-exam-writing-reader` 的“试别 / 草稿 / 交卷 / 候榜”四读，把当前安全考试 view、本地文章字数、route 支持状态、交卷 readiness 和本案卷近次交卷评定集中成可扫读状态；文章只显示字数，不回显正文，交卷后显示“已呈卷”与清洗后的分数摘要，不退回成未启封题纸。
+- S91.6 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全考试 view、本地文章字数、route 状态和交卷回执，不裁决评分、舞弊、放榜、晋级、授官、同年座师或 hidden 信息。
+- 最近完整运行态验证来自 S91.6：`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（107 tests）、`npm run typecheck:client`、S91.6 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-6-exam-writing-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1221 tests）已通过；提交前只读复审代理 `019e6998-28f8-7072-8af8-84bcad3b1ee4` 未发现阻塞问题。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.5：
+最新运行态完整验证锚点来自 S91.6：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（106 tests）
+- `node --test test/reactClientScaffold.test.js`（107 tests）
 - `npm run typecheck:client`
 - `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 76 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-5-inventory-transfer-reader-smoke`
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-6-exam-writing-reader-smoke`
 - `npm run check:docs-governance`
 - `git diff --check`
-- `npm test`（1220 tests）
+- `npm test`（1221 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S91.6 科举落墨校阅与候榜状态 polish 完成
+
+- 范围：科举页新增 `data-polish-exam-writing-reader="s91-6-exam-writing-reader"` 的“试别 / 草稿 / 交卷 / 候榜”四读，集中显示当前试别/场地流程、本地文章字数、可否呈卷、近次交卷评定和候榜边界；不显示文章正文、raw ledger、隐藏字段、完整 provider/prompt 信息或本地路径。
+- 体验修正：交卷成功后 `activeExam` 会按既有 store 逻辑清空，本读法仍根据同案卷 `lastExamResult` 显示“已呈卷”和清洗后的分数摘要，避免退回成“未启封”；榜次、同年、座师与授官仍引导到皇榜公开 view。App Vitest 原先手算文章字数与 `countCjkAwareWords()` 口径不一致，已改为断言数字字数与正文不回显。
+- 边界：本步只改 React 前端读法、科举/皇榜 route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决；浏览器仍只消费现有安全考试 view、本地文章字数、route 状态和交卷回执，不裁决评分、舞弊、放榜、晋级、授官、同年座师或 hidden 信息。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（107 tests）、`npm run typecheck:client`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-6-exam-writing-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1221 tests）；首次 App Vitest 因测试手算字数与组件计数口径不一致失败，调整断言后通过；首次 `git diff --check` 60 秒超时且仅输出既有 CRLF warning，长超时复跑通过。
+- 子代理：提交前只读复审代理 `019e6998-28f8-7072-8af8-84bcad3b1ee4` 已复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为提交前把复审待完成文案改为已完成，已采纳，代理未编辑文件、未运行 Git 命令。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-27：S91.5 囊箧移置校阅与候批状态 polish 完成
 

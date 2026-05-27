@@ -2169,6 +2169,8 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
     const background = hero ? getComputedStyle(hero).backgroundImage : "";
     const band = document.querySelector("[data-polish-exam-ceremony-band='s89-33-exam-ceremony-material']");
     const paper = document.querySelector("[data-polish-exam-paper='s89-33-exam-ceremony-material']");
+    const writingReader = document.querySelector("[data-polish-exam-writing-reader='s91-6-exam-writing-reader']");
+    const writingReaderText = writingReader?.textContent || "";
     const heroGlowStyle = hero ? getComputedStyle(hero, "::after") : null;
     const bandStyle = band ? getComputedStyle(band) : null;
     const paperStyle = paper ? getComputedStyle(paper) : null;
@@ -2192,6 +2194,14 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
       hasPaperMarker: Boolean(paper),
       hasRitualLedger: Boolean(document.querySelector('[data-polish-exam-ledger="s89-18-exam-ritual"]')),
       hasRitualCopy: text.includes("科举仪程") && text.includes("取题启封") && text.includes("场内推进") && text.includes("交卷候批") && text.includes("候榜回音"),
+      writingReaderMarker: writingReader?.getAttribute("data-polish-exam-writing-reader") || "",
+      writingReaderLabel: writingReader?.getAttribute("aria-label") || "",
+      hasWritingReaderCopy: writingReaderText.includes("落墨校阅") &&
+        writingReaderText.includes("试别") &&
+        writingReaderText.includes("草稿") &&
+        writingReaderText.includes("交卷") &&
+        writingReaderText.includes("候榜") &&
+        writingReaderText.includes("不补榜次、同年或授官"),
       hasQuestionPanel: Boolean(document.querySelector(".examQuestionPanel")),
       examStaticSurfaceCount: document.querySelectorAll(".examQuestionPanel.paperMotionSurface, .examDesk.paperMotionSurface, .examRecordPanel.paperMotionSurface, .examPeerPanel.paperMotionSurface, .examPreviewPanel.paperMotionSurface, .examRecentSubmitPanel.paperMotionSurface").length,
       examStaticSurfaceMissing: Boolean(document.querySelector(".examQuestionPanel:not(.paperMotionSurface), .examDesk:not(.paperMotionSurface), .examRecordPanel:not(.paperMotionSurface), .examPeerPanel:not(.paperMotionSurface), .examPreviewPanel:not(.paperMotionSurface), .examRecentSubmitPanel:not(.paperMotionSurface)")),
@@ -2222,6 +2232,9 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
     failures.push(`S89.59 reduced exam animations were ${JSON.stringify({ hero: initialSnapshot.heroGlowAnimation, band: initialSnapshot.ceremonyBandAnimation, paper: initialSnapshot.paperAnimation })}`);
   }
   if (!initialSnapshot.hasRitualLedger || !initialSnapshot.hasRitualCopy) failures.push("missing S89.18 exam ritual ledger copy");
+  if (initialSnapshot.writingReaderMarker !== "s91-6-exam-writing-reader" || initialSnapshot.writingReaderLabel !== "落墨校阅" || !initialSnapshot.hasWritingReaderCopy) {
+    failures.push("missing S91.6 exam writing reader copy");
+  }
   if (!initialSnapshot.hasQuestionPanel) failures.push("missing question panel");
   if (initialSnapshot.examStaticSurfaceCount < 6 || initialSnapshot.examStaticSurfaceMissing) failures.push(`S89.49 exam static surfaces were incomplete before question: ${JSON.stringify({ examStaticSurfaceCount: initialSnapshot.examStaticSurfaceCount, examStaticSurfaceMissing: initialSnapshot.examStaticSurfaceMissing })}`);
   if (!initialSnapshot.hasSafetyBoundary) failures.push("missing server-owned exam boundary");
@@ -2265,6 +2278,8 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
     const textarea = document.querySelector(".examSubmit textarea");
     const band = document.querySelector("[data-polish-exam-ceremony-band='s89-33-exam-ceremony-material']");
     const paper = document.querySelector("[aria-label='当前试卷'][data-polish-exam-paper='s89-33-exam-ceremony-material']");
+    const writingReader = document.querySelector("[data-polish-exam-writing-reader='s91-6-exam-writing-reader']");
+    const writingReaderText = writingReader?.textContent || "";
     const bandStyle = band ? getComputedStyle(band) : null;
     const paperStyle = paper ? getComputedStyle(paper) : null;
     return {
@@ -2276,6 +2291,12 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
       hasDraftBar: Boolean(document.querySelector(".examDraftBar")),
       hasRitualLedger: Boolean(document.querySelector('[data-polish-exam-ledger="s89-18-exam-ritual"]')),
       hasRitualCopy: text.includes("科举仪程") && text.includes("场内反馈只作案卷公开记录") && text.includes("候榜回音"),
+      writingReaderMarker: writingReader?.getAttribute("data-polish-exam-writing-reader") || "",
+      writingReaderLabel: writingReader?.getAttribute("aria-label") || "",
+      hasWritingReaderCopy: writingReaderText.includes("落墨校阅") &&
+        writingReaderText.includes("可呈卷") &&
+        writingReaderText.includes("本地只记文章字数") &&
+        writingReaderText.includes("交卷后仍候评阅、复核与放榜"),
       ceremonyBandState: band?.getAttribute("data-exam-state") || "",
       shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
       reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -2304,6 +2325,9 @@ async function assertExamFullScreen(page, sessionId, screenshotsDir, screenshotN
   if (!examSnapshot.hasEssay) afterFailures.push("missing essay textarea");
   if (!examSnapshot.hasDraftBar) afterFailures.push("missing draft status bar");
   if (!examSnapshot.hasRitualLedger || !examSnapshot.hasRitualCopy) afterFailures.push("missing S89.18 active exam ritual ledger");
+  if (examSnapshot.writingReaderMarker !== "s91-6-exam-writing-reader" || examSnapshot.writingReaderLabel !== "落墨校阅" || !examSnapshot.hasWritingReaderCopy) {
+    afterFailures.push("missing S91.6 active exam writing reader copy");
+  }
   if (examSnapshot.ceremonyBandState !== "active" || !examSnapshot.hasCeremonyActiveCopy) afterFailures.push(`missing S89.33 active exam ceremony band: ${examSnapshot.ceremonyBandState}`);
   if (!examSnapshot.hasPaperMarker) afterFailures.push("missing S89.33 active exam paper marker");
   if (examSnapshot.shellMotion !== "reduced" && !examSnapshot.reducedMotion) {

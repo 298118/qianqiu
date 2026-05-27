@@ -21,6 +21,12 @@ const defaultExamLevel: ExamLevel = "child_exam";
 const defaultSceneAction = "整理号舍，审题立意。";
 const defaultEssay = "臣闻治世之要，在修己以安人，明法以养民。";
 
+type ExamWritingReaderRow = {
+  readonly label: string;
+  readonly value: string;
+  readonly text: string;
+};
+
 const examStageCopy: Record<ExamLevel, { readonly place: string; readonly phase: string; readonly clock: string; readonly scene: string }> = {
   child_exam: { place: "县学试棚", phase: "入场点名", clock: "卯正至辰初", scene: "exam_cell" },
   provincial_exam: { place: "贡院号舍", phase: "头场经义", clock: "辰初至午后", scene: "exam_cell" },
@@ -104,6 +110,15 @@ function formatRequirement(value: unknown) {
 function readPositiveInteger(value: unknown) {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? Math.round(number) : null;
+}
+
+function getExamScoreSummary(score: unknown) {
+  const record = asRecord(score);
+  const total = readPositiveInteger(record.total) ??
+    readPositiveInteger(record.overall) ??
+    readPositiveInteger(record.final);
+  if (total !== null) return `${total} 分`;
+  return Object.keys(record).length ? "已有评语" : "暂无评定";
 }
 
 function formatWordCountLabel(value: unknown) {
@@ -323,6 +338,46 @@ export function ExamPage() {
       text: hasLatestExamEvaluation ? `${safeRecentExamName}已有评定，可转皇榜读榜文、同年与授官提示。` : "交卷后才有评阅、放榜、同年座师与授官过渡。"
     }
   ] as const;
+  const examWritingReaderRows: ExamWritingReaderRow[] = [
+    {
+      label: "试别",
+      value: activeExamForSession ? safeExamName : hasLatestExamEvaluation ? safeRecentExamName : getExamLabel(visibleLevel),
+      text: activeExamForSession
+        ? `${stage.place} · ${procedure.phaseLabel}，只按已启题纸与公开考场记录显示。`
+        : hasLatestExamEvaluation
+          ? `${safeRecentExamName}已有公开评定，本页不补造新题纸。`
+        : routeSessionSupported
+          ? `候取${getExamLabel(level)}题纸；未启封不补造试题。`
+          : unsupportedRouteMessage
+    },
+    {
+      label: "草稿",
+      value: essay.trim() ? `${essayWordCount} 字` : "草稿未成篇",
+      text: essay.trim()
+        ? `本地只记文章字数，目标约 ${wordCount.label} 字；不回显正文。`
+        : "本地尚无成篇文字；不回显正文。"
+    },
+    {
+      label: "交卷",
+      value: hasLatestExamEvaluation ? "已呈卷" : activeExamForSession && canCallSessionApi && essay.trim() ? "可呈卷" : activeExamForSession ? "候成篇" : "未启封",
+      text: hasLatestExamEvaluation
+        ? "本案卷已有评定回音，后续仍往皇榜读榜文。"
+        : activeExamForSession
+        ? canCallSessionApi && essay.trim()
+          ? "交卷后仍候评阅、复核与放榜。"
+          : "须有当前案卷题纸与成篇草稿，才可呈卷。"
+        : routeSessionSupported
+          ? "未取题前不交卷，不补评语。"
+          : "断卷不可交卷。"
+    },
+    {
+      label: "候榜",
+      value: hasLatestExamEvaluation ? getExamScoreSummary(latestSubmitForSession?.score) : "暂无评定",
+      text: hasLatestExamEvaluation
+        ? `${safeRecentExamName}已有公开评定；榜次、同年与授官往皇榜细看。`
+        : "暂无本案卷评定；不补榜次、同年或授官。"
+    }
+  ];
 
   useEffect(() => {
     setLevel(defaultExamLevel);
@@ -422,6 +477,27 @@ export function ExamPage() {
           </div>
         ))}
       </dl>
+      <section
+        className="examWritingReader"
+        aria-label="落墨校阅"
+        data-polish-exam-writing-reader="s91-6-exam-writing-reader"
+      >
+        <div className="examWritingReaderHeader">
+          <p className="eyebrow">落墨校阅</p>
+          <strong>呈卷前先校试别、草稿、交卷与候榜。</strong>
+        </div>
+        <dl>
+          {examWritingReaderRows.map((row) => (
+            <div key={row.label}>
+              <dt>{row.label}</dt>
+              <dd>
+                <strong>{row.value}</strong>
+                <span>{row.text}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       <div className="examImmersiveLayout">
         <main className="examPaperColumn" aria-label="中央试卷">

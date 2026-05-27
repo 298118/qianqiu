@@ -4256,6 +4256,16 @@ describe("S74.1 React client shell", () => {
     expect(document.querySelector('[data-polish-exam-hero="s89-33-exam-ceremony-material"]')).toBeTruthy();
     expect(document.querySelector('[data-polish-exam-ceremony-band="s89-33-exam-ceremony-material"]')?.getAttribute("data-exam-state")).toBe("ready");
     expect(document.querySelector('[data-polish-exam-ledger="s89-18-exam-ritual"]')).toBeTruthy();
+    const initialWritingReader = document.querySelector<HTMLElement>('[data-polish-exam-writing-reader="s91-6-exam-writing-reader"]');
+    expect(initialWritingReader).toBeTruthy();
+    expect(initialWritingReader?.getAttribute("aria-label")).toBe("落墨校阅");
+    expect(initialWritingReader?.textContent || "").toContain("呈卷前先校试别、草稿、交卷与候榜。");
+    expect(initialWritingReader?.textContent || "").toContain("试别");
+    expect(initialWritingReader?.textContent || "").toContain("草稿");
+    expect(initialWritingReader?.textContent || "").toContain("交卷");
+    expect(initialWritingReader?.textContent || "").toContain("候榜");
+    expect(initialWritingReader?.textContent || "").toContain("不补榜次、同年或授官");
+    expect(initialWritingReader?.textContent || "").not.toContain("臣闻治世之要");
     expect(document.querySelector(".examStageRail")).toBeTruthy();
     expect(document.querySelector(".sessionRouteShell")).toBeTruthy();
     expect(document.querySelector(".gameCommandBar")).toBeFalsy();
@@ -4290,6 +4300,11 @@ describe("S74.1 React client shell", () => {
     expect(screen.getAllByText(/发题审题：题纸既发/).length).toBeGreaterThan(0);
     expect(screen.getByText(/场内反馈只作案卷公开记录/)).toBeTruthy();
     expect(screen.getByText(/同场考生、阅卷官与榜单只显示公开占位/)).toBeTruthy();
+    const activeWritingReader = document.querySelector<HTMLElement>('[data-polish-exam-writing-reader="s91-6-exam-writing-reader"]');
+    expect(activeWritingReader?.textContent || "").toContain("乡试");
+    expect(activeWritingReader?.textContent || "").toContain("可呈卷");
+    expect(activeWritingReader?.textContent || "").toContain("交卷后仍候评阅、复核与放榜");
+    expect(activeWritingReader?.textContent || "").not.toContain("臣闻治世之要");
 
     const fetchCountBeforeFeedbackDraft = fetchMock.mock.calls.length;
     fireEvent.click(screen.getByRole("button", { name: "拟行动：审题立意" }));
@@ -4307,9 +4322,18 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText(/本步行动：誊清卷面/)).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("文章"), { target: { value: "夫荒政者，先安民食，继明教化。" } });
+    const draftWritingReader = document.querySelector<HTMLElement>('[data-polish-exam-writing-reader="s91-6-exam-writing-reader"]');
+    expect(draftWritingReader?.textContent || "").toMatch(/草稿\d+ 字/);
+    expect(draftWritingReader?.textContent || "").toContain("本地只记文章字数");
+    expect(draftWritingReader?.textContent || "").not.toContain("夫荒政者，先安民食，继明教化。");
     fireEvent.click(screen.getByRole("button", { name: "交卷" }));
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/exam/submit")).toHaveLength(1));
     await screen.findByText(/乡试 已有评定，可入皇榜细看。/);
+    const submittedWritingReader = document.querySelector<HTMLElement>('[data-polish-exam-writing-reader="s91-6-exam-writing-reader"]');
+    expect(submittedWritingReader?.textContent || "").toContain("已呈卷");
+    expect(submittedWritingReader?.textContent || "").toContain("82 分");
+    expect(submittedWritingReader?.textContent || "").toContain("榜次、同年与授官往皇榜细看");
+    expect(submittedWritingReader?.textContent || "").not.toMatch(/provider payload|sk-test-secret|C:\\secret/i);
 
     const requestedUrls = fetchMock.mock.calls.map(([url]) => String(url));
     expect(requestedUrls).not.toContain("/api/game/turn");

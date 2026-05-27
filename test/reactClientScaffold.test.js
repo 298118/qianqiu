@@ -2100,6 +2100,51 @@ test("S91.5 inventory transfer reader stays local-selection-only and frontend-on
   );
 });
 
+test("S91.6 exam writing reader stays local-count-only and frontend-only", () => {
+  const examPageSource = readText("client/src/pages/ExamPage.tsx");
+  const examStyleSource = readClientStyleModule("routes/exam-ranking.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = examPageSource.indexOf('data-polish-exam-writing-reader="s91-6-exam-writing-reader"');
+  const readerEnd = examPageSource.indexOf('<div className="examImmersiveLayout">', readerStart);
+  const readerMarkup = readerStart >= 0 && readerEnd > readerStart
+    ? examPageSource.slice(readerStart, readerEnd)
+    : "";
+  const readerDataStart = examPageSource.indexOf("const examWritingReaderRows");
+  const readerDataEnd = examPageSource.indexOf("useEffect(() =>", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? examPageSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const examWithoutGuard = examPageSource.replace(/const unsafeExamFragments[\s\S]*?\] as const;\r?\n/, "");
+  const runtimeCombined = stripSafeGuardPatterns(`${examWithoutGuard}\n${examStyleSource}`);
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.match(examPageSource, /type ExamWritingReaderRow/);
+  assert.match(examPageSource, /getExamScoreSummary/);
+  assert.match(examPageSource, /const examWritingReaderRows: ExamWritingReaderRow\[\]/);
+  assert.match(examPageSource, /aria-label="落墨校阅"/);
+  assert.match(readerDataBlock, /本地只记文章字数/);
+  assert.match(readerDataBlock, /不回显正文/);
+  assert.match(readerDataBlock, /交卷后仍候评阅、复核与放榜/);
+  assert.match(readerDataBlock, /不补榜次、同年或授官/);
+  assert.match(readerDataBlock, /榜次、同年与授官往皇榜细看/);
+  assert.doesNotMatch(readerMarkup, /essay|sceneAction|submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|ledger/);
+
+  assert.match(examStyleSource, /\.examWritingReader \{/);
+  assert.match(examStyleSource, /\.examWritingReader \{[\s\S]*grid-template-columns: minmax\(150px, 0\.34fr\) minmax\(0, 1fr\)/);
+  assert.match(examStyleSource, /\.examWritingReader dl \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(examStyleSource, /@media \(max-width: 760px\)[\s\S]*\.examWritingReader,[\s\S]*\.examWritingReader dl \{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(appTestSource, /s91-6-exam-writing-reader/);
+  assert.match(appTestSource, /夫荒政者，先安民食，继明教化。/);
+  assert.match(clientSmokeSource, /s91-6-exam-writing-reader/);
+  assert.match(clientSmokeSource, /S91\.6 exam writing reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.60 main and court desk keyframes use semantic names", () => {
   const keyframesSource = readText("client/src/styles/motion/keyframes.css");
   const gameStyleSource = readText("client/src/styles/routes/game.css");
