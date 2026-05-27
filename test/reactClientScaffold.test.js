@@ -2017,6 +2017,47 @@ test("S91.3 main turn reader stays local, player-facing, and draft-only", () => 
   );
 });
 
+test("S91.4 people workbench reader stays current-NPC, local-count-only, and frontend-only", () => {
+  const peoplePageSource = readText("client/src/pages/PeoplePage.tsx");
+  const peopleStyleSource = readClientStyleModule("routes/people-inventory.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = peoplePageSource.indexOf('data-polish-npc-workbench-reader="s91-4-people-workbench-reader"');
+  const readerEnd = peoplePageSource.indexOf('<nav className="inkboxTabs npcTabs"', readerStart);
+  const readerMarkup = readerStart >= 0 && readerEnd > readerStart
+    ? peoplePageSource.slice(readerStart, readerEnd)
+    : "";
+  const readerDataStart = peoplePageSource.indexOf("const selectedWorkbenchReaderRows");
+  const readerDataEnd = peoplePageSource.indexOf("async function handleDialogueSubmit", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? peoplePageSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const runtimeCombined = stripSafeGuardPatterns(`${peoplePageSource}\n${peopleStyleSource}`);
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.match(peoplePageSource, /localDraftCharCount/);
+  assert.match(peoplePageSource, /formatLocalDraftCount\("对话", localDialogueDraftCount\)/);
+  assert.match(peoplePageSource, /countCurrentNpcRecords/);
+  assert.match(peoplePageSource, /if \(!npcId\) return 0;/);
+  assert.match(peoplePageSource, /selectedReplyStatus/);
+  assert.match(readerDataBlock, /只显示字数，不回显对话、报价、命令或交游呈词/);
+  assert.match(readerDataBlock, /记录数量来自当前可见卷宗/);
+  assert.match(readerDataBlock, /不成交、不扣银、不改关系/);
+  assert.doesNotMatch(readerMarkup, /activeDialogueDraft|activeTradeOffer|activeCommandText|activeSocialDraft|actionDraft\.text|submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|ledger/);
+
+  assert.match(peopleStyleSource, /\.npcWorkbenchReader \{/);
+  assert.match(peopleStyleSource, /\.npcWorkbenchReader \{[\s\S]*grid-template-columns: minmax\(0, 0\.92fr\) minmax\(0, 1\.16fr\)/);
+  assert.match(peopleStyleSource, /@media \(max-width: 760px\)[\s\S]*\.npcWorkbenchReader \{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(appTestSource, /s91-4-people-workbench-reader/);
+  assert.match(appTestSource, /私下探问粮册旧账/);
+  assert.match(clientSmokeSource, /S91\.4 people workbench reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.60 main and court desk keyframes use semantic names", () => {
   const keyframesSource = readText("client/src/styles/motion/keyframes.css");
   const gameStyleSource = readText("client/src/styles/routes/game.css");

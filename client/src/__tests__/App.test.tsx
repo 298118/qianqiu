@@ -5266,6 +5266,20 @@ describe("S74.1 React client shell", () => {
     await screen.findByText("人物谱牒");
     await waitFor(() => expect(screen.getAllByText("新案幕友").length).toBeGreaterThan(0));
     await waitFor(() => expect(useGameSessionStore.getState().npcDetail?.sessionId).toBe(routeSessionId));
+    const npcWorkbenchReader = within(document.querySelector("[data-polish-npc-workbench-reader='s91-4-people-workbench-reader']") as HTMLElement);
+    expect(npcWorkbenchReader.getByText("照面")).toBeTruthy();
+    expect(npcWorkbenchReader.getByText("新案幕友 · 档案")).toBeTruthy();
+    expect(npcWorkbenchReader.getByText("本地稿")).toBeTruthy();
+    expect(npcWorkbenchReader.getByText("四簿未写")).toBeTruthy();
+    expect(npcWorkbenchReader.getByText("回批")).toBeTruthy();
+    expect(npcWorkbenchReader.getByText("暂无新回批")).toBeTruthy();
+    expect(npcWorkbenchReader.getByText("留痕")).toBeTruthy();
+    expect(npcWorkbenchReader.getByText("近事 0 · 交易 0 · 委派 0")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "对话" }));
+    fireEvent.change(screen.getByLabelText("对话"), { target: { value: "私下探问粮册旧账。" } });
+    expect(npcWorkbenchReader.getByText(/对话 \d+ 字 · 交易未写 · 委派未写 · 礼法未写/)).toBeTruthy();
+    expect(npcWorkbenchReader.queryByText(/私下探问粮册旧账/)).toBeNull();
 
     act(() => useGameSessionStore.setState({
       currentSessionId: staleSessionId,

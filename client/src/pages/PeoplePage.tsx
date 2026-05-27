@@ -664,6 +664,31 @@ function actionLabel(actionType: unknown) {
   return labels[text] || text || "交游";
 }
 
+function localDraftCharCount(value: string) {
+  return value.trim().length;
+}
+
+function formatLocalDraftCount(label: string, count: number) {
+  return count > 0 ? `${label} ${count} 字` : `${label}未写`;
+}
+
+function countCurrentNpcRecords(records: readonly unknown[], npcId: string) {
+  if (!npcId) return 0;
+  return records.filter((record) => {
+    if (!record || typeof record !== "object" || Array.isArray(record)) return false;
+    const entry = record as Record<string, unknown>;
+    const assignee = entry.assignee && typeof entry.assignee === "object" && !Array.isArray(entry.assignee)
+      ? entry.assignee as Record<string, unknown>
+      : {};
+    const recordNpcIds = [
+      entry.npcId,
+      entry.actorBId,
+      assignee.npcId
+    ].map((value) => safePeopleText(value, "", 80)).filter(Boolean);
+    return recordNpcIds.includes(npcId);
+  }).length;
+}
+
 function buildPersonRows(
   registry: AssetRegistry | null,
   session: ReturnType<typeof useGameSessionStore.getState>["currentSession"],
@@ -958,6 +983,59 @@ export function PeoplePage() {
       text: selectedTaskRecord
         ? safePeopleText(selectedTaskRecord.title, "委派任务已入卷；成败与耗费仍候回批。", 104)
         : "可写差遣意图；差事成败、经费与人物行动不在本页定夺。"
+    }
+  ] as const : [];
+  const localDialogueDraftCount = localDraftCharCount(activeDialogueDraft);
+  const localTradeDraftCount = localDraftCharCount(activeTradeOffer);
+  const localCommandDraftCount = localDraftCharCount(activeCommandText);
+  const localSocialDraftCount = localDraftCharCount(activeSocialDraft);
+  const localWorkbenchDraftTotal = localDialogueDraftCount + localTradeDraftCount + localCommandDraftCount + localSocialDraftCount;
+  const localWorkbenchDraftSummary = localWorkbenchDraftTotal
+    ? [
+      formatLocalDraftCount("对话", localDialogueDraftCount),
+      formatLocalDraftCount("交易", localTradeDraftCount),
+      formatLocalDraftCount("委派", localCommandDraftCount),
+      formatLocalDraftCount("礼法", localSocialDraftCount)
+    ].join(" · ")
+    : "四簿未写";
+  const selectedReplySignals = [
+    activeNpcDialogueView?.dialogueText ? "对话已回" : "",
+    activeNpcTradeRecord ? `交易${statusLabel(activeNpcTradeRecord.status)}` : "",
+    activeNpcCommandPlan ? "委派有策" : "",
+    activeNpcActionResolutionView ? "礼法已回" : ""
+  ].filter(Boolean);
+  const selectedReplyStatus = routeNpcMutationStatus === "loading"
+    ? "候回批"
+    : selectedReplySignals.length
+      ? selectedReplySignals.slice(0, 3).join(" · ")
+      : "暂无新回批";
+  const selectedInteractionRecordCount = countCurrentNpcRecords(interactionRecords, selectedNpcIdForResults);
+  const selectedTradeRecordCount = countCurrentNpcRecords(tradeRecords, selectedNpcIdForResults);
+  const selectedTaskRecordCount = countCurrentNpcRecords(delegatedTasks, selectedNpcIdForResults);
+  const selectedWorkbenchReaderRows = selectedNpc ? [
+    {
+      label: "照面",
+      value: `${selectedNpcName} · ${activeTabLabel}`,
+      text: `${selectedNpcTitle}；${routeNpcDetailStatus === "loading" ? "详情候载" : "只读当前公开人物详情。"}`
+    },
+    {
+      label: "本地稿",
+      value: localWorkbenchDraftSummary,
+      text: localWorkbenchDraftTotal
+        ? `共 ${localWorkbenchDraftTotal} 字，只显示字数，不回显对话、报价、命令或交游呈词。`
+        : "对话、交易、委派和礼法输入框均未落字；本页不会补造草稿。"
+    },
+    {
+      label: "回批",
+      value: selectedReplyStatus,
+      text: routeNpcMutationStatus === "loading"
+        ? "人物请求已呈出，仍等既有接口回批；浏览器不先行定夺。"
+        : "近次回应只作公开摘要；成败、银物、人情和关系终局仍候案卷回批。"
+    },
+    {
+      label: "留痕",
+      value: `近事 ${selectedInteractionRecordCount} · 交易 ${selectedTradeRecordCount} · 委派 ${selectedTaskRecordCount}`,
+      text: "记录数量来自当前可见卷宗；本页只帮你定位材料，不成交、不扣银、不改关系。"
     }
   ] as const : [];
 
@@ -1264,6 +1342,17 @@ export function PeoplePage() {
               </div>
               <dl className="npcDetailReadRail" aria-label={`${selectedNpc.displayName}读法`}>
                 {selectedReaderRows.map((row) => (
+                  <div key={row.label}>
+                    <dt>{row.label}</dt>
+                    <dd>
+                      <strong>{row.value}</strong>
+                      <span>{row.text}</span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <dl className="npcWorkbenchReader" aria-label={`${selectedNpc.displayName}往来校阅`} data-polish-npc-workbench-reader="s91-4-people-workbench-reader">
+                {selectedWorkbenchReaderRows.map((row) => (
                   <div key={row.label}>
                     <dt>{row.label}</dt>
                     <dd>

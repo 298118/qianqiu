@@ -3959,6 +3959,7 @@ async function runClientSmoke(options = {}) {
       const ledger = document.querySelector("[data-polish-people-ledger='s89-9-portrait-material']");
       const workbench = document.querySelector("[data-polish-people-workbench='s89-9-portrait-material']");
       const reader = document.querySelector("[data-polish-people-reader='s89-26-people-docket-reader']");
+      const workbenchReader = document.querySelector("[data-polish-npc-workbench-reader='s91-4-people-workbench-reader']");
       const galleryShell = document.querySelector("[data-polish-people-gallery='s89-35-people-portrait-gallery']");
       const galleryBand = document.querySelector("[data-polish-people-gallery-band='s89-35-people-portrait-gallery']");
       const galleryReadout = galleryBand?.querySelector(".peopleGalleryReadout");
@@ -3980,6 +3981,9 @@ async function runClientSmoke(options = {}) {
         polishReader: Boolean(reader),
         readerRows: reader?.querySelectorAll("dt").length || 0,
         readerText: reader?.textContent || "",
+        workbenchReader: Boolean(workbenchReader),
+        workbenchReaderRows: workbenchReader?.querySelectorAll("dt").length || 0,
+        workbenchReaderText: workbenchReader?.textContent || "",
         galleryShell: Boolean(galleryShell),
         galleryBand: Boolean(galleryBand),
         galleryState: galleryBand?.getAttribute("data-gallery-state") || "",
@@ -4019,6 +4023,9 @@ async function runClientSmoke(options = {}) {
     }
     if (!portraitLedger.polishReader || portraitLedger.readerRows < 5 || !/交游候复笺|人物案头索引|候复边界|不成交/.test(portraitLedger.readerText)) {
       throw new Error(`S89.26 people docket reader missing: ${JSON.stringify({ polishReader: portraitLedger.polishReader, readerRows: portraitLedger.readerRows, readerText: portraitLedger.readerText })}`);
+    }
+    if (!portraitLedger.workbenchReader || portraitLedger.workbenchReaderRows < 4 || !/照面|本地稿|回批|留痕|只显示字数|不成交/.test(portraitLedger.workbenchReaderText)) {
+      throw new Error(`S91.4 people workbench reader missing: ${JSON.stringify({ workbenchReader: portraitLedger.workbenchReader, workbenchReaderRows: portraitLedger.workbenchReaderRows, workbenchReaderText: portraitLedger.workbenchReaderText })}`);
     }
     if (!portraitLedger.polishShell || !portraitLedger.polishLedger || !portraitLedger.polishWorkbench || portraitLedger.polishCardCount < 1 || !portraitLedger.cardBackground.includes("linear-gradient") || !/transform|box-shadow|border-color/i.test(portraitLedger.cardTransition)) {
       throw new Error(`S89.9 people portrait material polish hooks were incomplete: ${JSON.stringify(portraitLedger)}`);
