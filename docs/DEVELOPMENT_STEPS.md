@@ -159,7 +159,7 @@
 - 边界：本步只改 React 前端读法、史册 route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。浏览器仍只消费现有 `eventArchiveView`、`domainConsequenceView`、来函 evidence 安全投影、route 状态和本地草稿标记；旁证只作读卷提示，不能改写成资源、关系、任免、罪名或未公开事实。
 - 验证：已通过 `node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（110 tests）、`npm run typecheck:client`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-9-archive-draft-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1224 tests）；首次 source canary 因 S91.8/S91.9 移动端 CSS selector 合并破坏旧 S91.8 正则守门失败，已拆回独立规则后通过；提交前复审后将 browser smoke 的 S91.9 文案检查从正则 alternation 改为逐项缺失检查，随后 `node --check`、source canary、docs governance、`git diff --check` 和 browser smoke 已复跑通过；browser smoke 首次复跑在首页 `networkidle` 超时、未进入 S91.9 断言，同命令重跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
 - 子代理：提交前只读复审代理 `019e6b45-c803-7aa2-9c4e-c43faae028e5` 已复审最终 diff 与验证证据，未发现阻塞问题；代理确认未编辑文件、未运行任何 Git 命令。非阻塞提醒为 browser smoke 的 S91.9 文案检查原先用正则 alternation，已改为逐项缺失检查并复跑通过；复审后改动的跟进只读复审同样未发现阻塞问题。
-- 提交：随本次 coherent change 统一提交，最终哈希待提交后补记。
+- 提交：S91.9 实现提交 `dce85fff`（`Polish archive draft reader`）；本哈希记录随低风险纯文档后续提交补入台账。
 
 ### 2026-05-27：S91.8 舆图图层校阅与草稿候复状态 polish 完成
 
