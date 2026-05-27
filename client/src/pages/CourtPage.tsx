@@ -1,4 +1,5 @@
 import { useParams } from "react-router";
+import "../styles/routes/game.css";
 import { CrossPageTraceRail, type CrossPageTraceItem } from "../components/CrossPageTraceRail";
 import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRouteLocalSessionId } from "../routes/sessionId";

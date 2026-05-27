@@ -268,6 +268,7 @@ function getMapRuntimeTooltipReading(ref: MapRuntimeRef, hasDrafts: boolean) {
     label: labels[tone],
     caption: captions[tone],
     meter: severity,
+    hint: hasDrafts ? "可先写入行动笺" : "宜先旁读观势",
     boundary: hasDrafts ? "可写入本地草稿，仍回主卷候复。" : "只作舆图旁读，不生成行动事实。"
   };
 }
@@ -487,6 +488,11 @@ export function InkMapRuntimeBridge({
                 <em>可见度 {activeTooltipReading?.meter ?? 0}</em>
               </div>
               <p>{activeTooltipSummary}</p>
+              <div className="inkMapTooltipReading" data-polish-map-mobile="s90-map-tooltip-actions">
+                <span>掌中操作</span>
+                <i style={{ width: activeDrafts.length ? "100%" : "46%" }} aria-hidden="true" />
+                <em>{activeTooltipReading?.hint}</em>
+              </div>
               <small>{activeTooltipReading?.boundary}</small>
               {activeDrafts.length ? (
                 <div className="buttonRow">

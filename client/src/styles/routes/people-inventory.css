@@ -244,6 +244,13 @@
   line-height: 1.65;
 }
 
+.peopleCardCue {
+  margin: 0;
+  color: #80664a;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
 .peopleRelationship {
   color: #6d372c;
 }
@@ -502,6 +509,40 @@
 
 .npcDetailHeader h2 {
   margin: 0;
+}
+
+.npcDetailReadRail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.npcDetailReadRail div {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 252 238 / .56);
+  padding: 8px 9px;
+}
+
+.npcDetailReadRail dt {
+  color: #8e2f27;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.npcDetailReadRail dd {
+  display: grid;
+  gap: 3px;
+  margin: 3px 0 0;
+  color: #514232;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.npcDetailReadRail strong {
+  color: #2d251d;
 }
 
 .npcTabs {
@@ -765,4 +806,10 @@
   grid-template-columns: minmax(160px, 1fr) auto;
   align-items: end;
   margin-top: 14px;
+}
+
+@media (max-width: 760px) {
+  .npcDetailReadRail {
+    grid-template-columns: 1fr;
+  }
 }

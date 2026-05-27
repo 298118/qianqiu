@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router";
+import "../styles/routes/map-archive.css";
 import type { JsonObject, JsonValue } from "../api";
 import { CrossPageTraceRail, type CrossPageTraceItem, type CrossPageTraceState } from "../components/CrossPageTraceRail";
 import { DomainConsequenceSection } from "../components/DomainConsequenceSection";

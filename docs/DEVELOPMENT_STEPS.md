@@ -113,41 +113,43 @@
 
 | ID | 状态 | 目标 | 范围 / 下一步 |
 | --- | --- | --- | --- |
-| S90.1 | TODO | CSS 物理拆文件第二阶段与预算恢复 | 承接 S89.68 后 CSS source guard 余量极小。优先拆分或瘦身 CSS import 图、合并重复规则、保持 browser smoke 与 source canary；不改变 React DOM、路由、数据流、后端 API/schema、AI 权限、prompt、provider、存档、manifest 或服务器裁决。 |
-| S90.2 | TODO | route 空态一致性与跨页读法继续 polish | 在预算恢复后，继续检查舆图、囊箧、设置、人物、史册等 route 的空态/候复/证据读法一致性。只消费安全 view 与本地草稿，不新增裁决权。 |
+| S90.1 | DONE | CSS 物理拆文件第二阶段与预算恢复 | 首页、主卷、舆图/史册、人物/囊箧、科举/皇榜和对应移动端样式已迁到页面级 import，`global.css` 仅保留 token/base/shell/controls/overlay/motion/全局移动布局；source canary 继续读取产品样式全集保护既有 selector，并新增全局启动样式图预算守门。 |
+| S90.2 | DONE | route 空态一致性与跨页读法继续 polish | 已完成舆图读图/地点状态/路线暗示/tooltip 操作、人物/高清立绘/科举/皇榜读法、全局壳、右上角印匣/设置入口、`SurfaceHost` 专题层、错误/loading/empty 状态和基础控件反馈 polish；只消费安全 view 与本地草稿，不新增裁决权。 |
 | S90.3 | TODO | S89 前端 polish 专题归档 | 如需要更完整追溯，可把 S89.1-S89.68 从 Git history 和压缩索引整理为独立专题归档；避免重新引入逐项长流水。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S89.68：首页身份与立绘选择态 token 复用，不新增 token、依赖或素材，不改 React 组件、className、路由、前端数据流、后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决。
-- S89.68 后 CSS import 图源码长度约 199987 bytes，距离 200000 bytes guard 余量极小。后续 CSS 工作优先预算恢复、物理拆文件或规则合并。
-- 最近完整运行态验证来自 S89.68：`node --test test/reactClientScaffold.test.js`、`npm run typecheck:client`、串行 Vitest、runtime manifest QA、client build/budget、直接 browser smoke 和 `npm test` 均通过；详见归档索引与 Git history。
-- 本轮 2026-05-27 为纯文档压缩与归档维护，不改运行时代码或产品行为。
+- 最新实现步骤 S90.1/S90.2：React 产品级前端 polish 与 CSS 启动预算恢复已完成。CSS 全局启动 import 图已从约 200 KiB 拆分到约 80 KiB，产品样式全集仍由 source canary 覆盖；体验 polish 覆盖舆图读图、地点/驿路/近事续卷、人物/立绘、科举/皇榜、全局壳、印匣/设置、专题层状态、错误空态和基础控件反馈。
+- S90.1/S90.2 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费安全 view、已审核 runtime 资产引用和本地偏好/草稿/专题状态。
+- 最近完整运行态验证来自 S90.1/S90.2：`npm run typecheck:client`、`npm run typecheck:server`、`npm run build:client`、`npm run budget:client`、`npm run qa:runtime-manifest`、`node --test test/reactClientScaffold.test.js`、串行 Vitest、`npm run check:docs-governance`、`npm test` 和 `npm run smoke:browser -- --screenshots artifacts/s90-polish-smoke` 均通过；详见本节记录与 Git history。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S89.68：
+最新运行态完整验证锚点来自 S90.1/S90.2：
 
-- focused `node --test --test-name-pattern "S89.68" test/reactClientScaffold.test.js`
-- 组合 focused `node --test --test-name-pattern "S89.67|S89.68|S89.20 CSS budget|S89.36 cross-page" test/reactClientScaffold.test.js`
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（99 tests）
+- `node --test test/reactClientScaffold.test.js`（100 tests）
 - `npm run typecheck:client`
-- `npx vitest --config vitest.config.mjs run --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）
+- `npm run typecheck:server`
+- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1`（6 files / 134 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
-- 直接 browser smoke `node scripts/clientSmoke.js`（约 362 秒）
-- `npm test`（1213 tests）
-
-本轮文档维护至少应运行：
-
 - `npm run check:docs-governance`
-- `node --test test/documentationGovernance.test.js`
 - `git diff --check`
+- `npm test`（1214 tests）
+- `npm run smoke:browser -- --screenshots artifacts/s90-polish-smoke`
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S90.1/S90.2 React 产品级前端 polish 完成
+
+- 范围：S90.1 已把首页、主卷、舆图/史册、人物/囊箧、科举/皇榜和对应移动端样式迁到页面级 import，`global.css` 仅保留 token、base、shell、controls、overlay、motion 和全局移动布局，source canary 新增全局启动样式图预算守门并继续用产品样式全集覆盖历史 selector。S90.2 已整合舆图读图指引、地点状态、路线暗示、掌中 tooltip 操作，人物详情“来函 / 礼法 / 交易 / 委派”读法、人物卡候回音提示、高清立绘“画卷三读”、科举入场-落墨-候批、皇榜题名-同年座师-授官过渡，以及印匣/设置、专题层状态、错误空态和基础控件反馈。
+- 子代理：按用户要求拆分为舆图、人物/立绘/科举/皇榜、全局壳/设置三个实施子代理。三个实施子代理均未提交、未推送、未创建 PR；主代理已接管整合，修复舆图类型谓词错误和立绘测试异步重渲染断言。提交前只读子代理复审已完成，无阻塞发现，复审代理仅运行只读轻量检查并认可主代理完整验证证据。
+- 边界：不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费安全 view、已审核 runtime 资产引用和本地偏好/草稿/专题状态。
+- 验证：已通过 `npm run typecheck:client`、`npm run typecheck:server`、`npm run build:client`、`npm run budget:client`、`npm run qa:runtime-manifest`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1`、`npm run check:docs-governance`、`git diff --check`、`npm test` 和 `npm run smoke:browser -- --screenshots artifacts/s90-polish-smoke`。浏览器 smoke 覆盖首页、主卷、舆图、人物、囊箧、史册、科举、皇榜、朝议、设置、移动端和低动效路径。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-27：上下文压缩与 S89 完成台账归档
 

@@ -131,7 +131,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 0.34fr);
   gap: 16px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .mapFullScreen .inkMapRuntimeBridge {
@@ -157,6 +157,60 @@
 
 .mapSituationLedger h2 {
   margin: 0;
+}
+
+.mapContinuationLedger {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .22);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .76), rgb(235 217 184 / .56)),
+    var(--qq-material-xuan) center / 620px repeat;
+  padding: clamp(14px, 2vw, 20px);
+}
+
+.mapContinuationLedger .sectionTitleRow {
+  align-items: flex-end;
+}
+
+.mapContinuationLedger .sectionTitleRow h2,
+.mapContinuationLedger .sectionTitleRow p {
+  margin: 0;
+}
+
+.mapContinuationLedger .sectionTitleRow > span {
+  border: 1px solid rgb(142 47 39 / .24);
+  background: rgb(255 248 230 / .62);
+  color: #7b241f;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 5px 8px;
+}
+
+.mapContinuationGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.mapContinuationGrid .mapActionDeck,
+.mapContinuationGrid .mapNpcActivityDeck,
+.mapContinuationGrid .domainConsequenceSection {
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 248 230 / .5);
+  padding: 12px;
+}
+
+.mapContinuationGrid .domainConsequenceSection {
+  display: grid;
+  gap: 10px;
+}
+
+.mapContinuationGrid .domainConsequenceSection .scholarPanelList {
+  display: grid;
+  gap: 10px;
 }
 
 .mapActionDeck,

@@ -1,5 +1,7 @@
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
+import "../styles/responsive/mobile-home.css";
+import "../styles/routes/home.css";
 import { useGameSessionStore } from "../state/gameSessionState";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useUiStateStore } from "../state/uiState";

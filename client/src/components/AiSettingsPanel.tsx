@@ -251,8 +251,8 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
   const matrixStatusText = matrixState === "loading"
     ? "正在整理推演分工。"
     : matrixState === "error"
-      ? "推演分工暂不可用；本页不会自行补造叙事来源或复核权限。"
-      : "暂无推演分工；本页不会自行补造叙事来源或复核权限。";
+      ? "推演分工暂不可用；本页只留候复提示，不自行补造来源。"
+      : "案卷未载推演分工；本页只留空匣，不自行补造来源。";
   const redactedError = safeAiSettingsLine(localError || storeError, "推演设置暂不可用；请稍后重试。");
   const hasSettingsError = Boolean(localError || storeError);
   const stateLedgerRows = [
@@ -392,16 +392,16 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
         <div>
           <p className="eyebrow">全局推演</p>
           <h3>推演设置</h3>
-          <p>{!hasLoadedPayload && isSettingsRequestLoading ? "正在载入案头设置" : statusLabel(saveState, dirty, aiSettings?.updatedAt)}</p>
+          <p>{!hasLoadedPayload && isSettingsRequestLoading ? "正在取回案头设置" : statusLabel(saveState, dirty, aiSettings?.updatedAt)}</p>
         </div>
         <div className="aiSettingsActions">
-          <button className="paperButton" type="button" onClick={() => void handleReload()} disabled={isSaving || isSettingsLoading}>
+          <button className="paperButton" type="button" onClick={() => void handleReload()} disabled={isSaving || isSettingsLoading} aria-busy={!isSaving && isSettingsRequestLoading} data-state={!isSaving && isSettingsRequestLoading ? "loading" : "idle"}>
             <RefreshCw size={16} aria-hidden="true" />
-            <span>{!isSaving && isSettingsRequestLoading ? "载入中" : "重新载入"}</span>
+            <span>{!isSaving && isSettingsRequestLoading ? "待回音" : "重新载入"}</span>
           </button>
-          <button className="paperButton" type="submit" disabled={!dirty || isSaving || isSettingsLoading || !form.routes.length}>
+          <button className="paperButton" type="submit" disabled={!dirty || isSaving || isSettingsLoading || !form.routes.length} aria-busy={isSaving} data-state={isSaving ? "loading" : dirty ? "dirty" : saveState}>
             <Save size={16} aria-hidden="true" />
-            <span>{isSaving ? "保存中" : "保存全局设置"}</span>
+            <span>{isSaving ? "候复" : "保存全局设置"}</span>
           </button>
         </div>
       </div>
@@ -433,9 +433,9 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
             ))}
           </select>
         </label>
-        <button className="paperButton" type="button" onClick={() => void handleConnectionTest()} disabled={isConnectionLoading || !providerOptions.length}>
+        <button className="paperButton" type="button" onClick={() => void handleConnectionTest()} disabled={isConnectionLoading || !providerOptions.length} aria-busy={isConnectionLoading} data-state={isConnectionLoading ? "loading" : "idle"}>
           <Wifi size={16} aria-hidden="true" />
-          <span>{isConnectionLoading ? "试连中" : "试连"}</span>
+          <span>{isConnectionLoading ? "待回音" : "试连"}</span>
         </button>
       </section>
 

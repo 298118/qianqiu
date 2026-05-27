@@ -1,6 +1,8 @@
 import type { CSSProperties, FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
+import "../styles/responsive/mobile-exam-ranking.css";
+import "../styles/routes/exam-ranking.css";
 import type { ExamLevel, JsonObject, JsonValue } from "../api";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { isRouteLocalSessionId, isRunnableSessionId } from "../routes/sessionId";
@@ -304,6 +306,23 @@ export function ExamPage() {
       text: hasLatestExamEvaluation ? `${safeRecentExamName}可往皇榜细看。` : "交卷后仍待评阅与张榜。"
     }
   ] as const;
+  const examTransitionRows = [
+    {
+      label: "入场",
+      value: activeExamForSession ? procedure.phaseLabel : "候点名",
+      text: activeExamForSession ? "号舍、搜检与题纸已经入卷；场内行动只留作下一步回音。" : "未取题时只看仪幕，不补写号舍与考官。"
+    },
+    {
+      label: "落墨",
+      value: activeExamForSession ? `${essayWordCount} 字` : "未开卷",
+      text: activeExamForSession ? `${draftState} 当前目标约 ${wordCount.label} 字。` : "先启封题纸，再作文章。"
+    },
+    {
+      label: "候批",
+      value: hasLatestExamEvaluation ? "可查榜" : "待回音",
+      text: hasLatestExamEvaluation ? `${safeRecentExamName}已有评定，可转皇榜读榜文、同年与授官提示。` : "交卷后才有评阅、放榜、同年座师与授官过渡。"
+    }
+  ] as const;
 
   useEffect(() => {
     setLevel(defaultExamLevel);
@@ -392,6 +411,17 @@ export function ExamPage() {
           ))}
         </ol>
       </section>
+      <dl className="examTransitionRail" aria-label="科举过渡读法">
+        {examTransitionRows.map((row) => (
+          <div key={row.label}>
+            <dt>{row.label}</dt>
+            <dd>
+              <strong>{row.value}</strong>
+              <span>{row.text}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
 
       <div className="examImmersiveLayout">
         <main className="examPaperColumn" aria-label="中央试卷">

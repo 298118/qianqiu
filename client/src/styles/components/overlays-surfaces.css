@@ -1147,6 +1147,19 @@
   grid-template-rows: auto auto minmax(190px, 1fr) auto auto;
 }
 
+.topicSurfaceColumn[data-state="loading"],
+.topicSurfaceColumn[data-state="error"],
+.topicSurfaceColumn[data-state="empty"],
+.topicSurfaceFallback[data-state="preview"] {
+  border-color: var(--qq-color-vermilion-border-soft);
+  background: var(--qq-surface-paper-empty);
+}
+
+.topicSurfaceColumn[data-state="selected"],
+.localSurfacePanel[data-surface-state="ready"] .surfaceSafetyRow:first-child {
+  border-color: var(--qq-color-vermilion-border-medium);
+}
+
 .topicSurfaceFallback {
   display: grid;
   gap: 12px;

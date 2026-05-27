@@ -49,7 +49,7 @@ export function AppShell() {
           ))}
         </nav>
         <div className="topTools" aria-label="案头工具" data-polish-shell-tools="s89-32-inkbox-entry">
-          <button className="inkboxButton" type="button" title="印匣" aria-label="打开印匣" data-polish-controls="s89-16-inkbox-button" onClick={(event) => { markOverlayTrigger(event.currentTarget); openInkbox(); }}>
+          <button className="inkboxButton" type="button" title="印匣与设置" aria-label="打开印匣" data-polish-controls="s89-16-inkbox-button" data-entry-state="ready" onClick={(event) => { markOverlayTrigger(event.currentTarget); openInkbox(); }}>
             <Archive size={18} aria-hidden="true" />
             <span>印匣</span>
           </button>

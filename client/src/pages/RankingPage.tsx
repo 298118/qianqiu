@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
+import "../styles/responsive/mobile-exam-ranking.css";
+import "../styles/routes/exam-ranking.css";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { isRouteLocalSessionId } from "../routes/sessionId";
 import { useGameSessionStore } from "../state/gameSessionState";
@@ -311,6 +313,23 @@ export function RankingPage() {
       text: appointmentHint
     }
   ] as const;
+  const rankingTransitionRows = [
+    {
+      label: "题名",
+      value: playerRankingEntry ? (playerRankingEntry.honorTitle || playerRankingEntry.rankLabel || "在榜") : passedText,
+      text: playerRankingEntry ? `${playerRankingEntry.name}已在正榜中标出；榜名细节仍按公开榜文读。` : "未见我名时不凭同名、评语或荣誉摘要补认。"
+    },
+    {
+      label: "同年座师",
+      value: `${sameYearContacts.length + examinerContacts.length} 人`,
+      text: sameYearContacts.length || examinerContacts.length ? "已公开往来可在本页细读；未入卷的师友不补造。" : "同年座师待榜后整理，案卷未载者不补写关系。"
+    },
+    {
+      label: "授官过渡",
+      value: appointmentHint,
+      text: "授官、差遣与入仕首月仍候主卷回音；本页只作榜后提示。"
+    }
+  ] as const;
   const sceneAsset = useMemo(
     () => registry?.getAssets({ category: "scene", usage: "ranking_page", scene: "ranking_wall" }).at(0),
     [registry]
@@ -379,9 +398,20 @@ export function RankingPage() {
                 <span>{item.label}</span>
                 <p>{item.text}</p>
               </li>
-            ))}
-          </ol>
-        </section>
+          ))}
+        </ol>
+      </section>
+      <dl className="rankingTransitionRail" aria-label="题名授官过渡">
+        {rankingTransitionRows.map((row) => (
+          <div key={row.label}>
+            <dt>{row.label}</dt>
+            <dd>
+              <strong>{row.value}</strong>
+              <span>{row.text}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
 
         {showGoldenNotice ? (
           <section className="rankingGoldenNotice" aria-label="金榜题名">

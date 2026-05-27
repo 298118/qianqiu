@@ -21,29 +21,29 @@ const settingsCards: readonly SettingsCard[] = [
   {
     tab: "ai-settings",
     title: "推演设置",
-    text: "整理叙事、科举、政务、人物与复核等推演分工，保存后用于当前和以后打开的案卷。",
-    badges: ["全局生效", "保存后复核"],
-    status: "可调来源、卷式、输出与辅佐次数。",
+    text: "整理叙事、科举、政务、人物与候复等推演分工，保存后用于当前和以后打开的案卷。",
+    badges: ["全局设置", "保存候复"],
+    status: "可调来源、卷式、输出与辅佐次数；试连只报可用与否。",
     boundary: "只改推演分工；叙事、工具与复核仍由主卷回批。",
     icon: <BrainCircuit size={18} aria-hidden="true" />,
     actionLabel: "打开推演设置"
   },
   {
     tab: "display",
-    title: "显示偏好",
-    text: "调整动效、舆图动效、字号、对比度与正文字体；低动效会保留清晰状态。",
-    badges: ["本地保存", "低动效可用"],
-    status: "只影响本机卷面、动效和字体。",
+    title: "卷面偏好",
+    text: "调整显示偏好、动效偏好、舆图动效、字号、正文字体与对比度。",
+    badges: ["本地保存", "低动效", "字体", "对比度"],
+    status: "只影响本机卷面、动效、字体和浓淡。",
     boundary: "不写案卷事实，不改变舆图、榜文或人物材料。",
     icon: <SlidersHorizontal size={18} aria-hidden="true" />,
     actionLabel: "打开显示偏好"
   },
   {
     tab: "saves",
-    title: "旧案卷",
+    title: "存档入口",
     text: "检点本地可读旧卷并续入主卷；旧案只显示公开摘要和可读时间。",
     badges: ["本机旧卷", "公开摘要"],
-    status: "按本机可读旧卷列出续读入口。",
+    status: "按本机可读旧卷列出续读入口，异常旧卷只留空态。",
     boundary: "异常旧卷只示暂不可读，不回显底层错因。",
     icon: <Save size={18} aria-hidden="true" />,
     actionLabel: "查看旧案"
@@ -87,7 +87,7 @@ export function SettingsPage() {
         <div>
           <p className="eyebrow">印匣</p>
           <h1 id="settings-title">案头工具</h1>
-          <p>设置仍收在右上角印匣中；此页只作案头整理，方便刷新或从旧路由回到同一套案头工具。</p>
+          <p>设置仍收在右上角印匣中；此页只作案头整理，把全局推演、卷面偏好、动效字体、存档入口和公开摘要引回同一套案头工具。</p>
         </div>
       </div>
       {!routeSessionSupported ? (
@@ -129,7 +129,7 @@ export function SettingsPage() {
         ))}
       </div>
       <div className="settingsDirectoryFooter" data-polish-settings-state="s89-19-settings-directory-state">
-        <p>印匣只保存显示与推演偏好、旧案入口和公开摘要；行动、交易、任免、考试和舆图后果仍回主卷呈上候复。</p>
+        <p>印匣只保存显示偏好、动效字体、全局推演分工、旧案入口和公开摘要；行动、交易、任免、考试和舆图后果仍回主卷呈上候复。</p>
         <div className="buttonRow" aria-label="印匣页去处">
           <Link className="paperLink" to={gameHref}>
             {gameLinkText}

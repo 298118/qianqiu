@@ -4,13 +4,8 @@
 @import "./components/shell.css";
 @import "./base/preferences.css";
 @import "./base/intrinsics.css";
-@import "./routes/home.css";
 @import "./components/controls.css";
-@import "./routes/game.css";
 @import "./utilities/polish-surfaces.css";
-@import "./routes/map-archive.css";
-@import "./routes/people-inventory.css";
-@import "./routes/exam-ranking.css";
 @import "./components/overlays-surfaces.css";
 @import "./responsive/global-responsive.css";
 @import "./motion/reduced-motion.css";

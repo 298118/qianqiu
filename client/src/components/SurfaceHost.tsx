@@ -215,7 +215,7 @@ const inkboxTabs: readonly {
 }[] = [
   { id: "ai-settings", label: "推演", icon: <BrainCircuit size={16} aria-hidden="true" /> },
   { id: "saves", label: "旧案", icon: <Save size={16} aria-hidden="true" /> },
-  { id: "display", label: "显示", icon: <SlidersHorizontal size={16} aria-hidden="true" /> },
+  { id: "display", label: "卷面", icon: <SlidersHorizontal size={16} aria-hidden="true" /> },
   { id: "safe-summary", label: "摘要", icon: <ShieldCheck size={16} aria-hidden="true" /> }
 ];
 
@@ -241,6 +241,7 @@ function InkboxDrawer() {
         <div>
           <p className="eyebrow">印匣</p>
           <h2>案头工具</h2>
+          <p>推演、卷面、旧案与公开摘要都收在这里。</p>
         </div>
         <button className="paperButton inkboxHomeButton" type="button" onClick={handleReturnHome}>
           <Home size={16} aria-hidden="true" />
@@ -293,7 +294,8 @@ function DisplayPreferencesPanel() {
 
   return (
     <div className="inkboxTabBody" data-polish-settings="s89-13-display-panel">
-      <h3>显示偏好</h3>
+      <h3>卷面偏好</h3>
+      <p>只调本机读卷习惯；案卷内容仍回主卷候复。</p>
       <section className="displayPreferenceLedger" aria-label="当前显示章法">
         {displayLedger.map((item) => (
           <article key={item.label}>
@@ -304,7 +306,7 @@ function DisplayPreferencesPanel() {
         ))}
       </section>
       <label>
-        动效
+        动效偏好
         <select value={preferences.motion} onChange={(event) => setDisplayPreference("motion", event.target.value === "reduced" ? "reduced" : "full")}>
           <option value="full">水墨动效</option>
           <option value="reduced">低动效</option>
@@ -344,7 +346,7 @@ function DisplayPreferencesPanel() {
       </label>
       <label className="checkRow">
         <input type="checkbox" checked={preferences.autoScroll} onChange={(event) => setDisplayPreference("autoScroll", event.target.checked)} />
-        自动滚动新回合
+        自动贴近新回音
       </label>
       <label className="checkRow">
         <input type="checkbox" checked={preferences.mapMotion} onChange={(event) => setDisplayPreference("mapMotion", event.target.checked)} />
@@ -376,7 +378,7 @@ function bodyFontLabel(value: ReturnType<typeof useUiStateStore.getState>["displ
 function buildDisplayPreferenceLedger(preferences: ReturnType<typeof useUiStateStore.getState>["displayPreferences"]) {
   return [
     {
-      label: "动效",
+      label: "动效偏好",
       value: preferences.motion === "reduced" ? "静读" : "水墨",
       detail: preferences.motion === "reduced" ? "纸页与浮层保留状态，不走强动画。" : "卷轴、墨晕和按钮回弹保持轻动效。"
     },
@@ -386,12 +388,12 @@ function buildDisplayPreferenceLedger(preferences: ReturnType<typeof useUiStateS
       detail: preferences.mapMotion && preferences.motion === "full" ? "舆图标记和流云可动。" : "舆图保留清楚标记，不强行动画。"
     },
     {
-      label: "正文",
+      label: "字体字号",
       value: bodyFontLabel(preferences.bodyFont),
       detail: preferences.textSize === "large" ? "大字读卷，长文更易辨认。" : "标准字号，适合常规案牍密度。"
     },
     {
-      label: "对比",
+      label: "对比卷面",
       value: preferences.contrast === "high" ? "浓墨" : "宣纸",
       detail: preferences.autoScroll ? "新回合会随卷面自动移至近处。" : "新回合后保留当前阅读位置。"
     }
@@ -614,6 +616,14 @@ function PortraitViewerHost() {
                 </span>
               ))}
             </div>
+            <dl className="portraitViewerDossierRail portraitViewerReadRail" aria-label="画卷三读">
+              {viewerCopy.readerRows.map((row) => (
+                <div key={row.label}>
+                  <dt>{row.label}</dt>
+                  <dd>{row.text}</dd>
+                </div>
+              ))}
+            </dl>
             <section>
               <h3>外貌介绍</h3>
               <p>{viewerCopy.appearance}</p>
@@ -769,8 +779,22 @@ function buildPortraitViewerCopy(
     (profile?.identity
       ? `眼下处境：${displayName}当前以“${identity}”见于公开卷宗；公开近况未详，候复后再补。`
       : `眼下处境：${displayName}当前情况案卷未载；只可观其已审阅立绘，公开近况候复。`);
+  const readerRows = [
+    {
+      label: "画中所见",
+      text: cleanPortraitViewerText(`${dress}；${emotion}`, "衣冠神采可细看。", 88)
+    },
+    {
+      label: "身世线索",
+      text: summary ? cleanPortraitViewerText(summary, "身世线索候载。", 88) : cleanPortraitViewerText(`${identity || "公开人物"}，生平细节尚未详载。`, "身世线索候载。", 88)
+    },
+    {
+      label: "眼下处境",
+      text: currentSummary ? cleanPortraitViewerText(currentSummary, "近况候复。", 88) : "近况案卷未载，候复后再补。"
+    }
+  ] as const;
 
-  return { appearance, biography, caption, cues, current, displayName, identity, tags };
+  return { appearance, biography, caption, cues, current, displayName, identity, readerRows, tags };
 }
 
 function cleanPortraitName(value: unknown, fallback: string) {
@@ -990,6 +1014,11 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
   const mapFilterSummary = activeSurface === "map-filter"
     ? buildMapFilterSummary(currentSession, currentSessionId)
     : null;
+  const surfaceState = isTopicSurface(activeSurface)
+    ? topicSurfaceState(topicView, topicSurfaceStatus, canLoadTopicSurface)
+    : mapFilterSummary && !mapFilterSummary.totalCues
+      ? "empty"
+      : "ready";
 
   useEffect(() => {
     focusFirstControl(surfaceRef.current);
@@ -1103,6 +1132,7 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
         data-overlay-kind="surface"
         data-polish-overlay="s89-5-surface-paper"
         data-polish-depth="s89-25-liquid-glass"
+        data-surface-state={surfaceState}
       >
         <button className="iconButton drawerClose" type="button" title="关闭" aria-label="关闭专题" onClick={closeSurface}>
           <X size={18} aria-hidden="true" />
@@ -1113,11 +1143,11 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
         <dl className="surfaceSafetyList" aria-label={`${entry.title}案卷口径`}>
           <div className="surfaceSafetyRow paperMotionSurface">
             <dt>卷宗取材</dt>
-            <dd>{topicView ? topicSourceSummary(topicView) : entry.dataSource}</dd>
+            <dd>{topicView ? topicSourceSummary(topicView) : isTopicSurface(activeSurface) ? topicSurfaceFallbackLine(topicSurfaceStatus, entry.dataSource) : entry.dataSource}</dd>
           </div>
           <div className="surfaceSafetyRow paperMotionSurface">
             <dt>{topicView ? "材料进度" : "案卷状态"}</dt>
-            <dd>{topicView ? topicMaterialSummary(topicView) : entry.emptyState}</dd>
+            <dd>{topicView ? topicMaterialSummary(topicView) : isTopicSurface(activeSurface) ? topicSurfaceFallbackLine(topicSurfaceStatus, entry.emptyState) : entry.emptyState}</dd>
           </div>
           <div className="surfaceSafetyRow paperMotionSurface">
             <dt>回批口径</dt>
@@ -1437,6 +1467,24 @@ function topicMaterialSummary(topicView: TopicSurfaceView) {
   return `${topicView.items.length} 条材料，${topicView.evidenceRefs.length} 枚可引用证据。`;
 }
 
+function topicSurfaceState(
+  topicView: TopicSurfaceView | null,
+  status: "idle" | "loading" | "ready" | "error",
+  canLoad: boolean
+) {
+  if (!canLoad) return "preview";
+  if (status === "loading") return "loading";
+  if (status === "error") return "error";
+  if (!topicView || (!topicView.items.length && !topicView.evidenceRefs.length)) return "empty";
+  return "ready";
+}
+
+function topicSurfaceFallbackLine(status: "idle" | "loading" | "ready" | "error", fallback: string) {
+  if (status === "loading") return "正在翻检公开材料，稍候回音。";
+  if (status === "error") return "专题材料暂未取回；可先用本地草稿，案卷事实不在此补造。";
+  return safeSurfaceText(fallback, "案卷未载专题材料，候主卷回音。", 96);
+}
+
 function topicDomainLabel(domain: unknown) {
   const text = String(domain || "").trim();
   if (text === "people") return "人物";
@@ -1508,11 +1556,13 @@ function TopicSurfaceWorkbench({
   const hasMaterials = Boolean(topicView && (topicView.items.length || topicView.evidenceRefs.length));
   const draftSource = topicView ? "推演拟稿" : "本地草稿";
   const finalDraftText = draftText;
+  const materialState = status === "loading" ? "loading" : status === "error" ? "error" : hasMaterials ? "ready" : "empty";
+  const draftState = draftStatus === "loading" ? "loading" : draftStatus === "error" ? "error" : finalDraftText.trim() ? "ready" : "empty";
 
   if (!canLoad) {
     return (
-      <div className="topicSurfaceFallback">
-        <p>预览案卷只显示专题模板；开卷后会载入公开材料、可引线索和推演草稿。</p>
+      <div className="topicSurfaceFallback" data-state="preview">
+        <p>预览案卷只显示专题模板；开卷后会载入公开材料、可引线索和候复草稿。</p>
         {entryDraft ? (
           <button className="paperButton" type="button" onClick={onWriteDraft}>
             写入奏折草稿
@@ -1523,11 +1573,11 @@ function TopicSurfaceWorkbench({
   }
 
   return (
-    <div className="topicSurfaceLayout" data-surface-id={activeSurface}>
-      <section className="topicSurfaceColumn paperMotionSurface" aria-label="材料栏">
+    <div className="topicSurfaceLayout" data-surface-id={activeSurface} data-material-state={materialState} data-draft-state={draftState}>
+      <section className="topicSurfaceColumn paperMotionSurface" aria-label="材料栏" data-state={materialState} aria-busy={status === "loading"}>
         <div className="topicSurfaceColumnHeader">
           <h3>材料</h3>
-          <span>{status === "loading" ? "检索中" : hasMaterials ? "可阅" : "暂无"}</span>
+          <span>{status === "loading" ? "候复" : materialState === "error" ? "受阻" : hasMaterials ? "可阅" : "案卷未载"}</span>
         </div>
         {topicView?.items.length ? (
           <div className="topicSurfaceItems">
@@ -1543,11 +1593,11 @@ function TopicSurfaceWorkbench({
             ))}
           </div>
         ) : (
-          <p>{status === "loading" ? "正在整理公开材料。" : safeSurfaceText(topicView?.emptyState, "尚未载入专题材料。", 96)}</p>
+          <p>{materialState === "loading" ? "正在整理公开材料，稍候回音。" : materialState === "error" ? safeSurfaceText(error, "专题材料暂未取回，可先用本地草稿候复。", 96) : safeSurfaceText(topicView?.emptyState, "案卷未载专题材料，候主卷回音。", 96)}</p>
         )}
       </section>
 
-      <section className="topicSurfaceColumn paperMotionSurface" aria-label="筹议栏">
+      <section className="topicSurfaceColumn paperMotionSurface" aria-label="筹议栏" data-state={selectedEvidenceRefs.length ? "selected" : materialState}>
         <div className="topicSurfaceColumnHeader">
           <h3>筹议</h3>
           <span>{selectedEvidenceRefs.length} 引</span>
@@ -1594,19 +1644,21 @@ function TopicSurfaceWorkbench({
         <p className="topicSurfaceMeta">{selectedLabels.length ? `已引：${selectedLabels.join("、")}` : "未勾选线索时，将按公开材料自行取用。"}</p>
       </section>
 
-      <section className="topicSurfaceColumn topicDraftColumn paperMotionSurface" aria-label="草稿栏">
+      <section className="topicSurfaceColumn topicDraftColumn paperMotionSurface" aria-label="草稿栏" data-state={draftState} aria-busy={draftStatus === "loading"}>
         <div className="topicSurfaceColumnHeader">
           <h3>草稿</h3>
-          <span>{draftStatus === "loading" ? "拟稿中" : draftSource}</span>
+          <span>{draftStatus === "loading" ? "待回音" : draftState === "error" ? "候复草稿" : draftSource}</span>
         </div>
         <button
           className="paperButton topicAiButton"
           type="button"
           disabled={!topicView || draftStatus === "loading"}
+          aria-busy={draftStatus === "loading"}
+          data-state={draftStatus === "loading" ? "loading" : topicView ? "ready" : "empty"}
           onClick={onRequestDraft}
         >
           <Sparkles size={16} aria-hidden="true" />
-          <span>{draftStatus === "loading" ? "拟稿中" : "推演拟稿"}</span>
+          <span>{draftStatus === "loading" ? "待回音" : "推演拟稿"}</span>
         </button>
         <textarea
           className="topicDraftTextarea"
@@ -1615,8 +1667,8 @@ function TopicSurfaceWorkbench({
           rows={8}
           aria-label="专题草稿正文"
         />
-        {draftStatus === "error" ? <p className="statusLine">{safeSurfaceText(error, "专题拟稿已降级为本地草稿。", 96)}</p> : null}
-        <button className="paperButton" type="button" disabled={!finalDraftText.trim()} onClick={onWriteDraft}>
+        {draftStatus === "error" ? <p className="statusLine">{safeSurfaceText(error, "专题拟稿暂未取回，已保留案头草稿候复。", 96)}</p> : null}
+        <button className="paperButton" type="button" disabled={!finalDraftText.trim()} data-state={finalDraftText.trim() ? "ready" : "empty"} onClick={onWriteDraft}>
           写入底部奏折
         </button>
       </section>

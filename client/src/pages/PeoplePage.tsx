@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
+import "../styles/responsive/mobile-people-inventory.css";
+import "../styles/routes/people-inventory.css";
 import type { AssetRegistry, RuntimePortraitAsset } from "../assets/assetRegistry";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import type { DelegatedTaskRecordView, NpcActiveRequestFollowUpTaskView, NpcActiveRequestItemView, NpcActiveRequestResponseOptionView, NpcDetailView, NpcRosterItem, PlayerSummary, TradeRecordView, WorldPeopleNpc, WorldPeopleRelationship } from "../api";
@@ -617,6 +619,24 @@ function countVisiblePeopleEconomyTrace(traceView: unknown) {
     .length;
 }
 
+function latestTradeForNpc(records: readonly TradeRecordView[], npcId: string) {
+  return records.find((record) => record.npcId === npcId || record.actorBId === npcId);
+}
+
+function latestTaskForNpc(records: readonly DelegatedTaskRecordView[], npcId: string) {
+  return records.find((task) => task.assignee?.npcId === npcId);
+}
+
+function readNpcRequestPerson(request: NpcActiveRequestItemView) {
+  const npc = request.npc && typeof request.npc === "object" && !Array.isArray(request.npc)
+    ? request.npc as Record<string, unknown>
+    : {};
+  return {
+    npcId: safePeopleText(npc.npcId, "", 80),
+    displayName: safePeopleText(npc.displayName, "", 40)
+  };
+}
+
 function statusLabel(status: unknown) {
   const text = safePeopleText(status, "待裁", 32);
   const labels: Record<string, string> = {
@@ -904,6 +924,42 @@ export function PeoplePage() {
   const activeNpcCommandPlan = activeLastNpcCommand?.delegatedTaskView?.items?.some((task) => task.assignee?.npcId === selectedNpcIdForResults)
     ? activeLastNpcCommand.delegatedTaskPlanView
     : undefined;
+  const selectedTradeRecord = activeNpcTradeRecord ?? latestTradeForNpc(tradeRecords, selectedNpcIdForResults);
+  const selectedTaskRecord = latestTaskForNpc(delegatedTasks, selectedNpcIdForResults);
+  const selectedSocialActions = npcDetail?.relationshipActionEligibilityView?.actions ?? [];
+  const selectedAvailableSocialActions = selectedSocialActions.filter((action) => action.available === true).length;
+  const selectedUnreadLetters = (activeSession?.npcActiveRequestView?.items ?? [])
+    .filter((request) => {
+      const person = readNpcRequestPerson(request);
+      return person.displayName === selectedNpcName || person.npcId === selectedNpcIdForResults;
+    })
+    .length;
+  const selectedReaderRows = selectedNpc ? [
+    {
+      label: "来函",
+      value: selectedUnreadLetters ? `${selectedUnreadLetters} 件` : "待回音",
+      text: selectedUnreadLetters ? `${selectedNpcName}已有来函入卷；先查来意与后续簿，再拟回应。` : "此人暂无当前来函；若后续入卷，只读公开问候与请托。"
+    },
+    {
+      label: "礼法",
+      value: selectedAvailableSocialActions ? `${selectedAvailableSocialActions} 项可呈` : "候礼单",
+      text: selectedAvailableSocialActions ? "论道、切磋、求爱或议婚只可按礼呈词，结局仍候回批。" : "礼法条目未备齐时不补造交游名目。"
+    },
+    {
+      label: "交易",
+      value: selectedTradeRecord ? statusLabel(selectedTradeRecord.status) : "未议价",
+      text: selectedTradeRecord
+        ? safePeopleText(selectedTradeRecord.publicSummary || selectedTradeRecord.offerSummary, "交易已有公开摘要，银物变动仍以后续回批为准。", 104)
+        : "可写报价摘要；是否成交、银两与物件去留仍候回音。"
+    },
+    {
+      label: "委派",
+      value: selectedTaskRecord ? statusLabel(selectedTaskRecord.status) : "未差遣",
+      text: selectedTaskRecord
+        ? safePeopleText(selectedTaskRecord.title, "委派任务已入卷；成败与耗费仍候回批。", 104)
+        : "可写差遣意图；差事成败、经费与人物行动不在本页定夺。"
+    }
+  ] as const : [];
 
   async function handleDialogueSubmit() {
     if (!selectedNpc || !activeDialogueDraft.trim() || !runnable) return;
@@ -1206,6 +1262,17 @@ export function PeoplePage() {
                   </div>
                 </div>
               </div>
+              <dl className="npcDetailReadRail" aria-label={`${selectedNpc.displayName}读法`}>
+                {selectedReaderRows.map((row) => (
+                  <div key={row.label}>
+                    <dt>{row.label}</dt>
+                    <dd>
+                      <strong>{row.value}</strong>
+                      <span>{row.text}</span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
               <nav className="inkboxTabs npcTabs" aria-label={`${selectedNpc.displayName}工作台页签`}>
                 {npcWorkbenchTabs.map((tab) => (
                   <button
@@ -1373,6 +1440,7 @@ export function PeoplePage() {
                   </div>
                   <p className="peopleSummary">{person.summary}</p>
                   {person.relationshipNote ? <p className="peopleRelationship">{person.relationshipNote}</p> : null}
+                  <p className="peopleCardCue">{person.kind === "player" ? "案主行迹随主卷推进。" : "详读请点左侧名册；来函、礼法、交易和委派均候回音。"}</p>
                 </div>
               </article>
             ))}

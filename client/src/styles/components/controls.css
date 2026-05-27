@@ -10,6 +10,15 @@ textarea {
   padding: 9px 10px;
 }
 
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--qq-color-paper-button-border-hover);
+  box-shadow: var(--qq-shadow-ink-focus);
+  outline: 2px solid var(--qq-color-paper-button-outline);
+  outline-offset: 2px;
+}
+
 textarea {
   resize: vertical;
 }
@@ -114,6 +123,20 @@ textarea {
   box-shadow: var(--qq-shadow-paper-button-active);
   filter: saturate(0.96);
   transform: translateY(1px);
+}
+
+.paperButton[aria-busy="true"],
+.paperButton[data-state="loading"] {
+  cursor: progress;
+  filter: saturate(1.04);
+}
+
+.paperButton[data-state="dirty"]:not(:disabled),
+.paperButton:is([aria-pressed="true"], [aria-selected="true"]):not(:disabled) {
+  border-color: var(--qq-color-vermilion-border-medium);
+  background-image: var(--qq-surface-paper-selected);
+  box-shadow: var(--qq-shadow-paper-selected);
+  color: var(--qq-color-vermilion);
 }
 
 button:disabled {

@@ -255,9 +255,16 @@ describe("S74.1 React client shell", () => {
       expect(document.querySelectorAll("input[name='player-portrait']").length).toBeGreaterThan(0);
     });
 
-    const portraitInputs = [...document.querySelectorAll<HTMLInputElement>("input[name='player-portrait']")];
-    fireEvent.click(portraitInputs[1]);
-    await waitFor(() => expect(portraitInputs[1].checked).toBe(true));
+    await waitFor(() => {
+      const portraitInputs = [...document.querySelectorAll<HTMLInputElement>("input[name='player-portrait']")];
+      expect(portraitInputs.length).toBeGreaterThan(1);
+      expect(portraitInputs[0].checked).toBe(true);
+    });
+    fireEvent.click([...document.querySelectorAll<HTMLInputElement>("input[name='player-portrait']")][1]);
+    await waitFor(() => {
+      const portraitInputs = [...document.querySelectorAll<HTMLInputElement>("input[name='player-portrait']")];
+      expect(portraitInputs[1].checked).toBe(true);
+    });
     fireEvent.click(screen.getByRole("button", { name: "新开一卷" }));
 
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === "/api/game/start")).toHaveLength(1));
@@ -504,9 +511,9 @@ describe("S74.1 React client shell", () => {
 
     renderRoute(`/game/${sessionId}/unknown`);
 
-    expect(screen.getByRole("heading", { name: "无此卷页" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "案卷未载" })).toBeTruthy();
     expect(document.querySelector("[data-polish-route-state='s89-19-route-recovery']")).toBeTruthy();
-    expect(screen.getByText("空卷只指路，不补造案卷内容，也不回显底层诊断。")).toBeTruthy();
+    expect(screen.getByText("空卷只指路，不补造案卷内容；待回主卷再听回音。")).toBeTruthy();
     expect(screen.getByRole("link", { name: "回主卷" }).getAttribute("href")).toBe(`/game/${sessionId}`);
     expect(screen.getByRole("link", { name: "归首页" }).getAttribute("href")).toBe("/");
     expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|OPENAI_API_KEY/i);
@@ -515,7 +522,7 @@ describe("S74.1 React client shell", () => {
   it("does not offer session recovery for preview or malformed bad routes", () => {
     renderRoute("/game/s74-preview/unknown");
 
-    expect(screen.getByRole("heading", { name: "无此卷页" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "案卷未载" })).toBeTruthy();
     expect(document.querySelector("[data-polish-route-state='s89-19-route-recovery']")).toBeTruthy();
     expect(screen.queryByRole("link", { name: "回主卷" })).toBeNull();
     expect(screen.getByRole("link", { name: "归首页" }).getAttribute("href")).toBe("/");
@@ -523,7 +530,7 @@ describe("S74.1 React client shell", () => {
     cleanup();
     renderRoute("/game/not-a-session/unknown");
 
-    expect(screen.getByRole("heading", { name: "无此卷页" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "案卷未载" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "回主卷" })).toBeNull();
     expect(screen.getByRole("link", { name: "归首页" }).getAttribute("href")).toBe("/");
   });
@@ -551,10 +558,10 @@ describe("S74.1 React client shell", () => {
     try {
       render(<RouterProvider router={router} />);
 
-      await screen.findByRole("heading", { name: "卷页受阻" });
+      await screen.findByRole("heading", { name: "卷页待回音" });
       expect(screen.getByText("案卷暂不可读。")).toBeTruthy();
       expect(document.querySelector("[data-polish-route-state='s89-19-route-recovery']")).toBeTruthy();
-      expect(screen.getByText("此页只给安全归路，不显示底层诊断、推演原文或本机路径。")).toBeTruthy();
+      expect(screen.getByText("此页只给归路；案卷未载之事不在此补写，待回主卷再看。")).toBeTruthy();
       expect(screen.getByRole("link", { name: "回主卷" }).getAttribute("href")).toBe(`/game/${sessionId}`);
       expect(document.body.textContent || "").not.toMatch(/data\/sessions|raw audit|provider payload|OPENAI_API_KEY/i);
     } finally {
@@ -584,7 +591,7 @@ describe("S74.1 React client shell", () => {
     try {
       render(<RouterProvider router={router} />);
 
-      await screen.findByRole("heading", { name: "卷页受阻" });
+      await screen.findByRole("heading", { name: "卷页待回音" });
       expect(screen.getByText("案卷暂不可读。")).toBeTruthy();
       expect(document.querySelector("[data-polish-route-state='s89-19-route-recovery']")).toBeTruthy();
       expect(screen.queryByRole("link", { name: "回主卷" })).toBeNull();
@@ -2314,10 +2321,10 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("button", { name: "关闭抽屉" })).toBe(document.activeElement);
     expect(document.querySelector("[data-polish-settings='s89-13-inkbox-overview']")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("tab", { name: "显示" }));
+    fireEvent.click(screen.getByRole("tab", { name: "卷面" }));
     expect(document.querySelector("[data-polish-settings='s89-13-display-panel']")).toBeTruthy();
     expect(document.querySelector(".displayPreferenceLedger")).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("动效"), { target: { value: "reduced" } });
+    fireEvent.change(screen.getByLabelText("动效偏好"), { target: { value: "reduced" } });
     fireEvent.change(screen.getByLabelText("正文字体"), { target: { value: "brush-mashan" } });
     expect(screen.getAllByText("静读").length).toBeGreaterThan(0);
     expect(screen.getAllByText("榜书墨笔").length).toBeGreaterThan(0);
@@ -2549,7 +2556,7 @@ describe("S74.1 React client shell", () => {
     await waitFor(() => expect(useUiStateStore.getState().currentSessionId).toBe(sessionId));
     fireEvent.click(screen.getByRole("button", { name: "打开印匣" }));
     await screen.findByText("矩阵未载");
-    expect(screen.getAllByText("暂无推演分工；本页不会自行补造叙事来源或复核权限。").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("案卷未载推演分工；本页只留空匣，不自行补造来源。").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("tab", { name: "旧案" }));
 
     expect((await screen.findAllByText("当前案主")).length).toBeGreaterThan(0);
@@ -2711,7 +2718,7 @@ describe("S74.1 React client shell", () => {
     fireEvent.click(await screen.findByRole("button", { name: "打开推演设置" }));
     await screen.findByDisplayValue("900");
     fireEvent.click(screen.getByRole("button", { name: /重新载入/ }));
-    await waitFor(() => expect(screen.getByRole("button", { name: /载入中/ })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole("button", { name: /待回音/ })).toBeTruthy());
     fireEvent.change(screen.getByDisplayValue("900"), { target: { value: "1300" } });
     expect(screen.getByText("未保存")).toBeTruthy();
 
@@ -2782,11 +2789,11 @@ describe("S74.1 React client shell", () => {
     expect(routePanel.getAttribute("data-polish-settings")).toBe("s89-13-settings-directory");
     expect(routePanel.querySelector("[data-polish-settings-state='s89-19-settings-directory-state']")).toBeTruthy();
     expect(within(routePanel).getByText("推演设置")).toBeTruthy();
-    expect(within(routePanel).getByText("显示偏好")).toBeTruthy();
-    expect(within(routePanel).getByText("旧案卷")).toBeTruthy();
+    expect(within(routePanel).getByText("卷面偏好")).toBeTruthy();
+    expect(within(routePanel).getByText("存档入口")).toBeTruthy();
     expect(within(routePanel).getByText("案卷摘要")).toBeTruthy();
-    expect(within(routePanel).getByText("全局生效")).toBeTruthy();
-    expect(within(routePanel).getByText("低动效可用")).toBeTruthy();
+    expect(within(routePanel).getByText("全局设置")).toBeTruthy();
+    expect(within(routePanel).getByText("低动效")).toBeTruthy();
     expect(within(routePanel).getByText("不载私记")).toBeTruthy();
     expect(within(routePanel).getByText("只改推演分工；叙事、工具与复核仍由主卷回批。")).toBeTruthy();
     expect(within(routePanel).getByText("异常旧卷只示暂不可读，不回显底层错因。")).toBeTruthy();
@@ -2809,8 +2816,8 @@ describe("S74.1 React client shell", () => {
 
     fireEvent.click(within(routePanel).getByRole("button", { name: "打开显示偏好" }));
     expect(screen.getByRole("complementary", { name: "印匣" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "显示", selected: true })).toBeTruthy();
-    expect(screen.getByLabelText("动效")).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "卷面", selected: true })).toBeTruthy();
+    expect(screen.getByLabelText("动效偏好")).toBeTruthy();
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(useUiStateStore.getState().activeDrawer).toBeNull());
 
@@ -2998,7 +3005,7 @@ describe("S74.1 React client shell", () => {
     await screen.findByText("推演设置暂不可用；请稍后重试。");
     expect(document.querySelector("[data-polish-ai-settings='s89-19-ai-state-ledger']")).toBeTruthy();
     expect(document.querySelector("[data-polish-ai-settings-ledger='s89-19-ai-state-ledger']")).toBeTruthy();
-    expect(screen.getAllByText("推演分工暂不可用；本页不会自行补造叙事来源或复核权限。").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("推演分工暂不可用；本页只留候复提示，不自行补造来源。").length).toBeGreaterThan(0);
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|provider payload|raw prompt|data\/sessions|demo\.json/i);
   });
 
@@ -4070,7 +4077,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("肃场候题，先定试别。")).toBeTruthy();
     expect(screen.getByText("肃场")).toBeTruthy();
     expect(screen.getByText("启封")).toBeTruthy();
-    expect(screen.getByText("落墨")).toBeTruthy();
+    expect(screen.getAllByText("落墨").length).toBeGreaterThan(0);
     expect(screen.getByText("科举仪程")).toBeTruthy();
     expect(screen.getByText("取题启封")).toBeTruthy();
     expect(screen.getByText("场内推进")).toBeTruthy();
@@ -4288,7 +4295,7 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByText("放榜仪程")).toBeTruthy();
     expect(screen.getByText("张榜取材")).toBeTruthy();
     expect(screen.getAllByText("我名").length).toBeGreaterThan(0);
-    expect(screen.getByText("授官过渡")).toBeTruthy();
+    expect(screen.getAllByText("授官过渡").length).toBeGreaterThan(0);
     expect(screen.getAllByText("顾衡").length).toBeGreaterThan(0);
     expect(document.querySelector(".rankingGoldenNotice")).toBeTruthy();
     expect(document.querySelector(".rankingList li.isPlayer")).toBeTruthy();
@@ -6564,7 +6571,7 @@ describe("S74.1 React client shell", () => {
     await screen.findByRole("button", { name: "贡院" });
     expect(screen.getByText("舆图行动")).toBeTruthy();
     expect(screen.getByText("草拟循贡院驿路")).toBeTruthy();
-    expect(screen.getByText("公开近事")).toBeTruthy();
+    expect(screen.getAllByText("公开近事").length).toBeGreaterThan(0);
     expect(screen.getAllByText("科场近讯").length).toBeGreaterThan(0);
     expect(screen.getByText("山河局势轴")).toBeTruthy();
     expect(screen.getByText("本卷读法")).toBeTruthy();

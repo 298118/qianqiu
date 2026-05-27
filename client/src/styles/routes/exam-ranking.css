@@ -221,6 +221,44 @@
   opacity: 0.78;
 }
 
+.examTransitionRail,
+.rankingTransitionRail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.examTransitionRail div,
+.rankingTransitionRail div {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .2);
+  background: rgb(255 252 238 / .66);
+  padding: 10px 11px;
+}
+
+.examTransitionRail dt,
+.rankingTransitionRail dt {
+  color: #8e2f27;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.examTransitionRail dd,
+.rankingTransitionRail dd {
+  display: grid;
+  gap: 4px;
+  margin: 3px 0 0;
+  color: #514232;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.examTransitionRail strong,
+.rankingTransitionRail strong {
+  color: #2d251d;
+}
+
 .examImmersiveLayout {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(270px, 0.62fr);
@@ -1009,4 +1047,11 @@
   color: #6f352b;
   line-height: 1.7;
   overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .examTransitionRail,
+  .rankingTransitionRail {
+    grid-template-columns: 1fr;
+  }
 }

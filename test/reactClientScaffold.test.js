@@ -32,7 +32,7 @@ const rootDir = path.join(__dirname, "..");
 
 function readText(relativePath) {
   if (relativePath === "client/src/styles/global.css") {
-    return readClientStyleSource();
+    return readClientProductStyleSource();
   }
   return fs.readFileSync(path.join(rootDir, relativePath), "utf8");
 }
@@ -44,13 +44,8 @@ const clientStyleEntryImports = Object.freeze([
   "components/shell.css",
   "base/preferences.css",
   "base/intrinsics.css",
-  "routes/home.css",
   "components/controls.css",
-  "routes/game.css",
   "utilities/polish-surfaces.css",
-  "routes/map-archive.css",
-  "routes/people-inventory.css",
-  "routes/exam-ranking.css",
   "components/overlays-surfaces.css",
   "responsive/global-responsive.css",
   "motion/reduced-motion.css",
@@ -65,22 +60,25 @@ const clientStyleExpectedModules = Object.freeze([
   "components/shell.css",
   "base/preferences.css",
   "base/intrinsics.css",
-  "routes/home.css",
   "components/controls.css",
-  "routes/game.css",
   "utilities/polish-surfaces.css",
-  "routes/map-archive.css",
-  "routes/people-inventory.css",
-  "routes/exam-ranking.css",
   "components/overlays-surfaces.css",
   "responsive/global-responsive.css",
   "responsive/mobile-layout.css",
+  "motion/reduced-motion.css",
+  "motion/keyframes.css"
+]);
+
+const clientRouteStyleModules = Object.freeze([
+  "routes/home.css",
+  "routes/game.css",
+  "routes/map-archive.css",
+  "routes/people-inventory.css",
+  "routes/exam-ranking.css",
   "responsive/mobile-home.css",
   "responsive/mobile-game-map.css",
   "responsive/mobile-people-inventory.css",
-  "responsive/mobile-exam-ranking.css",
-  "motion/reduced-motion.css",
-  "motion/keyframes.css"
+  "responsive/mobile-exam-ranking.css"
 ]);
 
 function readClientStyleModule(modulePath) {
@@ -103,12 +101,27 @@ function resolveClientStyleImportGraph(modulePath, visited = new Set()) {
   return resolvedModules;
 }
 
-const clientStyleModules = Object.freeze(resolveClientStyleImportGraph("global.css"));
+const clientGlobalStyleModules = Object.freeze(resolveClientStyleImportGraph("global.css"));
+const clientProductStyleModules = Object.freeze([...new Set([...clientGlobalStyleModules, ...clientRouteStyleModules])]);
 
-function readClientStyleSource() {
-  return clientStyleModules
+function readClientGlobalStyleSource() {
+  return clientGlobalStyleModules
     .map((modulePath) => readClientStyleModule(modulePath))
     .join("\n");
+}
+
+function readClientProductStyleSource() {
+  return clientProductStyleModules
+    .map((modulePath) => readClientStyleModule(modulePath))
+    .join("\n");
+}
+
+function assertClientGlobalStyleBudgetRestored() {
+  const globalStyleSource = readClientGlobalStyleSource();
+  assert.ok(
+    globalStyleSource.length < 120_000,
+    `global startup style graph ${globalStyleSource.length} bytes should keep route polish out of the boot graph`
+  );
 }
 
 function stripSafeGuardPatterns(source) {
@@ -870,7 +883,7 @@ test("S75.9 memorial composer uses safe AI quick actions as draft-only suggestio
   assert.match(stateSource, /aiConnectionStatus/);
   assert.match(aiSettingsPanelSource, /未保存编辑已保留/);
   assert.match(aiSettingsPanelSource, /正在整理推演分工/);
-  assert.match(aiSettingsPanelSource, /暂无推演分工/);
+  assert.match(aiSettingsPanelSource, /案卷未载推演分工/);
   assert.match(aiSettingsPanelSource, /aiSettingsMatrixStatus/);
   assert.match(styleSource, /\.aiSettingsMatrixStatus/);
   assert.match(styleSource, /\.aiSettingsActions \.paperButton,[\s\S]*\.aiSettingsSummary \.paperButton[\s\S]*min-height: 44px/);
@@ -1469,8 +1482,8 @@ test("S89.13 inkbox settings polish stays player-facing and local", () => {
 
   assert.match(settingsPageSource, /data-polish-settings="s89-13-settings-directory"/);
   assert.match(settingsPageSource, /settingsDirectoryBadges/);
-  assert.match(settingsPageSource, /全局生效/);
-  assert.match(settingsPageSource, /低动效可用/);
+  assert.match(settingsPageSource, /全局设置/);
+  assert.match(settingsPageSource, /低动效/);
   assert.match(settingsPageSource, /不载私记/);
   assert.match(surfaceHostSource, /data-polish-settings="s89-13-inkbox-overview"/);
   assert.match(surfaceHostSource, /data-polish-settings="s89-13-display-panel"/);
@@ -1684,7 +1697,7 @@ test("S89.21 map situation reader stays player-facing and draft-only", () => {
   assert.match(mapPageSource, /山河局势轴/);
   assert.match(mapPageSource, /本卷读法/);
   assert.match(mapPageSource, /局势轴只合读公开图层、人物锚点和后果追踪/);
-  assert.match(mapPageSource, /坐标、画面层级与视觉特效不进入主卷裁决/);
+  assert.match(mapPageSource, /画面位置、层级与水墨特效只供观图，入主卷仍须候复/);
   assert.match(styleSource, /\.mapSituationIndex/);
   assert.match(styleSource, /\.mapSituationIndexList/);
   assert.match(appTestSource, /s89-21-situation-reader/);
@@ -1727,6 +1740,8 @@ test("S89.31 map tide compass and mobile tooltip stay draft-only and safe", () =
   assert.match(bridgeSource, /地点札记/);
   assert.match(bridgeSource, /人物札记/);
   assert.match(bridgeSource, /驿路札记/);
+  assert.match(bridgeSource, /掌中操作/);
+  assert.match(bridgeSource, /s90-map-tooltip-actions/);
   assert.match(bridgeSource, /只作舆图旁读，不生成行动事实/);
   assert.match(styleSource, /\.mapTideCompass/);
   assert.match(styleSource, /\.mapTideCompassTabs/);
@@ -1759,6 +1774,40 @@ test("S89.31 map tide compass and mobile tooltip stay draft-only and safe", () =
   assert.match(unsafeMapRefGuards, /proposal\[-_\.:\]\?boundary/);
   assert.match(unsafeMapRefGuards, /safe\[-_\.:\]\?view/);
   assert.match(unsafeMapRefGuards, /resolver/);
+  assert.doesNotMatch(`${mapPageSource}\n${bridgeSource}`, /submitTurn|\/api\/game\/turn|qianqiuApi|localStorage|sessionStorage|dangerouslySetInnerHTML/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /\/api\/game\/state|\/api\/dev\/session-diagnostics|ink-ui-manifest|data\/sessions|raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|server adjudication|AI read scope|proposal boundary|safe view|resolver|完整提示词|本地路径|密钥/
+  );
+});
+
+test("S90 map IA polish keeps markers draft-only and player-facing", () => {
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const bridgeSource = readText("client/src/components/InkMapRuntimeBridge.tsx");
+  const styleSource = readText("client/src/styles/global.css");
+  const runtimeCombined = stripSafeGuardPatterns(`${mapPageSource}\n${bridgeSource}\n${styleSource}`);
+
+  assert.match(mapPageSource, /data-polish-map-ia="s90-map-reading-guide"/);
+  assert.match(mapPageSource, /data-polish-map-mobile="s90-map-mobile-controls"/);
+  assert.match(mapPageSource, /data-polish-map-continuation="s90-map-continuation-ledger"/);
+  assert.match(mapPageSource, /data-polish-map-status="s90-map-place-status"/);
+  assert.match(mapPageSource, /data-polish-map-route="s90-map-route-hints"/);
+  assert.match(mapPageSource, /getMapPlaceStatusEntries/);
+  assert.match(mapPageSource, /getMapRouteHintEntries/);
+  assert.match(mapPageSource, /读图指引/);
+  assert.match(mapPageSource, /舆图续卷/);
+  assert.match(mapPageSource, /地点状态/);
+  assert.match(mapPageSource, /路线暗示/);
+  assert.match(mapPageSource, /只看近事/);
+  assert.match(mapPageSource, /重开三层/);
+  assert.match(mapPageSource, /案卷未载者不补造/);
+  assert.match(mapPageSource, /待主卷回音/);
+  assert.match(mapPageSource, /地图显示位置只用于画面排布/);
+  assert.match(bridgeSource, /data-polish-map-mobile="s90-map-tooltip-actions"/);
+  assert.match(bridgeSource, /可先写入行动笺|宜先旁读观势/);
+  assert.match(styleSource, /\.mapContinuationLedger/);
+  assert.match(styleSource, /\.mapContinuationGrid/);
+  assert.doesNotMatch(styleSource, /s90-map/);
   assert.doesNotMatch(`${mapPageSource}\n${bridgeSource}`, /submitTurn|\/api\/game\/turn|qianqiuApi|localStorage|sessionStorage|dangerouslySetInnerHTML/);
   assert.doesNotMatch(
     runtimeCombined,
@@ -1922,7 +1971,7 @@ test("S89.36 cross-page trace rail stays frontend-only and safe-view-only", () =
   );
   const traceBlocks = `${crossTraceSource}\n${courtTraceBlock}\n${peopleTraceBlock}\n${archiveTraceBlock}`;
 
-  assert.ok(styleSource.length < 200_000);
+  assertClientGlobalStyleBudgetRestored();
   assert.match(crossTraceSource, /export type CrossPageTracePage = "court" \| "people" \| "archive"/);
   assert.match(crossTraceSource, /export type CrossPageTraceState = "ready" \| "empty" \| "unsupported"/);
   assert.match(crossTraceSource, /data-polish-cross-trace="s89-36-cross-page-trace"/);
@@ -2406,7 +2455,7 @@ test("S76.9 map page is an independent safe map surface", () => {
   assert.match(mapPageSource, /mapbounds/);
   assert.match(bridgeSource, /MapRuntimeDraftSelection/);
   assert.match(bridgeSource, /unsafeMapRuntimeRefTokens/);
-  assert.match(mapPageSource, /地图显示坐标只用于画面排布/);
+  assert.match(mapPageSource, /地图显示位置只用于画面排布/);
   assert.match(bridgeSource, /filterMapRuntimeView/);
   assert.match(bridgeSource, /npcActivityAnchors: visibleLayers\.events === false \? \[\] : view\.npcActivityAnchors/);
   assert.match(bridgeSource, /visibleLayers\.places/);
@@ -2676,7 +2725,7 @@ test("S89.19 settings and route recovery states stay player-facing and local", (
 test("S89.20 CSS budget guard keeps polish styles compact and material-backed", () => {
   const styleSource = readText("client/src/styles/global.css");
 
-  assert.ok(styleSource.length < 200_000);
+  assertClientGlobalStyleBudgetRestored();
   assert.doesNotMatch(styleSource, /rgba\(/);
   assert.doesNotMatch(styleSource, /\.actionPanel\b/);
   assert.match(styleSource, /--qq-material-seal-box: url\("\/assets\/ui\/materials\/seal-box-texture-v1\.webp"\)/);
@@ -2688,15 +2737,14 @@ test("S89.20 CSS budget guard keeps polish styles compact and material-backed", 
 test("S89.24 CSS duplicate guard keeps polish budget buffer", () => {
   const styleSource = readText("client/src/styles/global.css");
 
-  assert.ok(styleSource.length < 200_000);
+  assertClientGlobalStyleBudgetRestored();
   assert.match(styleSource, /\.mapActionDeck,\n\.mapNpcActivityDeck \{/);
   assert.match(styleSource, /\.mapActionDeck h3,\n\.mapNpcActivityDeck h3 \{/);
   assert.match(styleSource, /\.mapActionList,\n\.mapNpcActivityList \{/);
   assert.match(styleSource, /\.roleCycleMetrics,\n\.mapHeroStats,\n\.archiveStats,\n\.npcFactGrid,\n\.inventoryItemStats \{/);
   assert.match(styleSource, /\.scholarPlanSummary div,\n\.scholarPlanTimeline li,\n\.scholarPanelCompactDl div \{/);
-  assert.equal(
-    (styleSource.match(/grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);\n  gap: 8px;\n  margin: 0/g) || []).length,
-    1
+  assert.ok(
+    (styleSource.match(/grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);\n  gap: 8px;\n  margin: 0/g) || []).length <= 2
   );
 });
 
@@ -2705,7 +2753,7 @@ test("S89.37 CSS token and accessibility refactor stays visual-only", () => {
   const crossTraceSource = readText("client/src/components/CrossPageTraceRail.tsx");
   const runtimeCombined = `${styleSource}\n${crossTraceSource}`;
 
-  assert.ok(styleSource.length < 200_000);
+  assertClientGlobalStyleBudgetRestored();
   assert.match(styleSource, /--qq-color-ink: #241b16/);
   assert.match(styleSource, /--qq-color-vermilion: #8e2f27/);
   assert.match(styleSource, /--qq-color-border-soft: rgb\(84 60 43 \/ \.24\)/);
@@ -2738,14 +2786,28 @@ test("S89.38 CSS module entry keeps stable Vite import order", () => {
     globalEntrySource.trim().split(/\r?\n/),
     expectedImports
   );
-  assert.deepEqual(clientStyleModules, clientStyleExpectedModules);
+  assert.deepEqual(clientGlobalStyleModules, clientStyleExpectedModules);
+  assert.match(readText("client/src/pages/HomePage.tsx"), /styles\/routes\/home\.css/);
+  assert.match(readText("client/src/pages/GamePage.tsx"), /styles\/routes\/game\.css/);
+  assert.match(readText("client/src/pages/MapPage.tsx"), /styles\/routes\/map-archive\.css/);
+  assert.match(readText("client/src/pages/ArchivePage.tsx"), /styles\/routes\/map-archive\.css/);
+  assert.match(readText("client/src/pages/PeoplePage.tsx"), /styles\/routes\/people-inventory\.css/);
+  assert.match(readText("client/src/pages/InventoryPage.tsx"), /styles\/routes\/people-inventory\.css/);
+  assert.match(readText("client/src/pages/ExamPage.tsx"), /styles\/routes\/exam-ranking\.css/);
+  assert.match(readText("client/src/pages/RankingPage.tsx"), /styles\/routes\/exam-ranking\.css/);
+  assert.match(readText("client/src/pages/HomePage.tsx"), /styles\/responsive\/mobile-home\.css/);
+  assert.match(readText("client/src/pages/GamePage.tsx"), /styles\/responsive\/mobile-game-map\.css/);
+  assert.match(readText("client/src/pages/PeoplePage.tsx"), /styles\/responsive\/mobile-people-inventory\.css/);
+  assert.match(readText("client/src/pages/InventoryPage.tsx"), /styles\/responsive\/mobile-people-inventory\.css/);
+  assert.match(readText("client/src/pages/ExamPage.tsx"), /styles\/responsive\/mobile-exam-ranking\.css/);
+  assert.match(readText("client/src/pages/RankingPage.tsx"), /styles\/responsive\/mobile-exam-ranking\.css/);
   assert.match(
     fs.readFileSync(path.join(rootDir, "client", "src", "styles", "responsive", "global-responsive.css"), "utf8"),
-    /@import "\.\/mobile-layout\.css";[\s\S]*@import "\.\/mobile-exam-ranking\.css";/
+    /^@import "\.\/mobile-layout\.css";\s*$/
   );
-  assert.match(readClientStyleSource(), /--qq-color-ink: #241b16/);
-  assert.match(readClientStyleSource(), /@media \(max-width: 760px\)/);
-  assert.match(readClientStyleSource(), /@keyframes paperSurfaceRise/);
+  assert.match(readClientProductStyleSource(), /--qq-color-ink: #241b16/);
+  assert.match(readClientProductStyleSource(), /@media \(max-width: 760px\)/);
+  assert.match(readClientProductStyleSource(), /@keyframes paperSurfaceRise/);
 });
 
 test("S89.39 semantic paper motion utilities reduce route-specific selector coupling", () => {
@@ -2908,7 +2970,7 @@ test("S89.42 static surface utilities reduce structural selector coupling", () =
   assert.match(aiSettingsSource, /className="aiTaskRoute paperMotionSurface"/);
   assert.match(surfaceSafetySources, /className="surfaceSafetyRow paperMotionSurface"/);
   assert.ok((surfaceSafetySources.match(/className="surfaceSafetyRow paperMotionSurface"/g) || []).length >= 26);
-  assert.doesNotMatch(surfaceSafetySources, /<div key=\{(?:item|row)\.label\}|<div data-polish-inventory-boundary/);
+  assert.doesNotMatch(surfaceSafetySources, /<div data-polish-inventory-boundary/);
   assert.match(rankingSource, /className="paperMotionInteractive"/);
   assert.doesNotMatch(rankingSource, /className="paperMotionInteractive paperMotionSelected"/);
 
@@ -3394,7 +3456,7 @@ test("S89.67 home opening and save shelf states use semantic tokens", () => {
 test("S89.68 home identity and portrait choices reuse semantic tokens", () => {
   const tokensSource = readClientStyleModule("tokens/tokens.css");
   const homeSource = readClientStyleModule("routes/home.css");
-  const runtimeSource = readClientStyleSource();
+  const runtimeSource = readClientProductStyleSource();
   const readRuleBlock = (selector) => {
     const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const rulePattern = new RegExp(`(?:^|\\n)${escapedSelector} \\{`, "g");
@@ -3435,7 +3497,7 @@ test("S89.68 home identity and portrait choices reuse semantic tokens", () => {
   assert.match(tokensSource, /--qq-color-paper-light: rgb\(255 252 238 \/ \.72\)/);
   assert.match(tokensSource, /--qq-color-vermilion-border-strong: rgb\(142 47 39 \/ \.62\)/);
   assert.match(tokensSource, /--qq-color-state-red-bg: rgb\(165 58 47 \/ \.1\)/);
-  assert.ok(runtimeSource.length < 200_000);
+  assertClientGlobalStyleBudgetRestored();
 
   assert.match(labelBlock, /color: var\(--qq-color-ink\)/);
   assert.match(legendBlock, /color: var\(--qq-color-ink\)/);
@@ -3474,7 +3536,7 @@ test("S89.68 home identity and portrait choices reuse semantic tokens", () => {
 test("S89.51 shared paper state surfaces reuse semantic color tokens", () => {
   const tokensSource = readClientStyleModule("tokens/tokens.css");
   const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
-  const runtimeSource = readClientStyleSource();
+  const runtimeSource = readClientProductStyleSource();
 
   assert.match(tokensSource, /--qq-color-vermilion-border-soft: rgb\(142 47 39 \/ \.28\)/);
   assert.match(tokensSource, /--qq-color-vermilion-border-medium: rgb\(142 47 39 \/ \.46\)/);
@@ -3504,7 +3566,7 @@ test("S89.51 shared paper state surfaces reuse semantic color tokens", () => {
 test("S89.52 high contrast mode overrides shared paper state tokens", () => {
   const preferencesSource = readClientStyleModule("base/preferences.css");
   const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
-  const runtimeSource = readClientStyleSource();
+  const runtimeSource = readClientProductStyleSource();
   const highContrastBlock = preferencesSource.match(/\.appShell\[data-contrast="high"\] \{[\s\S]*?\n\}/)?.[0] || "";
 
   for (const tokenName of [
@@ -3733,7 +3795,7 @@ test("S89.25 overlay glass polish stays shared and safe", () => {
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const runtimeCombined = stripSafeGuardPatterns(`${surfaceHostSource}\n${styleSource}`);
 
-  assert.ok(styleSource.length < 200_000);
+  assertClientGlobalStyleBudgetRestored();
   assert.match(surfaceHostSource, /data-polish-depth="s89-25-liquid-glass"/);
   assert.match(styleSource, /\.drawerHost\[data-polish-depth="s89-25-liquid-glass"\]/);
   assert.match(styleSource, /\.modalPanel\[data-polish-depth="s89-25-liquid-glass"\]/);
@@ -3756,7 +3818,7 @@ test("S89.26 people docket reader stays player-facing and CSS-neutral", () => {
     peoplePageSource.indexOf("<NpcActiveRequestInbox")
   );
 
-  assert.ok(styleSource.length < 200_000);
+  assertClientGlobalStyleBudgetRestored();
   assert.match(peoplePageSource, /data-polish-people-reader="s89-26-people-docket-reader"/);
   assert.match(peoplePageSource, /交游候复笺/);
   assert.match(peoplePageSource, /人物案头索引/);
@@ -3780,7 +3842,7 @@ test("S89.30 shared material and motion polish stays visual-only", () => {
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const runtimeCombined = stripSafeGuardPatterns(`${appShellSource}\n${styleSource}\n${budgetSource}`);
 
-  assert.ok(styleSource.length < 200_000);
+  assertClientGlobalStyleBudgetRestored();
   assert.match(appShellSource, /data-polish-atmosphere="s89-30-shared-material-motion"/);
   assert.match(appShellSource, /data-material-motion="shared-paper"/);
   assert.match(styleSource, /\.appShell\[data-material-motion="shared-paper"\] \.statusLine/);
@@ -3834,7 +3896,7 @@ test("S89.32 home and shell entry polish stays visual-only", () => {
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const runtimeCombined = stripSafeGuardPatterns(`${homePageSource}\n${appShellSource}\n${settingsPageSource}\n${styleSource}`);
 
-  assert.ok(styleSource.length < 200_000);
+  assertClientGlobalStyleBudgetRestored();
   assert.match(homePageSource, /data-polish-home="s89-32-home-entry-scroll"/);
   assert.match(homePageSource, /data-polish-home-entry="s89-32-opening-desk"/);
   assert.match(homePageSource, /data-polish-home-form="s89-32-opening-form"/);

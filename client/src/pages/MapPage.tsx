@@ -1,5 +1,7 @@
 import { Link, useParams } from "react-router";
 import { useEffect, useMemo, useState } from "react";
+import "../styles/responsive/mobile-game-map.css";
+import "../styles/routes/map-archive.css";
 import type {
   DomainConsequenceView,
   MapRuntimeActionDraft,
@@ -35,6 +37,29 @@ type MapActionEntry = {
 };
 
 type MapSituationEntry = {
+  readonly id: string;
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
+type MapPlaceStatusEntry = {
+  readonly id: string;
+  readonly label: string;
+  readonly status: string;
+  readonly detail: string;
+  readonly draftEntry: MapActionEntry | undefined;
+};
+
+type MapRouteHintEntry = {
+  readonly id: string;
+  readonly label: string;
+  readonly status: string;
+  readonly detail: string;
+  readonly draftEntry: MapActionEntry | undefined;
+};
+
+type MapReadingGuideEntry = {
   readonly id: string;
   readonly label: string;
   readonly value: string;
@@ -328,6 +353,22 @@ function getNpcActivitySeverity(anchor: MapRuntimeNpcActivityAnchor) {
   return Math.max(0, Math.min(100, Math.round(normalized)));
 }
 
+function getMapSeverityLabel(value: number) {
+  if (value >= 72) return "急";
+  if (value >= 45) return "动";
+  if (value > 0) return "微";
+  return "平";
+}
+
+function getMapRefsById(view: MapRuntimeView | null | undefined) {
+  const refsById = new Map<string, MapRuntimeRef>();
+  (view?.refs ?? []).forEach((ref) => {
+    const id = getMapRefId(ref);
+    if (id) refsById.set(id, ref);
+  });
+  return refsById;
+}
+
 function getMapEvents(view: MapRuntimeView | null | undefined) {
   const refsById = new Map<string, MapRuntimeRef>();
   (view?.refs ?? []).forEach((ref) => {
@@ -362,11 +403,7 @@ function getMapEvents(view: MapRuntimeView | null | undefined) {
 }
 
 function getNpcActivityAnchors(view: MapRuntimeView | null | undefined) {
-  const refsById = new Map<string, MapRuntimeRef>();
-  (view?.refs ?? []).forEach((ref) => {
-    const id = getMapRefId(ref);
-    if (id) refsById.set(id, ref);
-  });
+  const refsById = getMapRefsById(view);
 
   return [...(view?.npcActivityAnchors ?? [])]
     .map((anchor, index) => {
@@ -393,6 +430,83 @@ function getNpcActivityAnchors(view: MapRuntimeView | null | undefined) {
     })
     .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
     .sort((a, b) => b.severity - a.severity)
+    .slice(0, 4);
+}
+
+function getMapPlaceStatusEntries({
+  view,
+  visibleMapEvents,
+  visibleNpcActivityAnchors,
+  visibleMapActionEntries
+}: {
+  readonly view: MapRuntimeView | null | undefined;
+  readonly visibleMapEvents: ReturnType<typeof getMapEvents>;
+  readonly visibleNpcActivityAnchors: ReturnType<typeof getNpcActivityAnchors>;
+  readonly visibleMapActionEntries: readonly MapActionEntry[];
+}) {
+  const eventsByTarget = new Map(visibleMapEvents.map((event) => [event.targetRef, event]));
+  const peopleByTarget = new Map(visibleNpcActivityAnchors.map((anchor) => [anchor.targetRef, anchor]));
+  const draftsByTarget = new Map(visibleMapActionEntries.map((entry) => [entry.targetRef, entry]));
+  return (view?.refs ?? [])
+    .map((ref) => {
+      const id = getMapRefId(ref);
+      if (!id) return null;
+      const topEvent = eventsByTarget.get(id);
+      const topPerson = peopleByTarget.get(id);
+      const draftEntry = draftsByTarget.get(id);
+      const label = safeMapPageText(ref.label, "未题地点", 36);
+      const summary = safeMapPageText(ref.summary, "案卷未载更多地点说明。", 86);
+      const status = topEvent
+        ? `近事${getMapSeverityLabel(topEvent.severity)}`
+        : topPerson
+        ? "有人问讯"
+        : draftEntry
+        ? "可拟一札"
+        : "待回音";
+      const detail = topEvent
+        ? `${topEvent.label}在此牵连，先看人证、驿路与官府文书。`
+        : topPerson
+        ? `${topPerson.label}在此留有公开动向，关系与去向仍候复。`
+        : draftEntry
+        ? `${summary} 可写入本地草稿，仍回主卷候复。`
+        : `${summary} 案卷未载者不补造。`;
+      return { id, label, status, detail, draftEntry };
+    })
+    .filter((entry): entry is MapPlaceStatusEntry => Boolean(entry))
+    .sort((a, b) => {
+      const rank = (entry: MapPlaceStatusEntry) => entry.status.startsWith("近事") ? 3 : entry.status === "有人问讯" ? 2 : entry.draftEntry ? 1 : 0;
+      return rank(b) - rank(a);
+    })
+    .slice(0, 5);
+}
+
+function getMapRouteHintEntries({
+  view,
+  visibleMapActionEntries
+}: {
+  readonly view: MapRuntimeView | null | undefined;
+  readonly visibleMapActionEntries: readonly MapActionEntry[];
+}) {
+  const refsById = getMapRefsById(view);
+  const draftsByTarget = new Map(visibleMapActionEntries.map((entry) => [entry.targetRef, entry]));
+  return (view?.routes ?? [])
+    .map((route) => {
+      const id = getRouteRefId(route);
+      if (!id) return null;
+      const fromLabel = safeMapPageText(refsById.get(safeMapPageRefId(route.fromRef))?.label, "来路未题", 28);
+      const toLabel = safeMapPageText(refsById.get(safeMapPageRefId(route.toRef))?.label, "去处未题", 28);
+      const label = safeMapPageText(route.label, "未题驿路", 36);
+      const summary = safeMapPageText(route.summary, "此路只作公开行程暗示。", 88);
+      const draftEntry = draftsByTarget.get(id);
+      return {
+        id,
+        label,
+        status: draftEntry ? "可拟行程" : "待回音",
+        detail: `${fromLabel}至${toLabel}：${summary}`,
+        draftEntry
+      };
+    })
+    .filter((entry): entry is MapRouteHintEntry => Boolean(entry))
     .slice(0, 4);
 }
 
@@ -575,6 +689,20 @@ export function MapPage() {
     if (entry.draftKind === "map_route_action") return visibleLayers.routes;
     return visibleLayers.events;
   });
+  const visibleMapPlaceStatusEntries = visibleLayers.places
+    ? getMapPlaceStatusEntries({
+      view: mapRuntimeView,
+      visibleMapEvents,
+      visibleNpcActivityAnchors,
+      visibleMapActionEntries
+    })
+    : [];
+  const visibleMapRouteHintEntries = visibleLayers.routes
+    ? getMapRouteHintEntries({
+      view: mapRuntimeView,
+      visibleMapActionEntries
+    })
+    : [];
   const visibleRefCount = visibleLayers.places ? refCount : 0;
   const visibleRouteCount = visibleLayers.routes ? routeCount : 0;
   const visibleEventCount = visibleLayers.events ? eventCount : 0;
@@ -582,6 +710,26 @@ export function MapPage() {
   const visibleLayerDigest = allLayersHidden
     ? "暂无可见舆图线索"
     : `${visibleRefCount} 处地点 · ${visibleRouteCount} 条驿路 · ${visibleEventCount} 项近事`;
+  const mapReadingGuideEntries: MapReadingGuideEntry[] = [
+    {
+      id: "events",
+      label: "先看",
+      value: visibleMapEvents[0] ? `${visibleMapEvents[0].label} · ${getMapSeverityLabel(visibleMapEvents[0].severity)}` : allLayersHidden ? "先展开图层" : "近事平稳",
+      detail: visibleMapEvents[0] ? `${visibleMapEvents[0].targetLabel}有公开警势，宜先核地点与驿路。` : "近事未起时，可先看地点状态与路线暗示。"
+    },
+    {
+      id: "places",
+      label: "再看",
+      value: visibleMapPlaceStatusEntries[0]?.label ?? "地点待回音",
+      detail: visibleMapPlaceStatusEntries[0]?.detail ?? "案卷未载的新地点不补造，只留公开卷面。"
+    },
+    {
+      id: "drafts",
+      label: "落笔",
+      value: `${visibleMapActionEntries.length} 条可拟`,
+      detail: visibleMapActionEntries.length ? "行动只写入本地草稿，仍回主卷候复。" : "暂无可拟时，可先筛图层或轻点题签看札记。"
+    }
+  ];
   const mapSituationEntries = getMapSituationEntries({
     activeLayerText,
     allLayersHidden,
@@ -681,6 +829,10 @@ export function MapPage() {
       entry.draftText,
       buildMapDraftContext(entry.id === "drafts" ? entry.draftKind ?? "map_ref_action" : "map_event_action", entry.targetRefs, entry.sourceRefs, true)
     );
+  }
+
+  function showOnlyEventsLayer() {
+    setVisibleLayers({ places: false, routes: false, events: true });
   }
 
   return (
@@ -791,6 +943,39 @@ export function MapPage() {
           </section>
           <section
             className="mapVisibleLayerDigest mapSituationIndex paperMotionSurface"
+            aria-label="舆图读图指引"
+            data-polish-map-ia="s90-map-reading-guide"
+            data-polish-map-mobile="s90-map-mobile-controls"
+          >
+            <div className="mapSituationIndexHeader">
+              <div>
+                <p className="eyebrow">读图指引</p>
+                <h3>先后次第</h3>
+              </div>
+              <div className="buttonRow" aria-label="掌中舆图操作">
+                <button className="paperButton" type="button" disabled={allLayersHidden && !eventCount} onClick={showOnlyEventsLayer}>
+                  只看近事
+                </button>
+                <button className="paperButton" type="button" onClick={restoreAllLayers}>
+                  重开三层
+                </button>
+              </div>
+            </div>
+            <dl className="mapSituationIndexList">
+              {mapReadingGuideEntries.map((entry) => (
+                <div key={entry.id}>
+                  <dt>{entry.label}</dt>
+                  <dd>
+                    <strong>{entry.value}</strong>
+                    <span>{entry.detail}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p className="mapSituationBoundary">掌中读图可轻点题签看札记、筛去无关图层；落笔仍只入草稿，待主卷回音。</p>
+          </section>
+          <section
+            className="mapVisibleLayerDigest mapSituationIndex paperMotionSurface"
             aria-label="山河局势轴"
             data-polish-map-situation="s89-21-situation-index"
             data-polish-map-reading="s89-21-situation-reader"
@@ -821,7 +1006,7 @@ export function MapPage() {
                 </div>
               ))}
             </dl>
-            <p className="mapSituationBoundary">局势轴只合读公开图层、人物锚点和后果追踪；坐标、画面层级与视觉特效不进入主卷裁决。</p>
+            <p className="mapSituationBoundary">局势轴只合读公开图层、人物锚点和后果追踪；画面位置、层级与水墨特效只供观图，入主卷仍须候复。</p>
           </section>
           <section
             className="mapTideCompass"
@@ -872,6 +1057,17 @@ export function MapPage() {
               </div>
             </article>
           </section>
+        </aside>
+      </div>
+      <section className="mapContinuationLedger paperMotionSurface" aria-label="舆图续卷" data-polish-map-continuation="s90-map-continuation-ledger">
+        <div className="sectionTitleRow">
+          <div>
+            <p className="eyebrow">舆图续卷</p>
+            <h2>地点、驿路、近事与后果</h2>
+          </div>
+          <span>{allLayersHidden ? "三层暂收" : activeLayerText}</span>
+        </div>
+        <div className="mapContinuationGrid">
           <section className="mapActionDeck" aria-labelledby="map-action-title">
             <div>
               <p className="eyebrow">行动入口</p>
@@ -881,7 +1077,7 @@ export function MapPage() {
               <ol className="mapActionList">
                 {visibleMapActionEntries.map((entry) => (
                   <li className="paperMotionCard paperMotionInteractive paperMotionDraft" key={entry.id} data-draft-state={lastWrittenMapDraftId === entry.id ? "written" : "idle"}>
-                    <span>{entry.kindLabel} · 待主卷复核</span>
+                    <span>{entry.kindLabel} · 待主卷回音</span>
                     <strong>{entry.label}</strong>
                     <p>{entry.summary}</p>
                     <button className="paperButton" type="button" aria-label={`写入行动：${entry.label}`} onClick={() => writeMapActionEntry(entry)}>
@@ -894,22 +1090,84 @@ export function MapPage() {
               <p className="mapEmptyLedger">{allLayersHidden ? "三层暂收，暂无可见舆图预备行动；展开图层后再写入候复草稿。" : "暂无舆图预备行动；可点击地图地点查看单点草稿，或回主卷自行落笔。"}</p>
             )}
           </section>
-          {visibleMapEvents.length ? (
-            <ol className="mapEventList">
-              {visibleMapEvents.map((eventItem) => (
-                <li className="paperMotionCard paperMotionInteractive paperMotionDraft" key={eventItem.id} data-draft-state={lastWrittenMapDraftId === eventItem.id ? "written" : "idle"}>
-                  <strong>{eventItem.label}</strong>
-                  <span>{eventItem.targetLabel} · 警势 {eventItem.severity}</span>
-                  <p>{eventItem.summary}</p>
-                  <button className="paperButton" type="button" onClick={() => draftFromEvent(eventItem)}>
-                    据此拟稿
-                  </button>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p className="mapEmptyLedger">{allLayersHidden ? "近事图层暂收，局势簿不显示公开近事。" : "暂无公开近事；可保留地点与驿路图层，或回主卷推进一旬后再查看。"}</p>
-          )}
+          <section
+            className="mapActionDeck"
+            aria-labelledby="map-place-status-title"
+            data-polish-map-status="s90-map-place-status"
+          >
+            <div>
+              <p className="eyebrow">地点状态</p>
+              <h3 id="map-place-status-title">卷上点位</h3>
+            </div>
+            {visibleMapPlaceStatusEntries.length ? (
+              <ol className="mapEventList">
+                {visibleMapPlaceStatusEntries.map((entry) => (
+                  <li className="paperMotionCard paperMotionInteractive paperMotionDraft" key={entry.id} data-draft-state={lastWrittenMapDraftId === entry.draftEntry?.id ? "written" : "idle"}>
+                    <strong>{entry.label}</strong>
+                    <span>{entry.status}</span>
+                    <p>{entry.detail}</p>
+                    {entry.draftEntry ? (
+                      <button className="paperButton" type="button" aria-label={`据地点状态拟稿：${entry.label}`} onClick={() => writeMapActionEntry(entry.draftEntry!)}>
+                        据点位拟稿
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="mapEmptyLedger">{allLayersHidden ? "地点图层暂收，点位状态待重开三层后再看。" : "暂无可列点位状态；案卷未载者不补造。"}</p>
+            )}
+          </section>
+          <section
+            className="mapActionDeck"
+            aria-labelledby="map-route-hint-title"
+            data-polish-map-route="s90-map-route-hints"
+          >
+            <div>
+              <p className="eyebrow">路线暗示</p>
+              <h3 id="map-route-hint-title">驿路去向</h3>
+            </div>
+            {visibleMapRouteHintEntries.length ? (
+              <ol className="mapEventList">
+                {visibleMapRouteHintEntries.map((entry) => (
+                  <li className="paperMotionCard paperMotionInteractive paperMotionDraft" key={entry.id} data-draft-state={lastWrittenMapDraftId === entry.draftEntry?.id ? "written" : "idle"}>
+                    <strong>{entry.label}</strong>
+                    <span>{entry.status}</span>
+                    <p>{entry.detail}</p>
+                    {entry.draftEntry ? (
+                      <button className="paperButton" type="button" aria-label={`据路线暗示拟稿：${entry.label}`} onClick={() => writeMapActionEntry(entry.draftEntry!)}>
+                        据驿路拟稿
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="mapEmptyLedger">{allLayersHidden ? "驿路图层暂收，路线暗示待重开三层后再看。" : "暂无可列路线暗示；行程仍可回主卷另拟。"}</p>
+            )}
+          </section>
+          <section className="mapActionDeck" aria-labelledby="map-event-title">
+            <div>
+              <p className="eyebrow">近事态势</p>
+              <h3 id="map-event-title">公开近事</h3>
+            </div>
+            {visibleMapEvents.length ? (
+              <ol className="mapEventList">
+                {visibleMapEvents.map((eventItem) => (
+                  <li className="paperMotionCard paperMotionInteractive paperMotionDraft" key={eventItem.id} data-draft-state={lastWrittenMapDraftId === eventItem.id ? "written" : "idle"}>
+                    <strong>{eventItem.label}</strong>
+                    <span>{eventItem.targetLabel} · 警势 {eventItem.severity}</span>
+                    <p>{eventItem.summary}</p>
+                    <button className="paperButton" type="button" onClick={() => draftFromEvent(eventItem)}>
+                      据此拟稿
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="mapEmptyLedger">{allLayersHidden ? "近事图层暂收，局势簿不显示公开近事。" : "暂无公开近事；可保留地点与驿路图层，或回主卷推进一旬后再查看。"}</p>
+            )}
+          </section>
           {visibleNpcActivityAnchors.length ? (
             <section className="mapNpcActivityDeck" aria-labelledby="map-npc-activity-title">
               <div>
@@ -931,14 +1189,14 @@ export function MapPage() {
             domainConsequenceView={domainConsequenceView}
             sourceTypes={mapDomainConsequenceSourceTypes}
             title="舆图后果追踪"
-            summaryFallback="舆图页只并列显示公开后果与地图近事；画面坐标不作为行军、查案或任免凭据。"
+            summaryFallback="舆图页只并列显示公开后果与地图近事；画面位置不作为行军、查案或任免凭据。"
             emptyText="暂无可与舆图并列追踪的公开领域后果。"
             maxItems={3}
             runnable={hasCurrentSession}
             onDraft={(text) => setActionDraft({ source: "map-runtime", targetPage: "game", text })}
           />
-        </aside>
-      </div>
+        </div>
+      </section>
       <p className="mapRuntimeNote">
         {mapRuntimeView
           ? allLayersHidden
@@ -951,7 +1209,7 @@ export function MapPage() {
             : "预览案卷不读取实时舆图；从首页新开一卷后即可查看。"}
       </p>
       <section className="mapSafetyBoundary" aria-label="舆图安全边界">
-        <p>地图显示坐标只用于画面排布，不作为行军、查案、调兵、财政、外交、人物行动或任免凭据；相关后果仍须回主卷呈上候复。</p>
+        <p>地图显示位置只用于画面排布，不作为行军、查案、调兵、财政、外交、人物行动或任免凭据；相关后果仍须回主卷呈上候复。</p>
       </section>
     </article>
   );

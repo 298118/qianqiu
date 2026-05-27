@@ -45,6 +45,10 @@
     min-height: 62vh;
   }
 
+  .mapContinuationGrid {
+    grid-template-columns: 1fr;
+  }
+
   .scholarPanelHeader,
   .scholarPanelCardHeader {
     flex-direction: column;

@@ -2938,13 +2938,13 @@ async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
     throw new Error(`Inkbox quick-action tool budget was not locked to zero: ${JSON.stringify(quickBudget)}`);
   }
 
-  await assertInkboxTab(page, drawer, "显示", "显示偏好");
+  await assertInkboxTab(page, drawer, "卷面", "卷面偏好");
   const displayPanelSnapshot = await drawer.evaluate(() => {
     const text = document.querySelector(".inkboxPanel")?.textContent || "";
     return {
       hasMarker: Boolean(document.querySelector("[data-polish-settings='s89-13-display-panel']")),
       hasLedger: Boolean(document.querySelector(".displayPreferenceLedger")),
-      hasReadableState: text.includes("显示章法") || (text.includes("动效") && text.includes("舆图") && text.includes("正文") && text.includes("对比")),
+      hasReadableState: text.includes("卷面偏好") && text.includes("动效偏好") && text.includes("舆图") && text.includes("字体字号") && text.includes("对比卷面"),
       hiddenTerms: text.match(/player-state|exam-submit|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|\/Users|\/private|tp-[a-z0-9_-]{6,}|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
     };
   });
@@ -3028,7 +3028,7 @@ async function assertMobileInkbox(page, screenshotsDir) {
 
   await assertInkboxTab(page, drawer, "推演", "推演设置");
   await assertInkboxTab(page, drawer, "旧案", "旧案");
-  await assertInkboxTab(page, drawer, "显示", "显示偏好");
+  await assertInkboxTab(page, drawer, "卷面", "卷面偏好");
   const mobileDisplaySnapshot = await drawer.evaluate(() => ({
     hasMarker: Boolean(document.querySelector("[data-polish-settings='s89-13-display-panel']")),
     hasLedger: Boolean(document.querySelector(".displayPreferenceLedger")),
@@ -3086,12 +3086,12 @@ async function assertMobileInkbox(page, screenshotsDir) {
 
 async function assertDisplayPreferencesPersistence(page, gamePath) {
   await page.getByRole("button", { name: "打开印匣" }).click();
-  await page.getByRole("tab", { name: "显示" }).click();
-  await page.getByRole("combobox", { name: "动效" }).selectOption("reduced");
+  await page.getByRole("tab", { name: "卷面" }).click();
+  await page.getByRole("combobox", { name: "动效偏好" }).selectOption("reduced");
   await page.getByRole("combobox", { name: "字号" }).selectOption("large");
   await page.getByRole("combobox", { name: "对比度" }).selectOption("high");
   await page.getByRole("combobox", { name: "正文字体" }).selectOption("kai-longcang");
-  await page.getByRole("checkbox", { name: "自动滚动新回合" }).uncheck();
+  await page.getByRole("checkbox", { name: "自动贴近新回音" }).uncheck();
   await page.getByRole("checkbox", { name: "舆图动效" }).uncheck();
   await assertS895MaterialFeedbackPolish(page, "S89.5 reduced inkbox", { drawer: true, reducedOverlay: true });
   await assertS8932HomeShellPolish(page, "S89.32 reduced inkbox", { drawer: true, reduced: true });
@@ -3601,6 +3601,9 @@ async function runClientSmoke(options = {}) {
         layerSummary: document.querySelector(".mapLayerSummary")?.textContent || "",
         hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
         mapStaticSurfaceCount: document.querySelectorAll(".mapSituationLedger.paperMotionSurface, .mapVisibleLayerDigest.paperMotionSurface, .mapSituationIndex.paperMotionSurface").length,
+        hasS90ReadingGuide: Boolean(document.querySelector("[data-polish-map-ia='s90-map-reading-guide']")),
+        hasS90PlaceStatus: Boolean(document.querySelector("[data-polish-map-status='s90-map-place-status']")),
+        hasS90RouteHints: Boolean(document.querySelector("[data-polish-map-route='s90-map-route-hints']")),
         situationMarker: document.querySelector("[data-polish-map-situation]")?.getAttribute("data-polish-map-situation") || "",
         readingMarker: document.querySelector("[data-polish-map-reading]")?.getAttribute("data-polish-map-reading") || "",
         situationText: document.querySelector("[data-polish-map-situation]")?.textContent || "",
@@ -3613,7 +3616,7 @@ async function runClientSmoke(options = {}) {
         tideDraftButtonCount: document.querySelectorAll(".mapTideCompass .paperButton").length,
         hasActionDeck: Boolean(document.querySelector(".mapActionDeck")),
         hasArchiveJump: [...document.querySelectorAll(".mapFullScreen a")].some((link) => (link.textContent || "").includes("入局势簿")),
-        hasBoundary: (document.body.innerText || "").includes("地图显示坐标只用于画面排布"),
+        hasBoundary: (document.body.innerText || "").includes("地图显示位置只用于画面排布"),
         status: bridge?.getAttribute("data-map-status"),
         motion: bridge?.getAttribute("data-map-motion"),
         canvasWidth: canvas?.clientWidth || 0,
@@ -3628,7 +3631,7 @@ async function runClientSmoke(options = {}) {
     if (mapRuntime.situationMarker !== "s89-21-situation-index" || mapRuntime.readingMarker !== "s89-21-situation-reader" || !/山河局势轴|本卷读法|据局势拟稿|不进入主卷裁决/.test(mapRuntime.situationText)) {
       throw new Error(`S89.21 map situation index missing safe player-facing copy: ${JSON.stringify(mapRuntime)}`);
     }
-    if (mapRuntime.mapStaticSurfaceCount !== 3) {
+    if (mapRuntime.mapStaticSurfaceCount < 3 || !mapRuntime.hasS90ReadingGuide || !mapRuntime.hasS90PlaceStatus || !mapRuntime.hasS90RouteHints) {
       throw new Error(`S89.44 map static surfaces were incomplete: ${JSON.stringify(mapRuntime)}`);
     }
     if (
@@ -4149,7 +4152,7 @@ async function runClientSmoke(options = {}) {
             hasS8919RouteRecovery: Boolean(document.querySelector("[data-polish-settings-state='s89-19-settings-route-recovery']")),
             hasCards: document.querySelectorAll(".settingsDirectoryCard").length,
             hasS8919Cards: document.querySelectorAll("[data-polish-settings-state='s89-19-settings-card-state']").length,
-            hasBadges: text.includes("全局生效") && text.includes("低动效可用") && text.includes("不载私记"),
+            hasBadges: text.includes("全局设置") && text.includes("低动效") && text.includes("不载私记"),
             hasStateCopy: text.includes("只改推演分工") && text.includes("异常旧卷只示暂不可读") && text.includes("案卷未载的身份、关系、授官或后果不在此补造"),
             hasAiSettingsPanel: Boolean(document.querySelector(".aiSettingsPanel")),
             hasInkboxButton: Boolean(document.querySelector("button[aria-label='打开印匣']")),
@@ -4332,6 +4335,9 @@ async function runClientSmoke(options = {}) {
         hasLayerSummary: /筛选只改卷上显示/.test(document.querySelector(".mapLayerSummary")?.textContent || ""),
         hasSituationLedger: Boolean(document.querySelector(".mapSituationLedger")),
         mapStaticSurfaceCount: document.querySelectorAll(".mapSituationLedger.paperMotionSurface, .mapVisibleLayerDigest.paperMotionSurface, .mapSituationIndex.paperMotionSurface").length,
+        hasS90ReadingGuide: Boolean(document.querySelector("[data-polish-map-ia='s90-map-reading-guide']")),
+        hasS90PlaceStatus: Boolean(document.querySelector("[data-polish-map-status='s90-map-place-status']")),
+        hasS90RouteHints: Boolean(document.querySelector("[data-polish-map-route='s90-map-route-hints']")),
         tideMarker: document.querySelector("[data-polish-map-tide]")?.getAttribute("data-polish-map-tide") || "",
         tideText: document.querySelector("[data-polish-map-tide]")?.textContent || "",
         tideTabCount: document.querySelectorAll(".mapTideCompassTab[role='tab']").length,
@@ -4347,7 +4353,10 @@ async function runClientSmoke(options = {}) {
       !mobileMap.hasLayerControls ||
       !mobileMap.hasLayerSummary ||
       !mobileMap.hasSituationLedger ||
-      mobileMap.mapStaticSurfaceCount !== 3 ||
+      mobileMap.mapStaticSurfaceCount < 3 ||
+      !mobileMap.hasS90ReadingGuide ||
+      !mobileMap.hasS90PlaceStatus ||
+      !mobileMap.hasS90RouteHints ||
       mobileMap.tideMarker !== "s89-31-map-tide-compass" ||
       mobileMap.tideTabCount !== 4 ||
       !/舆图态势罗盘|先看何处|近事|人物|后果|可拟/.test(mobileMap.tideText) ||

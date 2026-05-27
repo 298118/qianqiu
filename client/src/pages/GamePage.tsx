@@ -1,6 +1,8 @@
 import { Link, NavLink, Outlet, useLocation, useParams } from "react-router";
 import { BookOpen, FileText, Home, Landmark, Map, Package, ScrollText, Users } from "lucide-react";
 import { useEffect, useMemo, type CSSProperties } from "react";
+import "../styles/responsive/mobile-game-map.css";
+import "../styles/routes/game.css";
 import { useAssetRegistry } from "../assets/useAssetRegistry";
 import { EmperorPanel } from "../components/EmperorPanel";
 import { GeneralPanel } from "../components/GeneralPanel";
