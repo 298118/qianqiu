@@ -158,7 +158,7 @@
 - 边界：本步只改 React 前端读法、舆图 route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。浏览器仍只消费现有 `mapRuntimeView`、`domainConsequenceView` 安全投影、图层显示偏好和本地草稿状态；坐标、layout、viewport、画面层级、visual-only effect 和 NPC visual-only anchor 仍只供观图，不能成为主卷证据或地图行动事实。
 - 验证：已通过 `node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（109 tests）、`npm run typecheck:client`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-8-map-layer-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1223 tests）；首次 source canary 因新增 `.mapLayerReader dl` 复用旧四格 CSS 间距形状触发 S89.24 重复预算守门失败，已将新读法间距调为 10px 后复跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
 - 子代理：提交前只读复审代理 `019e6b0a-1f98-72f0-a363-dce46d46cff3` 已复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为提交前把复审待执行文案改为已完成，已采纳。代理确认未编辑文件、未运行任何 Git 命令。
-- 提交：待本次 coherent change 提交后补记；最终哈希见 Git history 和本轮回复。
+- 提交：S91.8 实现提交 `38463a07`（`Polish map layer reader`）；本哈希记录随低风险纯文档后续提交补入台账。
 
 ### 2026-05-27：S91.7 皇榜题名校阅与授官候复状态 polish 完成
 
