@@ -121,6 +121,36 @@
     0 20px 44px rgb(44 30 21 / .17),
     0 0 0 3px rgb(142 47 39 / .1),
     inset 0 0 0 1px rgb(255 252 238 / .42);
+  --qq-color-home-seal-button-border: var(--qq-color-vermilion-dark);
+  --qq-surface-home-seal-button: #9e3029 var(--qq-material-seal-button) center / cover no-repeat;
+  --qq-color-home-seal-button-text: #fff3e3;
+  --qq-color-home-sample-link-border: rgb(84 60 43 / .2);
+  --qq-surface-home-sample-link:
+    linear-gradient(180deg, rgb(255 252 238 / .58), rgb(230 211 178 / .4)),
+    var(--qq-material-xuan) center / 420px repeat;
+  --qq-color-home-sample-link-text: #674f3c;
+  --qq-color-home-sample-link-border-hover: var(--qq-color-vermilion-border-medium);
+  --qq-color-home-sample-link-text-hover: var(--qq-color-vermilion-dark);
+  --qq-shadow-home-sample-link-hover:
+    0 0 0 3px rgb(142 47 39 / .08),
+    0 8px 18px rgb(54 37 24 / .1);
+  --qq-color-home-start-error-border: rgb(142 47 39 / .78);
+  --qq-shadow-home-start-error-field: 0 0 0 2px rgb(142 47 39 / .12);
+  --qq-shadow-home-start-seal:
+    inset 0 0 0 3px rgb(255 236 211 / .18),
+    0 8px 18px rgb(101 31 27 / .2);
+  --qq-color-home-start-seal-inset-border: rgb(255 238 215 / .46);
+  --qq-color-home-start-seal-hover-border: #5f1815;
+  --qq-shadow-home-start-seal-hover:
+    inset 0 0 0 3px rgb(255 236 211 / .22),
+    0 10px 24px rgb(101 31 27 / .26);
+  --qq-color-home-start-seal-outline: rgb(123 36 31 / .26);
+  --qq-surface-home-start-seal-loading-sweep: linear-gradient(90deg, transparent, rgb(255 236 211 / .34), transparent);
+  --qq-color-home-start-seal-error-border: #6f1f1a;
+  --qq-shadow-home-start-seal-error:
+    inset 0 0 0 3px rgb(255 236 211 / .18),
+    0 0 0 3px rgb(142 47 39 / .16),
+    0 8px 18px rgb(101 31 27 / .18);
   --qq-color-shell-tools-border: rgb(255 252 238 / .28);
   --qq-color-shell-action-border: rgb(142 47 39 / .48);
   --qq-color-shell-action-border-strong: var(--qq-color-vermilion-dark);

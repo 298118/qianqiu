@@ -3208,6 +3208,89 @@ test("S89.65 home entry desk surfaces use semantic tokens", () => {
   assert.doesNotMatch(homeSource, /0 22px 48px rgb\(44 30 21 \/ \.18\)|0 24px 54px rgb\(44 30 21 \/ \.2\)|0 20px 44px rgb\(44 30 21 \/ \.17\)/);
 });
 
+test("S89.66 home seal and sample entry states use semantic tokens", () => {
+  const tokensSource = readClientStyleModule("tokens/tokens.css");
+  const homeSource = readClientStyleModule("routes/home.css");
+  const readRuleBlock = (selector) => {
+    const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const rulePattern = new RegExp(`(?:^|\\n)${escapedSelector} \\{`, "g");
+    let match;
+    while ((match = rulePattern.exec(homeSource))) {
+      const lineStart = match.index + (match[0].startsWith("\n") ? 1 : 0);
+      const previousLineStart = homeSource.lastIndexOf("\n", Math.max(0, lineStart - 2));
+      const previousLine = homeSource.slice(previousLineStart + 1, lineStart).trim();
+      if (!previousLine.endsWith(",")) {
+        const end = homeSource.indexOf("\n}", lineStart);
+        assert.notEqual(end, -1, `unterminated CSS rule ${selector}`);
+        return homeSource.slice(lineStart, end + 2);
+      }
+    }
+    assert.fail(`missing standalone CSS rule ${selector}`);
+  };
+  const readCombinedRuleBlock = (selector) => {
+    const start = homeSource.indexOf(selector);
+    assert.notEqual(start, -1, `missing combined CSS rule ${selector}`);
+    const end = homeSource.indexOf("\n}", start);
+    assert.notEqual(end, -1, `unterminated combined CSS rule ${selector}`);
+    return homeSource.slice(start, end + 2);
+  };
+  const sealButtonBlock = readRuleBlock(".sealButton");
+  const sampleLinkBlock = readRuleBlock('.homeActions[data-polish-home-actions="s89-32-sample-entry"] .paperLink');
+  const sampleLinkHoverBlock = readCombinedRuleBlock(
+    '.homeActions[data-polish-home-actions="s89-32-sample-entry"] .paperLink:hover,'
+  );
+  const startDeskErrorBlock = readCombinedRuleBlock('.startDeskError input[aria-invalid="true"],');
+  const startSealBlock = readRuleBlock(".homeStartSeal");
+  const startSealInsetBlock = readRuleBlock(".homeStartSeal::after");
+  const startSealHoverBlock = readCombinedRuleBlock(".homeStartSeal:hover:not(:disabled),");
+  const startSealFocusBlock = readRuleBlock(".homeStartSeal:focus-visible");
+  const startSealLoadingSweepBlock = readRuleBlock('.homeStartSeal[data-state="loading"]::before');
+  const startSealErrorBlock = readRuleBlock('.homeStartSeal[data-state="error"]');
+
+  assert.match(tokensSource, /--qq-color-home-seal-button-border: var\(--qq-color-vermilion-dark\)/);
+  assert.match(tokensSource, /--qq-surface-home-seal-button: #9e3029 var\(--qq-material-seal-button\) center \/ cover no-repeat/);
+  assert.match(tokensSource, /--qq-color-home-seal-button-text: #fff3e3/);
+  assert.match(tokensSource, /--qq-surface-home-sample-link:[\s\S]*linear-gradient\(180deg, rgb\(255 252 238 \/ \.58\), rgb\(230 211 178 \/ \.4\)\)/);
+  assert.match(tokensSource, /--qq-shadow-home-sample-link-hover:[\s\S]*0 8px 18px rgb\(54 37 24 \/ \.1\)/);
+  assert.match(tokensSource, /--qq-shadow-home-start-seal:[\s\S]*0 8px 18px rgb\(101 31 27 \/ \.2\)/);
+  assert.match(tokensSource, /--qq-shadow-home-start-seal-hover:[\s\S]*0 10px 24px rgb\(101 31 27 \/ \.26\)/);
+  assert.match(tokensSource, /--qq-shadow-home-start-seal-error:[\s\S]*0 0 0 3px rgb\(142 47 39 \/ \.16\)/);
+
+  assert.match(sealButtonBlock, /border: 2px solid var\(--qq-color-home-seal-button-border\)/);
+  assert.match(sealButtonBlock, /background: var\(--qq-surface-home-seal-button\)/);
+  assert.match(sealButtonBlock, /color: var\(--qq-color-home-seal-button-text\)/);
+  assert.match(sampleLinkBlock, /border-color: var\(--qq-color-home-sample-link-border\)/);
+  assert.match(sampleLinkBlock, /background: var\(--qq-surface-home-sample-link\)/);
+  assert.match(sampleLinkBlock, /color: var\(--qq-color-home-sample-link-text\)/);
+  assert.match(sampleLinkHoverBlock, /border-color: var\(--qq-color-home-sample-link-border-hover\)/);
+  assert.match(sampleLinkHoverBlock, /color: var\(--qq-color-home-sample-link-text-hover\)/);
+  assert.match(sampleLinkHoverBlock, /box-shadow: var\(--qq-shadow-home-sample-link-hover\)/);
+  assert.match(startDeskErrorBlock, /border-color: var\(--qq-color-home-start-error-border\)/);
+  assert.match(startDeskErrorBlock, /box-shadow: var\(--qq-shadow-home-start-error-field\)/);
+  assert.match(startSealBlock, /box-shadow: var\(--qq-shadow-home-start-seal\)/);
+  assert.match(startSealInsetBlock, /border: 1px solid var\(--qq-color-home-start-seal-inset-border\)/);
+  assert.match(startSealHoverBlock, /border-color: var\(--qq-color-home-start-seal-hover-border\)/);
+  assert.match(startSealHoverBlock, /box-shadow: var\(--qq-shadow-home-start-seal-hover\)/);
+  assert.match(startSealFocusBlock, /outline: 2px solid var\(--qq-color-home-start-seal-outline\)/);
+  assert.match(startSealLoadingSweepBlock, /background: var\(--qq-surface-home-start-seal-loading-sweep\)/);
+  assert.match(startSealErrorBlock, /border-color: var\(--qq-color-home-start-seal-error-border\)/);
+  assert.match(startSealErrorBlock, /box-shadow: var\(--qq-shadow-home-start-seal-error\)/);
+
+  const tokenizedBlocks = [
+    sealButtonBlock,
+    sampleLinkBlock,
+    sampleLinkHoverBlock,
+    startDeskErrorBlock,
+    startSealBlock,
+    startSealInsetBlock,
+    startSealHoverBlock,
+    startSealFocusBlock,
+    startSealLoadingSweepBlock,
+    startSealErrorBlock
+  ].join("\n");
+  assert.doesNotMatch(tokenizedBlocks, /#9e3029|#fff3e3|#674f3c|#5f1815|#6f1f1a|rgb\(84 60 43 \/ \.2\)|rgb\(255 252 238 \/ \.58\)|rgb\(230 211 178 \/ \.4\)|rgb\(142 47 39 \/ \.78\)|rgb\(142 47 39 \/ \.12\)|rgb\(101 31 27 \/ \.2\)|rgb\(255 238 215 \/ \.46\)|rgb\(101 31 27 \/ \.26\)|rgb\(123 36 31 \/ \.26\)|rgb\(142 47 39 \/ \.16\)|rgb\(255 236 211 \/ \.34\)/);
+});
+
 test("S89.51 shared paper state surfaces reuse semantic color tokens", () => {
   const tokensSource = readClientStyleModule("tokens/tokens.css");
   const polishSource = readClientStyleModule("utilities/polish-surfaces.css");
