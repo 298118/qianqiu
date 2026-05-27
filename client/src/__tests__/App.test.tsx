@@ -778,6 +778,12 @@ describe("S74.1 React client shell", () => {
     expect(archiveFlow.getAttribute("data-archive-flow-state")).toBe("unsupported");
     expect(archiveFlow.textContent || "").toContain("案卷暂不可读");
     expect(archiveFlow.textContent || "").toContain("暂不可成题");
+    const archiveDraftReader = document.querySelector("[data-polish-archive-draft-reader='s91-9-archive-draft-reader']") as HTMLElement;
+    expect(archiveDraftReader).toBeTruthy();
+    expect(archiveDraftReader.getAttribute("data-archive-draft-state")).toBe("unsupported");
+    expect(archiveDraftReader.textContent || "").toContain("史册拟稿校阅");
+    expect(archiveDraftReader.textContent || "").toContain("案卷暂不可读");
+    expect(archiveDraftReader.textContent || "").toContain("案卷未载");
     const memorialButton = screen.getByRole("button", { name: "阅奏折" });
     expect(memorialButton).toHaveProperty("disabled", true);
     fireEvent.click(memorialButton);
@@ -7198,6 +7204,16 @@ describe("S74.1 React client shell", () => {
     expect(archiveFlow.textContent || "").toContain("5 条可旁读");
     expect(archiveFlow.textContent || "").toContain("可入朝议成题");
     expect(archiveFlow.textContent || "").toContain("资源、关系、任免与定罪仍不在本页定夺。");
+    const archiveDraftReader = archivePanel.querySelector("[data-polish-archive-draft-reader='s91-9-archive-draft-reader']") as HTMLElement;
+    expect(archiveDraftReader).toBeTruthy();
+    expect(archiveDraftReader.getAttribute("data-archive-draft-state")).toBe("empty");
+    expect(archiveDraftReader.querySelectorAll("dt")).toHaveLength(4);
+    expect(archiveDraftReader.textContent || "").toContain("史册拟稿校阅");
+    expect(archiveDraftReader.textContent || "").toContain("读卷、旁证与候复");
+    expect(archiveDraftReader.textContent || "").toContain("12 条可据");
+    expect(archiveDraftReader.textContent || "").toContain("5 条可旁读");
+    expect(archiveDraftReader.textContent || "").toContain("尚未落稿");
+    expect(archiveDraftReader.textContent || "").toContain("不回显正文");
     expect(archivePanel.querySelector(".archiveEvidenceStack")).toBeTruthy();
     const archive = within(archivePanel);
 
@@ -7250,6 +7266,11 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: expect.stringContaining("平粜余波")
     });
+    expect(archiveDraftReader.getAttribute("data-archive-draft-state")).toBe("written");
+    expect(archiveDraftReader.textContent || "").toContain("已入主卷");
+    expect(archiveDraftReader.textContent || "").toContain("本地史册札记已入底部奏折，仍候主卷回音。");
+    expect(archiveDraftReader.textContent || "").toContain("主卷待呈");
+    expect(archiveDraftReader.textContent || "").not.toContain("平粜余波");
     fireEvent.click(archive.getByRole("button", { name: "续记后果" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "archive-view",

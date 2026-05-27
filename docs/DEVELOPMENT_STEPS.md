@@ -125,31 +125,41 @@
 | S91.6 | DONE | 科举落墨校阅与候榜状态 polish | 已完成科举页“落墨校阅”四读：只从现有安全考试 view、本地文章字数、route 支持状态、交卷 readiness 和本案卷近次交卷评定派生试别、草稿、交卷与候榜状态；不回显文章正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.7 | DONE | 皇榜题名校阅与授官候复状态 polish | 已完成皇榜“题名校阅”四读：只从现有公开榜行、案主榜行、本地细读选择、同年座师公开计数和授官提示派生榜文、我名、细读与授官候复；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.8 | DONE | 舆图图层校阅与草稿候复状态 polish | 已完成舆图“图层校阅”四读：只从现有 `mapRuntimeView` 安全投影、图层显示状态、公开计数、可见行动条数和本地草稿写入状态派生图层、卷宗、可见与草稿候复读法；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.9 | DONE | 史册拟稿校阅与候复状态 polish | 已完成史册页“拟稿校阅”四读：只从现有公开史册/旁证计数、route 状态和当前案卷本地 `archive-view` 草稿状态派生归档、旁证、草稿与候复读法；写稿后只显示已入主卷候复，不回显草稿正文或史册条目标题，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.8：舆图图层校阅与草稿候复状态 polish 已完成。舆图页新增 `s91-8-map-layer-reader` 的“图层 / 卷宗 / 可见 / 草稿”四读，把当前图层显隐、公开地点/驿路/近事/人物计数、可见近事与人物条数、公开后果计数、可拟行动条数和本地舆图草稿写入状态集中成可扫读状态；写稿后只显示“已入主卷”候复，不回显行动全文。
-- S91.8 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有 `mapRuntimeView`、`domainConsequenceView` 安全投影、图层显示偏好和本地草稿状态，不把坐标、layout、viewport、画面层级、visual-only effect 或 NPC visual-only anchor 当作案卷事实。
-- 最近完整运行态验证来自 S91.8：`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（109 tests）、`npm run typecheck:client`、S91.8 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-8-map-layer-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1223 tests）已通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning；提交前只读复审代理 `019e6b0a-1f98-72f0-a363-dce46d46cff3` 未发现阻塞问题。
+- 最新实现步骤 S91.9：史册拟稿校阅与候复状态 polish 已完成。史册页新增 `s91-9-archive-draft-reader` 的“归档 / 旁证 / 草稿 / 候复”四读，把公开史册条目数、公开后果/实体余波/来函旁证数、route 支持状态和当前案卷本地史册草稿写入状态集中成可扫读状态；写稿后只显示“已入主卷”候复，不回显草稿正文或史册条目标题。
+- S91.9 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有 `eventArchiveView`、`domainConsequenceView`、来函 evidence 安全投影、route 状态和本地 `archive-view` 草稿标记，不把旁证改写成裁决事实。
+- 最近完整运行态验证来自 S91.9：`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（110 tests）、`npm run typecheck:client`、S91.9 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-9-archive-draft-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1224 tests）已通过；提交前复审后将 browser smoke 的 S91.9 文案检查从正则 alternation 改为逐项缺失检查，随后 `node --check`、source canary、docs governance、`git diff --check` 和 browser smoke 已复跑通过；browser smoke 首次复跑在首页 `networkidle` 超时、未进入 S91.9 断言，同命令重跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning；提交前只读复审代理 `019e6b45-c803-7aa2-9c4e-c43faae028e5` 未发现阻塞问题，复审后改动的跟进只读复审同样未发现阻塞问题。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.8：
+最新运行态完整验证锚点来自 S91.9：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（109 tests）
+- `node --test test/reactClientScaffold.test.js`（110 tests）
 - `npm run typecheck:client`
 - `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 76 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-8-map-layer-reader-smoke`
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-9-archive-draft-reader-smoke`
 - `npm run check:docs-governance`
 - `git diff --check`（仅既有 CRLF warning）
-- `npm test`（1223 tests）
+- `npm test`（1224 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S91.9 史册拟稿校阅与候复状态 polish 完成
+
+- 范围：史册页在操作区与案卷索引之间新增 `data-polish-archive-draft-reader="s91-9-archive-draft-reader"` 的“拟稿校阅”，四格显示公开归档可据条数、公开后果/实体余波/来函旁证条数、本地史册草稿是否已入主卷和候复边界。
+- 体验修正：初始状态显示“尚未落稿”和“据此拟稿只写本地奏折，不回显正文”；点击“据此拟稿”后，“草稿”格只变为“已入主卷”和“本地史册札记已入底部奏折，仍候主卷回音”，候复格显示“主卷待呈”。读法只检查当前案卷 `actionDraft.sessionId` 与 `actionDraft.source === "archive-view"`，不读取 `actionDraft.text`，因此不回显“平粜余波”等史册标题或草稿正文。移动端同 route CSS 单列。
+- 边界：本步只改 React 前端读法、史册 route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。浏览器仍只消费现有 `eventArchiveView`、`domainConsequenceView`、来函 evidence 安全投影、route 状态和本地草稿标记；旁证只作读卷提示，不能改写成资源、关系、任免、罪名或未公开事实。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（110 tests）、`npm run typecheck:client`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-9-archive-draft-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1224 tests）；首次 source canary 因 S91.8/S91.9 移动端 CSS selector 合并破坏旧 S91.8 正则守门失败，已拆回独立规则后通过；提交前复审后将 browser smoke 的 S91.9 文案检查从正则 alternation 改为逐项缺失检查，随后 `node --check`、source canary、docs governance、`git diff --check` 和 browser smoke 已复跑通过；browser smoke 首次复跑在首页 `networkidle` 超时、未进入 S91.9 断言，同命令重跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
+- 子代理：提交前只读复审代理 `019e6b45-c803-7aa2-9c4e-c43faae028e5` 已复审最终 diff 与验证证据，未发现阻塞问题；代理确认未编辑文件、未运行任何 Git 命令。非阻塞提醒为 browser smoke 的 S91.9 文案检查原先用正则 alternation，已改为逐项缺失检查并复跑通过；复审后改动的跟进只读复审同样未发现阻塞问题。
+- 提交：随本次 coherent change 统一提交，最终哈希待提交后补记。
 
 ### 2026-05-27：S91.8 舆图图层校阅与草稿候复状态 polish 完成
 

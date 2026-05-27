@@ -34,6 +34,12 @@ type ArchiveFlowRow = {
   readonly detail: string;
 };
 
+type ArchiveDraftReaderRow = {
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
 const archiveVisibleItemLimit = 12;
 
 const unsafeArchiveFragments = [
@@ -270,12 +276,52 @@ function buildArchiveFlowRows(input: {
   ];
 }
 
+function buildArchiveDraftReaderRows(input: {
+  readonly archiveCount: number;
+  readonly sideEvidenceCount: number;
+  readonly canDraft: boolean;
+  readonly hasArchiveDraft: boolean;
+  readonly routeSessionSupported: boolean;
+  readonly status: string;
+}): ArchiveDraftReaderRow[] {
+  const archiveValue = !input.routeSessionSupported
+    ? "案卷暂不可读"
+    : input.archiveCount
+    ? `${input.archiveCount} 条可据`
+    : input.status === "loading"
+    ? "正在翻检"
+    : "暂待入册";
+  return [
+    {
+      label: "归档",
+      value: archiveValue,
+      detail: input.routeSessionSupported ? "只取本页已公开史册条目。" : "请先从首页开卷或载入旧案。"
+    },
+    {
+      label: "旁证",
+      value: input.sideEvidenceCount ? `${input.sideEvidenceCount} 条可旁读` : "旁证候载",
+      detail: "后果、实体余波与来函只作读卷线索。"
+    },
+    {
+      label: "草稿",
+      value: input.hasArchiveDraft ? "已入主卷" : input.canDraft ? "尚未落稿" : "先择案卷",
+      detail: input.hasArchiveDraft ? "本地史册札记已入底部奏折，仍候主卷回音。" : "据此拟稿只写本地奏折，不回显正文。"
+    },
+    {
+      label: "候复",
+      value: input.hasArchiveDraft ? "主卷待呈" : input.routeSessionSupported ? "候案卷回批" : "案卷未载",
+      detail: "不结算资源、关系、任免、罪名或未公开事实。"
+    }
+  ];
+}
+
 export function ArchivePage() {
   const { sessionId = "s74-preview" } = useParams();
   const currentSession = useGameSessionStore((state) => state.currentSession);
   const status = useGameSessionStore((state) => state.status);
   const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
+  const actionDraft = useUiStateStore((state) => state.actionDraft);
   const routeSessionSupported = isRouteLocalSessionId(sessionId);
   const sessionMatches = routeSessionSupported && currentSession?.sessionId === sessionId;
   const archiveView = asRecord(sessionMatches ? currentSession?.eventArchiveView : null);
@@ -289,6 +335,7 @@ export function ArchivePage() {
   const followUpCount = countFollowUpEvidence(npcFollowUpEvidence);
   const totalItems = numberValue(pagination.totalItems ?? counts.total);
   const pageSize = numberValue(pagination.pageSize, archiveItems.length);
+  const sideEvidenceCount = domainCount + entityImpactCount + followUpCount;
   const digestCards = buildArchiveDigestCards({
     totalItems,
     visibleItems: archiveItems.length,
@@ -314,6 +361,16 @@ export function ArchivePage() {
     domainCount,
     entityImpactCount,
     followUpCount,
+    routeSessionSupported,
+    status
+  });
+  const archiveCount = archiveItems.length || totalItems;
+  const hasArchiveDraft = Boolean(routeSessionSupported && actionDraft?.sessionId === sessionId && actionDraft.source === "archive-view");
+  const archiveDraftReaderRows = buildArchiveDraftReaderRows({
+    archiveCount,
+    sideEvidenceCount,
+    canDraft,
+    hasArchiveDraft,
     routeSessionSupported,
     status
   });
@@ -413,6 +470,31 @@ export function ArchivePage() {
         <Link className="paperLink" to={mapHref}>入舆图</Link>
         <Link className="paperLink" to={gameHref}>回主卷</Link>
       </div>
+
+      <section
+        className="archiveDraftReader"
+        aria-label="史册拟稿校阅"
+        data-polish-archive-draft-reader="s91-9-archive-draft-reader"
+        data-archive-draft-state={hasArchiveDraft ? "written" : routeSessionSupported ? "empty" : "unsupported"}
+      >
+        <div>
+          <p className="eyebrow">史册拟稿校阅</p>
+          <h2>读卷、旁证与候复</h2>
+          <p>先看公开归档与旁证是否足够，再把史册札记写回主卷候复。</p>
+        </div>
+        <dl>
+          {archiveDraftReaderRows.map((row) => (
+            <div key={row.label}>
+              <dt>{row.label}</dt>
+              <dd>
+                <strong>{row.value}</strong>
+                <span>{row.detail}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p className="archiveDraftReaderBoundary">只认当前案卷的本地史册草稿；不回显草稿正文，不把旁证改写成裁决事实。</p>
+      </section>
 
       <section className="archiveDigestBand paperMotionSurface" aria-label="史册案卷索引">
         <div className="archiveDigestIntro paperMotionSurface">

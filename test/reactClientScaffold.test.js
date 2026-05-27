@@ -2237,6 +2237,55 @@ test("S91.8 map layer reader stays local-layer-only and frontend-only", () => {
   );
 });
 
+test("S91.9 archive draft reader stays local-draft-only and frontend-only", () => {
+  const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
+  const mapArchiveStyleSource = readClientStyleModule("routes/map-archive.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = archivePageSource.indexOf('data-polish-archive-draft-reader="s91-9-archive-draft-reader"');
+  const readerEnd = archivePageSource.indexOf('<section className="archiveDigestBand', readerStart);
+  const readerMarkup = readerStart >= 0 && readerEnd > readerStart
+    ? archivePageSource.slice(readerStart, readerEnd)
+    : "";
+  const readerDataStart = archivePageSource.indexOf("function buildArchiveDraftReaderRows");
+  const readerDataEnd = archivePageSource.indexOf("export function ArchivePage", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? archivePageSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const archiveWithoutGuard = stripSafeGuardPatterns(archivePageSource);
+  const runtimeCombined = stripSafeGuardPatterns(`${archiveWithoutGuard}\n${mapArchiveStyleSource}`);
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.match(archivePageSource, /type ArchiveDraftReaderRow/);
+  assert.match(archivePageSource, /function buildArchiveDraftReaderRows/);
+  assert.match(archivePageSource, /const actionDraft = useUiStateStore\(\(state\) => state\.actionDraft\)/);
+  assert.match(archivePageSource, /sideEvidenceCount = domainCount \+ entityImpactCount \+ followUpCount/);
+  assert.match(archivePageSource, /actionDraft\?\.sessionId === sessionId && actionDraft\.source === "archive-view"/);
+  assert.match(readerDataBlock, /只取本页已公开史册条目/);
+  assert.match(readerDataBlock, /后果、实体余波与来函只作读卷线索/);
+  assert.match(readerDataBlock, /本地史册札记已入底部奏折，仍候主卷回音/);
+  assert.match(readerDataBlock, /据此拟稿只写本地奏折，不回显正文/);
+  assert.match(readerMarkup, /只认当前案卷的本地史册草稿/);
+  assert.match(readerMarkup, /不回显草稿正文/);
+  assert.match(readerMarkup, /不把旁证改写成裁决事实/);
+  assert.doesNotMatch(readerDataBlock, /submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|evidenceRefs|outcomeId|actionDraft\.text/);
+  assert.doesNotMatch(readerMarkup, /submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|evidenceRefs|outcomeId|平粜余波|同年文社压力留痕/);
+
+  assert.match(mapArchiveStyleSource, /\.archiveDraftReader \{/);
+  assert.match(mapArchiveStyleSource, /\.archiveDraftReader \{[\s\S]*grid-template-columns: minmax\(190px, 0\.36fr\) minmax\(0, 1fr\)/);
+  assert.match(mapArchiveStyleSource, /\.archiveDraftReader dl \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(mapArchiveStyleSource, /@media \(max-width: 760px\)[\s\S]*\.archiveDraftReader,[\s\S]*\.archiveDraftReader dl \{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(appTestSource, /s91-9-archive-draft-reader/);
+  assert.match(appTestSource, /本地史册札记已入底部奏折/);
+  assert.match(clientSmokeSource, /s91-9-archive-draft-reader/);
+  assert.match(clientSmokeSource, /assertArchiveDraftReaderWritten/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.60 main and court desk keyframes use semantic names", () => {
   const keyframesSource = readText("client/src/styles/motion/keyframes.css");
   const gameStyleSource = readText("client/src/styles/routes/game.css");

@@ -871,6 +871,7 @@ async function assertArchiveDigestPolish(page, label) {
     const digest = document.querySelector(".archiveDigestBand");
     const reader = document.querySelector("[data-polish-archive-reader='s89-29-evidence-reader']");
     const readerBoundary = reader?.querySelector("[data-polish-archive-boundary]");
+    const draftReader = document.querySelector("[data-polish-archive-draft-reader='s91-9-archive-draft-reader']");
     const flow = document.querySelector("[data-polish-archive-flow='s90-4-archive-court-reader']");
     const crossTrace = document.querySelector("[data-polish-cross-trace='s89-36-cross-page-trace'][data-cross-trace-page='archive']");
     const crossTraceCard = crossTrace?.querySelector(".crossPageTraceGrid article");
@@ -892,6 +893,10 @@ async function assertArchiveDigestPolish(page, label) {
       readerRows: reader ? reader.querySelectorAll(".surfaceSafetyList > div").length : 0,
       readerBoundaryMarker: readerBoundary?.getAttribute("data-polish-archive-boundary") || "",
       readerBoundaryText: readerBoundary?.textContent || "",
+      draftReaderMarker: draftReader?.getAttribute("data-polish-archive-draft-reader") || "",
+      draftReaderState: draftReader?.getAttribute("data-archive-draft-state") || "",
+      draftReaderRows: draftReader ? draftReader.querySelectorAll("dt").length : 0,
+      draftReaderText: draftReader?.textContent || "",
       flowMarker: flow?.getAttribute("data-polish-archive-flow") || "",
       flowState: flow?.getAttribute("data-archive-flow-state") || "",
       flowText: flow?.textContent || "",
@@ -931,6 +936,19 @@ async function assertArchiveDigestPolish(page, label) {
   if (!snapshot.readerBoundaryText.includes("按钮只写案头草稿") || !snapshot.readerBoundaryText.includes("回主卷候复")) {
     failures.push(`archive reader lacked draft boundary copy: ${snapshot.readerBoundaryText.slice(0, 120)}`);
   }
+  const draftReaderRequiredText = ["史册拟稿校阅", "读卷、旁证与候复", "归档", "旁证", "草稿", "候复", "不回显正文", "不把旁证改写成裁决事实"];
+  const missingDraftReaderText = draftReaderRequiredText.filter((requiredText) => !snapshot.draftReaderText.includes(requiredText));
+  if (
+    snapshot.draftReaderMarker !== "s91-9-archive-draft-reader" ||
+    !/^(empty|unsupported)$/.test(snapshot.draftReaderState) ||
+    snapshot.draftReaderRows !== 4 ||
+    missingDraftReaderText.length
+  ) {
+    failures.push(`S91.9 archive draft reader missing: ${JSON.stringify({ marker: snapshot.draftReaderMarker, state: snapshot.draftReaderState, rows: snapshot.draftReaderRows, text: snapshot.draftReaderText.slice(0, 180) })}`);
+  }
+  if (/\/api\/game\/turn|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/i.test(snapshot.draftReaderText)) {
+    failures.push(`S91.9 archive draft reader leaked unsafe copy: ${snapshot.draftReaderText.slice(0, 180)}`);
+  }
   if (
     snapshot.flowMarker !== "s90-4-archive-court-reader" ||
     !/^(ready|empty)$/.test(snapshot.flowState) ||
@@ -969,6 +987,29 @@ async function assertArchiveDigestPolish(page, label) {
   if (snapshot.forbiddenText.length) failures.push(`archive digest/page leaked forbidden text: ${snapshot.forbiddenText.join(", ")}`);
   if (failures.length) {
     throw new Error(`${label} archive digest polish failed: ${failures.join("; ")}`);
+  }
+}
+
+async function assertArchiveDraftReaderWritten(page, label) {
+  await page.getByRole("button", { name: "据此拟稿" }).first().click();
+  const snapshot = await page.evaluate(() => {
+    const reader = document.querySelector("[data-polish-archive-draft-reader='s91-9-archive-draft-reader']");
+    return {
+      marker: reader?.getAttribute("data-polish-archive-draft-reader") || "",
+      state: reader?.getAttribute("data-archive-draft-state") || "",
+      text: reader?.textContent || "",
+      forbiddenText: (reader?.textContent || "").match(/平粜余波|同年文社压力留痕|\/api\/game\/turn|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || []
+    };
+  });
+  const requiredWrittenText = ["已入主卷", "本地史册札记已入底部奏折", "主卷待呈"];
+  const missingWrittenText = requiredWrittenText.filter((requiredText) => !snapshot.text.includes(requiredText));
+  if (
+    snapshot.marker !== "s91-9-archive-draft-reader" ||
+    snapshot.state !== "written" ||
+    missingWrittenText.length ||
+    snapshot.forbiddenText.length
+  ) {
+    throw new Error(`${label} S91.9 archive draft reader written state failed: ${JSON.stringify(snapshot)}`);
   }
 }
 
@@ -4224,6 +4265,7 @@ async function runClientSmoke(options = {}) {
       })
     );
     await assertArchiveDigestPolish(page, "S89.4 desktop archive");
+    await assertArchiveDraftReaderWritten(page, "S91.9 desktop archive");
     await assertIndependentSessionRouteShell(page, "S89.2 史册");
     screenshots.push(
       await assertRouteRefresh(page, archivePath, "s74-react-archive-refresh-desktop", options.screenshotsDir, {
