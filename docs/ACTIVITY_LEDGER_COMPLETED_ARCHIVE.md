@@ -40,6 +40,7 @@
 | S86 | 后端 TypeScript 渐进迁移首轮，建立 server typecheck/probe、contracts、runtime guards 和高风险模块选择性 `@ts-check`。 | [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md) |
 | S87 | route/API response shape 首轮覆盖，固定 game/exam/AI/inventory/NPC/trade/delegation public response，并以局部 helper 守住 raw ledger 剥离。 | [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md) |
 | S88 | 全面系统打磨阶段性归档：书生主线、六身份循环、官场/领域后果、NPC/关系、经济解释、React 状态、PixiJS 舆图、视觉立绘和 provider 验收首轮。 | [QIANQIU_POLISHING_ARCHIVE.md](QIANQIU_POLISHING_ARCHIVE.md) |
+| S89.1-S89.68 | React 产品 polish、玩家可见术语清洗、route 空态/读法深化、材质动效、CSS 预算、CSS token/surface/keyframe 语义化和首页 token 收敛。 | 本文件“S89 压缩归档”、`docs/DEVELOPMENT_STEPS.md` 归档前 Git history、实现提交至 `948f59a0` |
 
 ## S73-S78 历史台账压缩
 
@@ -55,6 +56,19 @@
 | S76.1-S76.12 | 主游戏壳、六类身份面板、科举考试全屏、放榜全屏、独立舆图页、人物谱牒、专题 surface 扩展位和 S76 总验收。 | 前端只读安全 projection 和草稿入口，不裁决考试、官职、军务、财政、案件、地图移动或人物 hidden 真值。 |
 | S77.1-S77.8 | 默认入口确认、browser smoke 扩展、视觉像素、安全污染防线、资源预算、可访问性/字体系统、归档和 S73-S77 总验证。 | browser smoke 守护 DOM/storage/runtime manifest/截图名安全字段；完整书生科举链由 `smoke:exam-s69` 持续保护。 |
 | S78 | 官署专题真实材料、证据 ref、AI/Mock 草稿和写入底部奏折闭环。 | `topic_draft` 不提交普通回合、不推进时间、不调用 resolver、不写 canonical state；真实后果仍由服务器回合裁决。 |
+
+## S89 压缩归档
+
+2026-05-27 按用户要求将 S89 完成流水从活动台账迁出。详细逐步记录不再复制到当前必读上下文；需要逐项追溯时查看迁出前的 `docs/DEVELOPMENT_STEPS.md` Git history 和对应实现提交。
+
+| 范围 | 完成内容 | 关键边界 |
+| --- | --- | --- |
+| S89.1-S89.19 | React 玩家可见术语、移动端覆盖层、视觉矩阵、轻量专题页壳、设置/错误空态、首页旧案状态、人物/立绘查看器、舆图、史册、朝议、科举、皇榜、囊箧/账解读法等 polish。 | 前端只消费安全 view 与本地草稿；不新增后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、manifest 字段或服务器裁决权。 |
+| S89.20-S89.36 | CSS 预算瘦身、重复规则折叠、JS 分包预算稳定、覆盖层纵深、人物/舆图/首页/科举/皇榜/主卷/朝议材质动效和跨页追踪读法。 | 保持 route/local 状态和 browser-draft-only 边界；地图 layout、visual-only effect、NPC anchor 和证据 hint 不得变成真实裁决事实。 |
+| S89.37-S89.63 | CSS token 与可访问性渐进重构、结构 selector 收敛、静态 surface utility 接入、共享纸面状态 token 化、状态色 token 化、基础控件/壳 token 化和 motion keyframe 语义化。 | 不删除仍有源码命中的业务 selector，不改变 React DOM、className、`data-polish-*` 历史 marker、数据流、API/schema、AI 权限、prompt、provider、存档或 manifest。 |
+| S89.64-S89.68 | 首页背景、开卷案桌、朱印、样卷入口、开卷路径、旧案状态、身份选项和立绘选择态 token 化/复用。 | 最新 CSS source 聚合长度约 199987 bytes，距离 200000 bytes guard 余量极小；后续 CSS 需先考虑瘦身、合并或物理拆文件。 |
+
+S89 最新完整验证锚点来自 S89.68：focused scaffold、组合 CSS canary、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（99 tests）、`npm run typecheck:client`、串行 Vitest（6 files / 134 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、直接 `node scripts/clientSmoke.js` 和 `npm test`（1213 tests）均通过。
 
 ## 验证锚点
 
