@@ -5,7 +5,7 @@ import { markOverlayTrigger } from "../components/overlayFocus";
 import { isRouteLocalSessionId } from "../routes/sessionId";
 import { surfaceRegistry } from "../surfaces/surfaceRegistry";
 import { useGameSessionStore } from "../state/gameSessionState";
-import type { LocalSurface } from "../state/uiState";
+import type { ActionDraft, LocalSurface } from "../state/uiState";
 import { useUiStateStore } from "../state/uiState";
 
 const mainCourtDeskPolishId = "s89-34-main-court-desk";
@@ -54,6 +54,21 @@ type CourtReaderRow = {
   readonly detail: string;
 };
 
+type CourtDraftReaderRow = {
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
+const courtTopicSurfaceLabels: Partial<Record<LocalSurface, string>> = {
+  "memorial-review": "奏折队列",
+  "edict-draft": "拟圣旨",
+  "court-debate": "朝议",
+  trial: "堂审",
+  "war-council": "军议",
+  "npc-profile": "人物档案"
+};
+
 function recordValue(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
@@ -73,6 +88,49 @@ function countFollowUpEvidence(evidence: unknown) {
   const total = countNumber(counts.total);
   if (total) return total;
   return arrayLength(view.items) + arrayLength(view.people) + arrayLength(view.events) + arrayLength(view.economy);
+}
+
+function getCourtTopicDraftLabel(actionDraft: ActionDraft | null, sessionId: string) {
+  if (!actionDraft || actionDraft.sessionId !== sessionId || actionDraft.source !== "role-surface") return "";
+  const surfaceId = actionDraft.draftContext?.surfaceId;
+  if (typeof surfaceId !== "string") return "";
+  return courtTopicSurfaceLabels[surfaceId as LocalSurface] ?? "";
+}
+
+function buildCourtDraftReaderRows(input: {
+  readonly publicEvidenceCount: number;
+  readonly routeSessionSupported: boolean;
+  readonly draftSurfaceLabel: string;
+}): CourtDraftReaderRow[] {
+  const hasCourtTopicDraft = Boolean(input.routeSessionSupported && input.draftSurfaceLabel);
+  return [
+    {
+      label: "材料",
+      value: input.routeSessionSupported
+        ? input.publicEvidenceCount
+          ? `${input.publicEvidenceCount} 条可读`
+          : "候公开材料"
+        : "案卷暂不可读",
+      detail: "只取章奏、史册、后果、议题与月账公开摘要。"
+    },
+    {
+      label: "官署",
+      value: hasCourtTopicDraft ? input.draftSurfaceLabel : input.routeSessionSupported ? "六署待选" : "六署停开",
+      detail: "专题按钮只打开既有官署索引，不新增案面。"
+    },
+    {
+      label: "草稿",
+      value: hasCourtTopicDraft ? "已入主卷" : "尚未落稿",
+      detail: hasCourtTopicDraft
+        ? "本地专题草稿已入底部奏折，仍候主卷回音。"
+        : "写入底部奏折只留本地草稿，不回显正文。"
+    },
+    {
+      label: "候复",
+      value: hasCourtTopicDraft ? "主卷待呈" : "不定终局",
+      detail: "任免、诏令、战和、财政结算和时间推进仍归主卷回批。"
+    }
+  ];
 }
 
 function buildCourtReaderRows(input: {
@@ -116,6 +174,7 @@ export function CourtPage() {
   const { sessionId = "s74-preview" } = useParams();
   const currentSession = useGameSessionStore((state) => state.currentSession);
   const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
+  const actionDraft = useUiStateStore((state) => state.actionDraft);
   const routeSessionSupported = isRouteLocalSessionId(sessionId);
   const sessionMatches = routeSessionSupported && currentSession?.sessionId === sessionId;
   const archiveView = recordValue(sessionMatches ? currentSession?.eventArchiveView : null);
@@ -133,6 +192,15 @@ export function CourtPage() {
     : archiveCount || domainCount || followUpCount || threadCount || economyCount
     ? "ready"
     : "empty";
+  const courtDraftEvidenceCount = archiveCount + domainCount + followUpCount + threadCount + economyCount;
+  const courtDraftSurfaceLabel = getCourtTopicDraftLabel(actionDraft, sessionId);
+  const hasCourtTopicDraft = Boolean(routeSessionSupported && courtDraftSurfaceLabel);
+  const courtDraftState = !routeSessionSupported ? "unsupported" : hasCourtTopicDraft ? "written" : "empty";
+  const courtDraftReaderRows = buildCourtDraftReaderRows({
+    publicEvidenceCount: courtDraftEvidenceCount,
+    routeSessionSupported,
+    draftSurfaceLabel: courtDraftSurfaceLabel
+  });
   const courtReaderRows = buildCourtReaderRows({
     archiveCount,
     domainCount,
@@ -209,6 +277,30 @@ export function CourtPage() {
         items={crossTraceItems}
         summary="从六署专题读议题，从人物页查来人，从史册页看已留痕后果。"
       />
+      <section
+        className="courtDraftReader"
+        aria-label="朝议专题草稿校阅"
+        data-polish-court-draft-reader="s91-10-court-draft-reader"
+        data-court-draft-state={courtDraftState}
+      >
+        <div>
+          <p className="eyebrow">专题校阅</p>
+          <h2>草稿候复</h2>
+          <p>只认当前案卷的本地官署专题草稿；不回显正文，不把官署材料改写成裁决事实。</p>
+        </div>
+        <dl>
+          {courtDraftReaderRows.map((row) => (
+            <div key={row.label}>
+              <dt>{row.label}</dt>
+              <dd>
+                <strong>{row.value}</strong>
+                <span>{row.detail}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p className="courtDraftReaderBoundary">此处只看本地草稿标记与公开材料数量；真正呈递、任免、诏令、战和和财赋结算仍回主卷。</p>
+      </section>
       <section
         className="courtReaderBand paperMotionSurface"
         aria-label="朝议专题读法"

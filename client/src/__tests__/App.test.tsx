@@ -3465,6 +3465,16 @@ describe("S74.1 React client shell", () => {
     expect(courtReader.textContent || "").toContain("候公开材料");
     expect(courtReader.textContent || "").toContain("六署可开");
     expect(courtReader.textContent || "").toContain("资源、交易、关系、任免、罪名和战和结果仍回案卷回批。");
+    const courtDraftReader = document.querySelector("[data-polish-court-draft-reader='s91-10-court-draft-reader']") as HTMLElement;
+    expect(courtDraftReader).toBeTruthy();
+    expect(courtDraftReader.getAttribute("data-court-draft-state")).toBe("empty");
+    expect(courtDraftReader.querySelectorAll("dt")).toHaveLength(4);
+    expect(courtDraftReader.textContent || "").toContain("专题校阅");
+    expect(courtDraftReader.textContent || "").toContain("草稿候复");
+    expect(courtDraftReader.textContent || "").toContain("候公开材料");
+    expect(courtDraftReader.textContent || "").toContain("六署待选");
+    expect(courtDraftReader.textContent || "").toContain("尚未落稿");
+    expect(courtDraftReader.textContent || "").toContain("写入底部奏折只留本地草稿，不回显正文。");
     const courtTrace = document.querySelector("[data-polish-cross-trace='s89-36-cross-page-trace'][data-cross-trace-page='court']") as HTMLElement;
     expect(courtTrace).toBeTruthy();
     expect(courtTrace.getAttribute("data-cross-trace-state")).toBe("ready");
@@ -3522,6 +3532,8 @@ describe("S74.1 React client shell", () => {
       source: "role-surface",
       targetPage: "game"
     });
+    expect(courtDraftReader.getAttribute("data-court-draft-state")).toBe("empty");
+    expect(courtDraftReader.textContent || "").toContain("尚未落稿");
 
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "拟圣旨" })).toBeNull());
@@ -3704,6 +3716,13 @@ describe("S74.1 React client shell", () => {
 
     await screen.findByRole("heading", { name: "朝议与官署" });
     expect(document.body.textContent || "").not.toMatch(/安全专题投影|后端裁决|resolver|safe view|\bserver\b|provider|model/i);
+    const courtDraftReader = document.querySelector("[data-polish-court-draft-reader='s91-10-court-draft-reader']") as HTMLElement;
+    expect(courtDraftReader).toBeTruthy();
+    expect(courtDraftReader.getAttribute("data-court-draft-state")).toBe("empty");
+    expect(courtDraftReader.textContent || "").toContain("专题校阅");
+    expect(courtDraftReader.textContent || "").toContain("候公开材料");
+    expect(courtDraftReader.textContent || "").toContain("六署待选");
+    expect(courtDraftReader.textContent || "").toContain("不回显正文");
     fireEvent.click(screen.getByRole("button", { name: "朝议" }));
 
     const dialog = await screen.findByRole("dialog", { name: "朝议" });
@@ -3747,6 +3766,12 @@ describe("S74.1 React client shell", () => {
         generatedAtTurn: 3
       }
     });
+    expect(courtDraftReader.getAttribute("data-court-draft-state")).toBe("written");
+    expect(courtDraftReader.textContent || "").toContain("朝议");
+    expect(courtDraftReader.textContent || "").toContain("已入主卷");
+    expect(courtDraftReader.textContent || "").toContain("本地专题草稿已入底部奏折，仍候主卷回音。");
+    expect(courtDraftReader.textContent || "").toContain("主卷待呈");
+    expect(courtDraftReader.textContent || "").not.toContain("请召诸臣廷议，先核边饷催报与纸价议价解释，再拟稳妥章程。");
     const requestedUrls = fetchMock.mock.calls.map(([url]) => String(url));
     expect(requestedUrls).toContain(`/api/game/topic-surface/${sessionId}/court-debate`);
     expect(requestedUrls).toContain(`/api/ai/topic-draft/${sessionId}`);

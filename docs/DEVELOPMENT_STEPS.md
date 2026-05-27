@@ -126,31 +126,41 @@
 | S91.7 | DONE | 皇榜题名校阅与授官候复状态 polish | 已完成皇榜“题名校阅”四读：只从现有公开榜行、案主榜行、本地细读选择、同年座师公开计数和授官提示派生榜文、我名、细读与授官候复；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.8 | DONE | 舆图图层校阅与草稿候复状态 polish | 已完成舆图“图层校阅”四读：只从现有 `mapRuntimeView` 安全投影、图层显示状态、公开计数、可见行动条数和本地草稿写入状态派生图层、卷宗、可见与草稿候复读法；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.9 | DONE | 史册拟稿校阅与候复状态 polish | 已完成史册页“拟稿校阅”四读：只从现有公开史册/旁证计数、route 状态和当前案卷本地 `archive-view` 草稿状态派生归档、旁证、草稿与候复读法；写稿后只显示已入主卷候复，不回显草稿正文或史册条目标题，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.10 | DONE | 朝议专题草稿校阅与候复状态 polish | 已完成朝议页“专题校阅”四读：只从现有公开材料计数、route 状态和当前案卷本地 `role-surface` 专题草稿 `draftContext.surfaceId` 派生材料、官署、草稿与候复状态；写稿后只显示已入主卷候复，不读取或回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.9：史册拟稿校阅与候复状态 polish 已完成。史册页新增 `s91-9-archive-draft-reader` 的“归档 / 旁证 / 草稿 / 候复”四读，把公开史册条目数、公开后果/实体余波/来函旁证数、route 支持状态和当前案卷本地史册草稿写入状态集中成可扫读状态；写稿后只显示“已入主卷”候复，不回显草稿正文或史册条目标题。
-- S91.9 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有 `eventArchiveView`、`domainConsequenceView`、来函 evidence 安全投影、route 状态和本地 `archive-view` 草稿标记，不把旁证改写成裁决事实。
-- 最近完整运行态验证来自 S91.9：`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（110 tests）、`npm run typecheck:client`、S91.9 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-9-archive-draft-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1224 tests）已通过；提交前复审后将 browser smoke 的 S91.9 文案检查从正则 alternation 改为逐项缺失检查，随后 `node --check`、source canary、docs governance、`git diff --check` 和 browser smoke 已复跑通过；browser smoke 首次复跑在首页 `networkidle` 超时、未进入 S91.9 断言，同命令重跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning；提交前只读复审代理 `019e6b45-c803-7aa2-9c4e-c43faae028e5` 未发现阻塞问题，复审后改动的跟进只读复审同样未发现阻塞问题。
+- 最新实现步骤 S91.10：朝议专题草稿校阅与候复状态 polish 已完成。朝议页新增 `s91-10-court-draft-reader` 的“材料 / 官署 / 草稿 / 候复”四读，把公开章奏、史册、后果、议题、thread、月账计数、route 支持状态和当前案卷本地专题草稿写入状态集中成可扫读状态；写稿后只显示“已入主卷”候复，不读取或回显 `actionDraft.text`。
+- S91.10 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全朝议/史册/后果/thread/月账 view、route 状态和本地 `role-surface` 专题草稿标记，不把官署材料改写成裁决事实。
+- 最近完整运行态验证来自 S91.10：`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（111 tests）、`npm run typecheck:client`、S91.10 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-10-court-draft-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1225 tests）已通过；首次 S91.10 App Vitest 使用 120 秒外层超时未出结果，长超时复跑通过；接手前 source canary 因旧 S89.36/S89.17 片段过宽触发，已收窄到各自读法后通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.9：
+最新运行态完整验证锚点来自 S91.10：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（110 tests）
+- `node --test test/reactClientScaffold.test.js`（111 tests）
 - `npm run typecheck:client`
 - `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 76 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-9-archive-draft-reader-smoke`
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-10-court-draft-reader-smoke`
 - `npm run check:docs-governance`
 - `git diff --check`（仅既有 CRLF warning）
-- `npm test`（1224 tests）
+- `npm test`（1225 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S91.10 朝议专题草稿校阅与候复状态 polish 完成
+
+- 范围：朝议页在跨页线索与既有“材料入席”读法之间新增 `data-polish-court-draft-reader="s91-10-court-draft-reader"` 的“专题校阅”，四格显示公开材料可读条数、当前本地专题官署、草稿是否已入主卷和候复边界。
+- 体验修正：初始状态显示“候公开材料 / 六署待选 / 尚未落稿”和“不回显正文”；从朝议专题写入底部奏折后，“官署”格显示“朝议”，“草稿”格只变为“已入主卷”和“本地专题草稿已入底部奏折，仍候主卷回音”，候复格显示“主卷待呈”。读法只检查当前案卷 `actionDraft.sessionId`、`actionDraft.source === "role-surface"` 和 `actionDraft.draftContext?.surfaceId` 是否命中既有官署专题；没有 `draftContext.surfaceId` 的旧静态拟圣旨草稿不会误判为专题草稿，也不读取 `actionDraft.text`，因此不回显“请召诸臣廷议……”等草稿正文。移动端同 route CSS 单列。
+- 边界：本步只改 React 前端读法、朝议 route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。浏览器仍只消费现有公开章奏、史册、后果、议题、thread、月账安全投影、route 状态和本地专题草稿标记；官署材料只作读卷提示，不能改写成呈递、任免、诏令、战和、财赋结算或未公开事实。
+- 验证：已通过 `node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（111 tests）、`npm run typecheck:client`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-10-court-draft-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1225 tests）；首次 S91.10 App Vitest 使用 120 秒外层超时未出结果，长超时复跑通过；接手前 source canary 因旧 S89.36/S89.17 片段过宽触发，已收窄到各自读法后通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
+- 子代理：提交前只读复审代理 `019e6b45-c803-7aa2-9c4e-c43faae028e5` 已复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为提交前把本条“待执行”文案改为已完成，已采纳。代理确认未编辑文件、未运行任何命令或 Git 命令。复审后只做本条文档状态补记，按低风险纯文档状态更新处理。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复；必要时用低风险纯文档后续提交补记哈希。
 
 ### 2026-05-27：S91.9 史册拟稿校阅与候复状态 polish 完成
 

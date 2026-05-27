@@ -3486,6 +3486,7 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     const agendaBand = document.querySelector('[data-polish-court-agenda-band="s89-34-main-court-desk"]');
     const crossTrace = document.querySelector('[data-polish-cross-trace="s89-36-cross-page-trace"][data-cross-trace-page="court"]');
     const courtReader = document.querySelector('[data-polish-court-reader="s90-4-archive-court-reader"]');
+    const courtDraftReader = document.querySelector('[data-polish-court-draft-reader="s91-10-court-draft-reader"]');
     const crossTraceCard = crossTrace?.querySelector(".crossPageTraceGrid article");
     const crossTraceCardStyle = crossTraceCard ? window.getComputedStyle(crossTraceCard) : null;
     const agendaStyle = agendaBand ? window.getComputedStyle(agendaBand) : null;
@@ -3512,6 +3513,10 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
       courtReaderMarker: courtReader?.getAttribute("data-polish-court-reader") || "",
       courtReaderState: courtReader?.getAttribute("data-court-reader-state") || "",
       courtReaderText: courtReader?.textContent || "",
+      courtDraftReaderMarker: courtDraftReader?.getAttribute("data-polish-court-draft-reader") || "",
+      courtDraftReaderState: courtDraftReader?.getAttribute("data-court-draft-state") || "",
+      courtDraftReaderText: courtDraftReader?.textContent || "",
+      courtDraftReaderRows: courtDraftReader?.querySelectorAll("dt").length || 0,
       agendaAnimation: agendaStyle?.animationName || "",
       agendaSealAnimation: agendaSealStyle?.animationName || "",
       agendaStepAnimation: agendaStepStyle?.animationName || "",
@@ -3557,6 +3562,18 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     !initialSnapshot.courtReaderText.includes("不定终局")
   ) {
     failures.push(`S90.4 court reader missing: ${JSON.stringify({ marker: initialSnapshot.courtReaderMarker, state: initialSnapshot.courtReaderState, text: initialSnapshot.courtReaderText.slice(0, 160) })}`);
+  }
+  if (
+    initialSnapshot.courtDraftReaderMarker !== "s91-10-court-draft-reader" ||
+    initialSnapshot.courtDraftReaderState !== "empty" ||
+    initialSnapshot.courtDraftReaderRows !== 4 ||
+    !initialSnapshot.courtDraftReaderText.includes("专题校阅") ||
+    !initialSnapshot.courtDraftReaderText.includes("草稿候复") ||
+    !initialSnapshot.courtDraftReaderText.includes("尚未落稿") ||
+    !initialSnapshot.courtDraftReaderText.includes("不回显正文") ||
+    !initialSnapshot.courtDraftReaderText.includes("不把官署材料改写成裁决事实")
+  ) {
+    failures.push(`S91.10 court draft reader missing: ${JSON.stringify({ marker: initialSnapshot.courtDraftReaderMarker, state: initialSnapshot.courtDraftReaderState, rows: initialSnapshot.courtDraftReaderRows, text: initialSnapshot.courtDraftReaderText.slice(0, 180) })}`);
   }
   if (initialSnapshot.shellMotion !== "reduced" && !initialSnapshot.reducedMotion) {
     if (!initialSnapshot.agendaAnimation.includes("mainCourtDeskPaperUnroll")) failures.push(`S89.60 court agenda animation was ${initialSnapshot.agendaAnimation}`);
@@ -3694,9 +3711,13 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
   const surfaceSnapshot = await page.evaluate((tokens) => {
     const dialog = document.querySelector(".localSurfacePanel");
     const bodyText = document.body.innerText || "";
+    const courtDraftReader = document.querySelector('[data-polish-court-draft-reader="s91-10-court-draft-reader"]');
     return {
       dialogText: dialog?.textContent || "",
       draft: document.querySelector("textarea")?.value || "",
+      courtDraftReaderMarker: courtDraftReader?.getAttribute("data-polish-court-draft-reader") || "",
+      courtDraftReaderState: courtDraftReader?.getAttribute("data-court-draft-state") || "",
+      courtDraftReaderText: courtDraftReader?.textContent || "",
       hiddenLeaks: tokens.filter((token) => bodyText.includes(token)),
       forbiddenText: bodyText.match(/\/api\/game\/state|\/api\/dev\/session-diagnostics|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥|sk-[a-z0-9_-]{6,}|[a-z]:[\\/]/gi) || []
     };
@@ -3704,6 +3725,17 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
 
   const dialogFailures = [];
   if (!surfaceSnapshot.draft.includes("廷议")) dialogFailures.push(`draft did not enter memorial composer: ${surfaceSnapshot.draft}`);
+  if (
+    surfaceSnapshot.courtDraftReaderMarker !== "s91-10-court-draft-reader" ||
+    surfaceSnapshot.courtDraftReaderState !== "written" ||
+    !surfaceSnapshot.courtDraftReaderText.includes("朝议") ||
+    !surfaceSnapshot.courtDraftReaderText.includes("已入主卷") ||
+    !surfaceSnapshot.courtDraftReaderText.includes("本地专题草稿已入底部奏折") ||
+    !surfaceSnapshot.courtDraftReaderText.includes("主卷待呈") ||
+    surfaceSnapshot.courtDraftReaderText.includes(surfaceSnapshot.draft)
+  ) {
+    dialogFailures.push(`S91.10 court draft reader did not enter written local-only state: ${JSON.stringify({ marker: surfaceSnapshot.courtDraftReaderMarker, state: surfaceSnapshot.courtDraftReaderState, text: surfaceSnapshot.courtDraftReaderText.slice(0, 180) })}`);
+  }
   if (surfaceSnapshot.hiddenLeaks.length) dialogFailures.push(`hidden text leaked: ${surfaceSnapshot.hiddenLeaks.join(", ")}`);
   if (surfaceSnapshot.forbiddenText.length) dialogFailures.push(`unsafe text leaked: ${surfaceSnapshot.forbiddenText.join(", ")}`);
   if (dialogFailures.length) {

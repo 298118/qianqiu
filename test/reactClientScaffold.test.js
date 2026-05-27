@@ -2286,6 +2286,55 @@ test("S91.9 archive draft reader stays local-draft-only and frontend-only", () =
   );
 });
 
+test("S91.10 court draft reader stays local-topic-draft-only and frontend-only", () => {
+  const courtPageSource = readText("client/src/pages/CourtPage.tsx");
+  const gameStyleSource = readClientStyleModule("routes/game.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = courtPageSource.indexOf('data-polish-court-draft-reader="s91-10-court-draft-reader"');
+  const readerEnd = courtPageSource.indexOf('<section\n        className="courtReaderBand', readerStart);
+  const readerMarkup = readerStart >= 0 && readerEnd > readerStart
+    ? courtPageSource.slice(readerStart, readerEnd)
+    : "";
+  const readerDataStart = courtPageSource.indexOf("function buildCourtDraftReaderRows");
+  const readerDataEnd = courtPageSource.indexOf("function buildCourtReaderRows", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? courtPageSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const runtimeCombined = stripSafeGuardPatterns(`${courtPageSource}\n${gameStyleSource}`);
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.match(courtPageSource, /type CourtDraftReaderRow/);
+  assert.match(courtPageSource, /function getCourtTopicDraftLabel/);
+  assert.match(courtPageSource, /function buildCourtDraftReaderRows/);
+  assert.match(courtPageSource, /const actionDraft = useUiStateStore\(\(state\) => state\.actionDraft\)/);
+  assert.match(courtPageSource, /actionDraft\.sessionId !== sessionId \|\| actionDraft\.source !== "role-surface"/);
+  assert.match(courtPageSource, /actionDraft\.draftContext\?\.surfaceId/);
+  assert.match(readerDataBlock, /只取章奏、史册、后果、议题与月账公开摘要/);
+  assert.match(readerDataBlock, /专题按钮只打开既有官署索引，不新增案面/);
+  assert.match(readerDataBlock, /本地专题草稿已入底部奏折，仍候主卷回音/);
+  assert.match(readerDataBlock, /写入底部奏折只留本地草稿，不回显正文/);
+  assert.match(readerMarkup, /只认当前案卷的本地官署专题草稿/);
+  assert.match(readerMarkup, /不回显正文/);
+  assert.match(readerMarkup, /不把官署材料改写成裁决事实/);
+  assert.doesNotMatch(readerDataBlock, /submitTurn|\/api\/game\/turn|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|evidenceRefs|actionDraft\.text/);
+  assert.doesNotMatch(readerMarkup, /submitTurn|\/api\/game\/turn|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|evidenceRefs|廷议|边饷催报|纸价议价解释|actionDraft\.text/);
+
+  assert.match(gameStyleSource, /\.courtDraftReader \{/);
+  assert.match(gameStyleSource, /\.courtDraftReader \{[\s\S]*grid-template-columns: minmax\(190px, 0\.36fr\) minmax\(0, 1fr\)/);
+  assert.match(gameStyleSource, /\.courtDraftReader dl \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(gameStyleSource, /@media \(max-width: 760px\)[\s\S]*\.courtDraftReader,[\s\S]*\.courtDraftReader dl \{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(appTestSource, /s91-10-court-draft-reader/);
+  assert.match(appTestSource, /本地专题草稿已入底部奏折/);
+  assert.match(clientSmokeSource, /s91-10-court-draft-reader/);
+  assert.match(clientSmokeSource, /S91\.10 court draft reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.60 main and court desk keyframes use semantic names", () => {
   const keyframesSource = readText("client/src/styles/motion/keyframes.css");
   const gameStyleSource = readText("client/src/styles/routes/game.css");
@@ -2331,8 +2380,8 @@ test("S89.36 cross-page trace rail stays frontend-only and safe-view-only", () =
   const appTestSource = readText("client/src/__tests__/App.test.tsx");
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const courtTraceBlock = courtPageSource.slice(
-    courtPageSource.indexOf("function recordValue"),
-    courtPageSource.indexOf("<div className=\"courtSurfaceGrid\"", courtPageSource.indexOf("<CrossPageTraceRail"))
+    courtPageSource.indexOf("const sessionMatches ="),
+    courtPageSource.indexOf("<section\n        className=\"courtDraftReader\"", courtPageSource.indexOf("<CrossPageTraceRail"))
   );
   const peopleTraceBlock = peoplePageSource.slice(
     peoplePageSource.indexOf("const peopleCrossTraceState"),
@@ -2926,16 +2975,28 @@ test("S89.17 court directory keeps topic entries player-facing and draft-only", 
   const appTestSource = readText("client/src/__tests__/App.test.tsx");
   const clientSmokeSource = readText("scripts/clientSmoke.js");
   const styleSource = readText("client/src/styles/global.css");
+  const directoryStart = courtPageSource.indexOf('<div className="courtSurfaceGrid"');
+  const directoryEnd = courtPageSource.indexOf("<p className=\"statusLine\">", directoryStart);
+  const directoryBlock = directoryStart >= 0 && directoryEnd > directoryStart
+    ? courtPageSource.slice(directoryStart, directoryEnd)
+    : "";
+  const groupStart = courtPageSource.indexOf("const courtSurfaceGroups");
+  const groupEnd = courtPageSource.indexOf("const courtSurfaceDraftUses", groupStart);
+  const groupBlock = groupStart >= 0 && groupEnd > groupStart
+    ? courtPageSource.slice(groupStart, groupEnd)
+    : "";
 
+  assert.ok(directoryStart >= 0 && directoryEnd > directoryStart);
+  assert.ok(groupStart >= 0 && groupEnd > groupStart);
   assert.match(courtPageSource, /data-polish-court="s89-17-court-directory"/);
   assert.match(courtPageSource, /官署案头索引/);
-  assert.match(courtPageSource, /卷宗取材/);
-  assert.match(courtPageSource, /可拟草稿/);
-  assert.match(courtPageSource, /案卷未载/);
-  assert.match(courtPageSource, /候复边界/);
+  assert.match(directoryBlock, /卷宗取材/);
+  assert.match(directoryBlock, /可拟草稿/);
+  assert.match(directoryBlock, /案卷未载/);
+  assert.match(directoryBlock, /候复边界/);
   assert.match(courtPageSource, /formatCourtRegistryLine/);
   for (const surfaceId of ["memorial-review", "edict-draft", "court-debate", "trial", "war-council", "npc-profile"]) {
-    assert.match(courtPageSource, new RegExp(surfaceId));
+    assert.match(groupBlock, new RegExp(surfaceId));
   }
   assert.match(appTestSource, /s89-17-court-directory/);
   assert.match(appTestSource, /courtSurfaceEntries\)\.toHaveLength\(6\)/);
@@ -2945,7 +3006,7 @@ test("S89.17 court directory keeps topic entries player-facing and draft-only", 
   assert.match(clientSmokeSource, /court directory lacked player-facing index copy/);
   assert.doesNotMatch(styleSource, /s89-17/);
   assert.doesNotMatch(
-    courtPageSource,
+    directoryBlock,
     /submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|raw audit|provider payload|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver/
   );
 });
