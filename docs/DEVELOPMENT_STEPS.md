@@ -160,7 +160,7 @@
 - 边界：本步只改 React 前端读法、朝议 route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。浏览器仍只消费现有公开章奏、史册、后果、议题、thread、月账安全投影、route 状态和本地专题草稿标记；官署材料只作读卷提示，不能改写成呈递、任免、诏令、战和、财赋结算或未公开事实。
 - 验证：已通过 `node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（111 tests）、`npm run typecheck:client`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-10-court-draft-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1225 tests）；首次 S91.10 App Vitest 使用 120 秒外层超时未出结果，长超时复跑通过；接手前 source canary 因旧 S89.36/S89.17 片段过宽触发，已收窄到各自读法后通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
 - 子代理：提交前只读复审代理 `019e6b45-c803-7aa2-9c4e-c43faae028e5` 已复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为提交前把本条“待执行”文案改为已完成，已采纳。代理确认未编辑文件、未运行任何命令或 Git 命令。复审后只做本条文档状态补记，按低风险纯文档状态更新处理。
-- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复；必要时用低风险纯文档后续提交补记哈希。
+- 提交：S91.10 实现提交 `a4058332`（`Polish court draft reader`）；本哈希记录随低风险纯文档后续提交补入台账。
 
 ### 2026-05-27：S91.9 史册拟稿校阅与候复状态 polish 完成
 
