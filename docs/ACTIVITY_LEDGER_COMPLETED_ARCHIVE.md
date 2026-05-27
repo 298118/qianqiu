@@ -40,7 +40,8 @@
 | S86 | 后端 TypeScript 渐进迁移首轮，建立 server typecheck/probe、contracts、runtime guards 和高风险模块选择性 `@ts-check`。 | [TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md) |
 | S87 | route/API response shape 首轮覆盖，固定 game/exam/AI/inventory/NPC/trade/delegation public response，并以局部 helper 守住 raw ledger 剥离。 | [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md) |
 | S88 | 全面系统打磨阶段性归档：书生主线、六身份循环、官场/领域后果、NPC/关系、经济解释、React 状态、PixiJS 舆图、视觉立绘和 provider 验收首轮。 | [QIANQIU_POLISHING_ARCHIVE.md](QIANQIU_POLISHING_ARCHIVE.md) |
-| S89.1-S89.68 | React 产品 polish、玩家可见术语清洗、route 空态/读法深化、材质动效、CSS 预算、CSS token/surface/keyframe 语义化和首页 token 收敛。 | 本文件“S89 压缩归档”、`docs/DEVELOPMENT_STEPS.md` 归档前 Git history、实现提交至 `948f59a0` |
+| S89.1-S89.68 | React 产品 polish、玩家可见术语清洗、route 空态/读法深化、材质动效、CSS 预算、CSS token/surface/keyframe 语义化和首页 token 收敛。 | [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)、本文件“S89 压缩归档”、`docs/DEVELOPMENT_STEPS.md` 归档前 Git history、实现提交至 `948f59a0` |
+| S90.1-S90.4 | React 产品级前端 polish 续轮：CSS 启动预算恢复、route 样式拆分、跨页读法深化、囊箧/史册/朝议深层读卷和专题层材料/证据/草稿读法。 | [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)、`docs/DEVELOPMENT_STEPS.md` 近期记录、提交 `5d96bb4f`、`fd0c8be7` |
 
 ## S73-S78 历史台账压缩
 

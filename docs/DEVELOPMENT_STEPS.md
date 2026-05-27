@@ -19,7 +19,7 @@
 - S86 后端 TypeScript 渐进迁移：[TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md](TYPESCRIPT_BACKEND_MIGRATION_ARCHIVE.md)，规划见 [TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md](TYPESCRIPT_BACKEND_MIGRATION_ROADMAP.md)。
 - S87 route/API 响应类型覆盖：[TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md)，规划见 [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ROADMAP.md)。
 - S88 全面系统打磨阶段性归档：[QIANQIU_POLISHING_ARCHIVE.md](QIANQIU_POLISHING_ARCHIVE.md)，原规划见 [QIANQIU_POLISHING_ROADMAP.md](QIANQIU_POLISHING_ROADMAP.md)。
-- S89 React 产品 polish、CSS token/keyframe/surface 收敛和预算稳定压缩归档：[ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
+- S89-S90 React 产品 polish、CSS token/keyframe/surface 收敛和预算稳定专题归档：[FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)，压缩索引见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
 
 2026-05-14 起，按用户要求停止与 Gemini CLI 共同开发；后续开发全部由 Codex 负责。远程存档、账号体系、多人同步、云端冲突解决和托管数据库不进入当前规划。
 
@@ -116,13 +116,14 @@
 | S90.1 | DONE | CSS 物理拆文件第二阶段与预算恢复 | 首页、主卷、舆图/史册、人物/囊箧、科举/皇榜和对应移动端样式已迁到页面级 import，`global.css` 仅保留 token/base/shell/controls/overlay/motion/全局移动布局；source canary 继续读取产品样式全集保护既有 selector，并新增全局启动样式图预算守门。 |
 | S90.2 | DONE | route 空态一致性与跨页读法继续 polish | 已完成舆图读图/地点状态/路线暗示/tooltip 操作、人物/高清立绘/科举/皇榜读法、全局壳、右上角印匣/设置入口、`SurfaceHost` 专题层、错误/loading/empty 状态和基础控件反馈 polish；只消费安全 view 与本地草稿，不新增裁决权。 |
 | S90.4 | DONE | 囊箧、史册、朝议深层读卷 polish | 已完成囊箧“四读”账解索引、史册“由史册成题”归档读法、朝议“材料入席”读法和 `SurfaceHost` 专题层材料/证据/草稿读法；只消费现有安全 view、本地草稿和页面状态，不新增 route/API/schema/AI 权限/依赖/素材或服务器裁决能力。 |
-| S90.3 | TODO | S89 前端 polish 专题归档 | 如需要更完整追溯，可把 S89.1-S89.68 从 Git history 和压缩索引整理为独立专题归档；避免重新引入逐项长流水。 |
+| S90.3 | DONE | S89/S90 前端 polish 专题归档 | 已将 S89.1-S89.68 与 S90.1/S90.2/S90.4 从 Git history、压缩索引和 brief 摘要整理为 [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)；避免重新引入逐项长流水。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S90.4：囊箧、史册、朝议深层读卷 polish 已完成。囊箧页新增“四读”账解索引，史册页新增“由史册成题”归档读法，朝议页新增“材料入席”专题读法，`SurfaceHost` 专题层新增材料/证据/草稿读法；样式分别落在囊箧、史册、朝议 route CSS 与共享专题层 CSS，source canary、Vitest 和 browser smoke 均已覆盖。
-- S90.4 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费安全 view、已审核 runtime 资产引用、本地偏好/草稿和专题状态。
+- 最新实现步骤 S90.3：S89/S90 React 产品 polish 专题归档已完成，见 [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)。该归档只整理已完成前端 polish 的范围、边界、验证锚点和追溯入口，不改运行时代码或产品行为。
+- 最近运行时代码实现步骤仍为 S90.4：囊箧、史册、朝议深层读卷 polish 已完成。囊箧页新增“四读”账解索引，史册页新增“由史册成题”归档读法，朝议页新增“材料入席”专题读法，`SurfaceHost` 专题层新增材料/证据/草稿读法；样式分别落在囊箧、史册、朝议 route CSS 与共享专题层 CSS，source canary、Vitest 和 browser smoke 均已覆盖。
+- S90.3/S90.4 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费安全 view、已审核 runtime 资产引用、本地偏好/草稿和专题状态。
 - 最近完整运行态验证来自 S90.4：`npm run typecheck:client`、`npm run build:client`、`npm run budget:client`、`npm run qa:runtime-manifest`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`、S90.4 串行 Vitest、`npm run check:docs-governance`、`git diff --check`、`npm test` 和 `npm run smoke:browser -- --screenshots artifacts/s90-4-polish-smoke` 均通过；详见本节记录与 Git history。
 
 ## 6. 最近完整验证口径
@@ -142,6 +143,14 @@
 - `npm run smoke:browser -- --screenshots artifacts/s90-4-polish-smoke`
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S90.3 S89/S90 前端 polish 专题归档完成
+
+- 范围：新增 [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)，把 S89.1-S89.68 与 S90.1/S90.2/S90.4 的 React 产品 polish、玩家可见读法、CSS 架构/token/keyframe/surface 收敛、安全守门、验证锚点和追溯入口整理为专题归档；同步本活动台账与完成压缩索引。
+- 边界：纯文档归档，不改运行时代码、前端行为、后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决。
+- 子代理：低风险纯文档改动，按项目规则跳过提交前子代理复审，并在归档记录中说明。
+- 验证：已运行 `npm run check:docs-governance`、`node --test test/documentationGovernance.test.js` 和 `git diff --check`。
+- 提交：随本次 coherent 文档提交完成，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-27：S90.4 囊箧、史册、朝议深层读卷 polish 完成
 
