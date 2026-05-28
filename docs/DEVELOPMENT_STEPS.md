@@ -164,7 +164,7 @@
 - 边界：本步只改 React 前端读法、主卷 route CSS、客户端测试、browser smoke 和文档；不新增后端 route/API/schema、AI 权限、provider/prompt 能力、依赖、素材、存档字段或服务器裁决。浏览器仍只消费现有安全 `roleCycleView`、route 状态和本地草稿标记；身份候复、取材、入口或本地草稿状态不得被改写成身份切换、任免、调兵、审案、交易、考试或时间推进事实。
 - 验证：已通过 `npm run typecheck:client`、`npm run typecheck:server`、`node --test test/reactClientScaffold.test.js`（114 tests）、`node --check scripts/clientSmoke.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（77 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-13-role-cycle-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1228 tests）；首次 App Vitest 因测试期望“3 类取材”但 fixture 实际 allowed source scope 只含“官职履历、奏议回应”两类失败，已把断言收紧到当前安全来源后复跑通过；browser smoke 首次在首页 `networkidle` 超时，未进入 S91.13 断言，同命令重跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
 - 子代理：提交前只读复审代理 `019e6d9c-9251-7b23-86d1-4da148389ca0` 已复审最终 diff 与验证证据，未发现阻塞问题；残余风险提醒为 `localRoleSurfaceDraftWritten` 是当前案卷主卷页任意 `role-surface` 草稿的页面级布尔，并非证明草稿来自身份循环某个按钮，此口径已在交接记录中说明。代理确认未编辑文件、未运行任何 Git 命令。
-- 提交：待实现提交生成后补记。
+- 提交：S91.13 实现提交 `231fde57`（`Polish role cycle reader`）；本哈希记录随低风险纯文档后续提交补入台账。
 
 ### 2026-05-28：S91.12 皇帝御案朱批校阅与候复状态 polish 完成
 
