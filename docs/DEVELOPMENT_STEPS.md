@@ -162,7 +162,7 @@
 - 边界：本步只改 React 前端读法、主卷 route CSS、客户端测试、browser smoke 和文档；不新增后端 route/API/schema、AI 权限、provider/prompt 能力、依赖、素材、存档字段或服务器裁决。浏览器仍只消费现有安全月报/官职/公开差事 view、route 状态和本地草稿标记；月报、首月差事、任所摘要或本地草稿状态不得被改写成考成、任免、弹劾、财赋或官署终局事实。
 - 验证：已通过 `npm run typecheck:client`、`npm run typecheck:server`、`node --test test/reactClientScaffold.test.js`（112 tests）、`node --check scripts/clientSmoke.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-11-official-monthly-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1226 tests）；首次 App Vitest 使用 180 秒外层超时未出结果，长超时复跑通过；browser smoke 首次在首页 `networkidle` 超时、未进入 S91.11 断言，同命令重跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
 - 子代理：提交前只读复审代理 `019e6cd5-420f-79e3-a467-913d096f8f7e` 已复审最终 diff 与验证证据，未发现阻塞问题；代理确认未编辑文件、未运行任何 Git 命令。非阻塞提醒为文档待补状态与 `localRoleSurfaceDraftWritten` 当前表示当前案卷主卷页任意 `role-surface` 草稿，前者已补记，后者符合本轮页面级本地草稿状态设计。
-- 提交：随本次 coherent change 统一提交，最终哈希待补。
+- 提交：S91.11 实现提交 `1e9988be`（`Polish official monthly reader`）；本哈希记录随低风险纯文档后续提交补入台账。
 
 ### 2026-05-27：S91.10 朝议专题草稿校阅与候复状态 polish 完成
 
