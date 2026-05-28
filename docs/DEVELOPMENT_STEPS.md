@@ -170,7 +170,7 @@
 - 边界：本步只改 React 前端专题层读法、共享 overlay CSS、客户端测试、browser smoke、source canary 和文档；不新增 route/API/schema、AI 权限、provider/prompt 能力、依赖、素材、存档字段或服务器裁决。浏览器仍只消费现有安全 `topicSurfaceView`、本地证据勾选、本地草稿和当前案卷 route 状态；候复播报、证据空态、勾选或专题草稿写入状态不得被改写成资源、交易、任免、赏罚、罪名、战和、关系或时间推进事实。
 - 验证：已通过 `npm run typecheck:client`、`node --test test/reactClientScaffold.test.js --test-name-pattern "S91.18 topic surface live status|S91.14 topic surface reply reader"`（实际完整 119 tests）、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx -t "S78 topic surface|registry-backed local surfaces"`（2 passed / 76 skipped）、`node --check scripts/clientSmoke.js`、完整 App Vitest（78 tests）、`npm run build:client`、`npm run typecheck:server`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-18-topic-live-status-smoke`、`npm run check:docs-governance`、`git diff --check`（仅既有未触碰归档/素材 CRLF warning）和 `npm test`（1233 tests）。
 - 子代理：开工前只读审计代理 `019e6e30-b9f6-7e11-ac26-f76088a44256` 建议收束 S91.14 的整组 `aria-live` 风险，并确认未编辑文件、未运行 Git 命令。提交前同一只读复审代理复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为旧 S91.14 source canary 的 `aria-live` 断言较宽泛，S91.18 新 canary 已精确守住 reader opening 无 `aria-live`，当前不阻塞。代理确认未编辑文件、未运行任何 Git 命令、未创建 PR。
-- 提交：S91.18 实现随本次 coherent change 提交；最终哈希提交后补记。
+- 提交：S91.18 实现提交 `bd588f33`（`Polish topic surface live status`）；本哈希记录随低风险纯文档后续提交补入台账。
 
 ### 2026-05-28：S91.17 领域后果范围上限口径 polish 完成
 
