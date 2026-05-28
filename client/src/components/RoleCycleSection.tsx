@@ -9,6 +9,7 @@ type RoleCycleSectionProps = {
   readonly onDraft: (text: string) => void;
   readonly resolveRouteHref?: (routeId: string) => string | null;
   readonly onOpenSurface?: (surface: LocalSurface) => void;
+  readonly localRoleSurfaceDraftWritten?: boolean;
   readonly runnable?: boolean;
   readonly idPrefix?: string;
 };
@@ -67,6 +68,18 @@ type CycleBoundarySummary = {
   readonly sourceLabels: readonly string[];
   readonly safetyLabels: readonly string[];
   readonly notes: readonly string[];
+};
+
+type RoleCycleReaderRow = {
+  readonly id: string;
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
+type RoleCycleReader = {
+  readonly state: "empty" | "ready" | "written";
+  readonly rows: readonly RoleCycleReaderRow[];
 };
 
 const unsafeRoleCycleFragments = [
@@ -313,6 +326,66 @@ function cycleFocusStats({
   ];
 }
 
+function buildRoleCycleReader({
+  roleLabel,
+  loopLabel,
+  statusLabel,
+  items,
+  risks,
+  entryPoints,
+  actions,
+  sourceLabels,
+  safetyLabels,
+  localRoleSurfaceDraftWritten
+}: {
+  readonly roleLabel: string;
+  readonly loopLabel: string;
+  readonly statusLabel: string;
+  readonly items: readonly CycleItem[];
+  readonly risks: readonly CycleItem[];
+  readonly entryPoints: readonly CycleEntryPoint[];
+  readonly actions: readonly CycleAction[];
+  readonly sourceLabels: readonly string[];
+  readonly safetyLabels: readonly string[];
+  readonly localRoleSurfaceDraftWritten: boolean;
+}): RoleCycleReader {
+  const hasVisibleCycleMaterial = Boolean(
+    items.length || risks.length || entryPoints.length || actions.length || sourceLabels.length || safetyLabels.length
+  );
+  const state = localRoleSurfaceDraftWritten ? "written" : hasVisibleCycleMaterial ? "ready" : "empty";
+  return {
+    state,
+    rows: [
+      {
+        id: "identity",
+        label: "身份",
+        value: roleLabel,
+        detail: `${loopLabel} · ${statusLabel}`
+      },
+      {
+        id: "docket",
+        label: "事务",
+        value: items.length ? `${items.length} 项事务` : "事务候载",
+        detail: risks.length ? `${risks.length} 条风险须留意` : "暂无可见风险；不补造待办。"
+      },
+      {
+        id: "sources",
+        label: "取材",
+        value: sourceLabels.length ? `${sourceLabels.length} 类取材` : "取材候载",
+        detail: sourceLabels.length ? sourceLabels.slice(0, 3).join("、") : "只读当前身份循环公开材料。"
+      },
+      {
+        id: "reply",
+        label: "候复",
+        value: localRoleSurfaceDraftWritten ? "主卷待呈" : actions.length ? `${actions.length} 项可拟` : "候主卷",
+        detail: localRoleSurfaceDraftWritten
+          ? "身份循环草稿已入底部奏折，仍候主卷回音。"
+          : "可拟草稿只写本地奏折；不回显正文，不写成已裁决事实。"
+      }
+    ]
+  };
+}
+
 function cycleBoundarySummary(view: JsonObject, currentRole: JsonObject): CycleBoundarySummary {
   const aiReadScope = asRecord(view.aiReadScope);
   const readScopeLabels = cycleSourceLabels(aiReadScope.allowedSourceViews);
@@ -427,6 +500,7 @@ export function RoleCycleSection({
   onDraft,
   resolveRouteHref,
   onOpenSurface,
+  localRoleSurfaceDraftWritten = false,
   runnable = true,
   idPrefix = "role-cycle"
 }: RoleCycleSectionProps) {
@@ -451,6 +525,18 @@ export function RoleCycleSection({
   const focusStats = cycleFocusStats({ items, risks, entryPoints, actions });
   const currentEvidenceRefs = dedupeCycleEvidenceRefs(cycleEvidenceRefs(currentRole.evidenceRefs));
   const boundary = cycleBoundarySummary(view, currentRole);
+  const cycleReader = buildRoleCycleReader({
+    roleLabel,
+    loopLabel,
+    statusLabel,
+    items,
+    risks,
+    entryPoints,
+    actions,
+    sourceLabels: boundary.sourceLabels,
+    safetyLabels: boundary.safetyLabels,
+    localRoleSurfaceDraftWritten
+  });
 
   return (
     <article className="scholarPanelCard paperMotionPanel rolePanel roleCycleSection" aria-labelledby={titleId}>
@@ -470,6 +556,32 @@ export function RoleCycleSection({
           </span>
         ))}
       </div>
+      <section
+        className="roleCycleReader"
+        aria-labelledby={`${idPrefix}-reader-title`}
+        data-polish-role-cycle-reader="s91-13-role-cycle-reader"
+        data-role-cycle-reader-state={cycleReader.state}
+      >
+        <div className="roleCycleReaderHeader">
+          <div>
+            <h4 id={`${idPrefix}-reader-title`}>身份候复校阅</h4>
+            <p>只读当前身份循环公开事务、风险、入口与取材。</p>
+          </div>
+          <span>{cycleReader.state === "written" ? "主卷待呈" : cycleReader.state === "ready" ? "可据此拟" : "候公开卷"}</span>
+        </div>
+        <dl>
+          {cycleReader.rows.map((row) => (
+            <div key={row.id}>
+              <dt>{row.label}</dt>
+              <dd>{row.value}</dd>
+              <span>{row.detail}</span>
+            </div>
+          ))}
+        </dl>
+        <p className="roleCycleReaderBoundary">
+          只认当前案卷本页的本地草稿状态，不回显正文，不把身份切换、任免、调兵、审案、交易、考试或时间推进写成已生效事实。
+        </p>
+      </section>
       {currentEvidenceRefs.length ? (
         <div className="roleCycleCurrentEvidence" aria-label="本身份公开取材">
           <span>本身份取材</span>

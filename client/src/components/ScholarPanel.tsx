@@ -11,6 +11,7 @@ type ScholarPanelProps = {
   readonly studyProfileView?: JsonObject | null;
   readonly examCalendarView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
+  readonly localRoleSurfaceDraftWritten?: boolean;
   readonly onDraft: (text: string) => void;
   readonly resolveRoleCycleRouteHref?: (routeId: string) => string | null;
   readonly onOpenRoleCycleSurface?: (surface: LocalSurface) => void;
@@ -323,6 +324,7 @@ export function ScholarPanel({
   studyProfileView,
   examCalendarView,
   roleBackgroundPath,
+  localRoleSurfaceDraftWritten = false,
   onDraft,
   resolveRoleCycleRouteHref,
   onOpenRoleCycleSurface,
@@ -384,6 +386,7 @@ export function ScholarPanel({
           runnable={runnable}
           resolveRouteHref={resolveRoleCycleRouteHref}
           onOpenSurface={onOpenRoleCycleSurface}
+          localRoleSurfaceDraftWritten={localRoleSurfaceDraftWritten}
           onDraft={onDraft}
         />
         <article className="scholarPanelCard paperMotionPanel rolePanel scholarPanelStudyLedger" aria-labelledby="scholar-ledger-title">

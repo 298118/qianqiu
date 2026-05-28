@@ -18,6 +18,7 @@ type GeneralPanelProps = {
   readonly roleBackgroundPath?: string;
   readonly mapHref?: string;
   readonly archiveHref?: string;
+  readonly localRoleSurfaceDraftWritten?: boolean;
   readonly onDraft: (text: string) => void;
   readonly resolveRoleCycleRouteHref?: (routeId: string) => string | null;
   readonly onOpenRoleCycleSurface?: (surface: LocalSurface) => void;
@@ -292,6 +293,7 @@ export function GeneralPanel({
   roleBackgroundPath,
   mapHref,
   archiveHref,
+  localRoleSurfaceDraftWritten = false,
   onDraft,
   resolveRoleCycleRouteHref,
   onOpenRoleCycleSurface,
@@ -353,6 +355,7 @@ export function GeneralPanel({
           runnable={runnable}
           resolveRouteHref={resolveRoleCycleRouteHref}
           onOpenSurface={onOpenRoleCycleSurface}
+          localRoleSurfaceDraftWritten={localRoleSurfaceDraftWritten}
           onDraft={onDraft}
         />
         <article className="scholarPanelCard paperMotionPanel rolePanel generalPanelCommand" aria-labelledby="general-command-title">

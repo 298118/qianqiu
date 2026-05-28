@@ -2080,6 +2080,7 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
   await page.getByRole("heading", { name: "寒窗书斋" }).waitFor({ timeout: 10000 });
   const panelSnapshot = await page.evaluate((id) => {
     const panel = document.querySelector(".scholarPanel");
+    const roleCycleReader = panel?.querySelector("[data-polish-role-cycle-reader='s91-13-role-cycle-reader']");
     const text = panel?.textContent || "";
     const examLink = [...document.querySelectorAll(".scholarPanel a")].find((link) => (link.textContent || "").includes("入科举页"));
     const rankingLink = [...document.querySelectorAll(".scholarPanel a")].find((link) => (link.textContent || "").includes("看皇榜"));
@@ -2100,6 +2101,10 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
       hasCalendar: text.includes("科期"),
       hasPractice: text.includes("文章练习"),
       hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险") && text.includes("可查入口") && text.includes("证据："),
+      roleCycleReaderMarker: roleCycleReader?.getAttribute("data-polish-role-cycle-reader") || "",
+      roleCycleReaderState: roleCycleReader?.getAttribute("data-role-cycle-reader-state") || "",
+      roleCycleReaderRows: roleCycleReader?.querySelectorAll("dl > div").length || 0,
+      roleCycleReaderText: roleCycleReader?.textContent || "",
       hasDeepPlan: text.includes("晨课") && text.includes("复盘") && text.includes("执行首课"),
       hasBoundary: text.includes("写成草稿") && text.includes("按案卷规则回批"),
       examPath: examLink ? new URL(examLink.href).pathname : "",
@@ -2119,6 +2124,12 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
   if (!panelSnapshot.hasCalendar) failures.push("missing exam calendar");
   if (!panelSnapshot.hasPractice) failures.push("missing practice block");
   if (!panelSnapshot.hasRoleCycle) failures.push("missing role cycle block");
+  if (panelSnapshot.roleCycleReaderMarker !== "s91-13-role-cycle-reader" || panelSnapshot.roleCycleReaderRows !== 4) {
+    failures.push(`S91.13 role cycle reader missing: ${JSON.stringify({ marker: panelSnapshot.roleCycleReaderMarker, state: panelSnapshot.roleCycleReaderState, rows: panelSnapshot.roleCycleReaderRows, text: panelSnapshot.roleCycleReaderText.slice(0, 180) })}`);
+  }
+  if (!panelSnapshot.roleCycleReaderText.includes("身份候复校阅") || !panelSnapshot.roleCycleReaderText.includes("身份") || !panelSnapshot.roleCycleReaderText.includes("事务") || !panelSnapshot.roleCycleReaderText.includes("取材") || !panelSnapshot.roleCycleReaderText.includes("候复") || !panelSnapshot.roleCycleReaderText.includes("不回显正文") || !panelSnapshot.roleCycleReaderText.includes("不把身份切换、任免、调兵、审案、交易、考试或时间推进写成已生效事实")) {
+    failures.push(`S91.13 role cycle reader copy incomplete: ${panelSnapshot.roleCycleReaderText.slice(0, 220)}`);
+  }
   if (!panelSnapshot.hasDeepPlan) failures.push("missing deep study plan rhythm");
   if (!panelSnapshot.hasBoundary) failures.push("missing server boundary");
   if (panelSnapshot.dimensionCount < 7) failures.push(`expected seven study dimensions, saw ${panelSnapshot.dimensionCount}`);
@@ -2194,6 +2205,17 @@ async function assertScholarPanel(page, sessionId, screenshotsDir) {
   }
   if ((mainLedgerDraftState.shellMotion === "reduced" || mainLedgerDraftState.reducedMotion) && (mainLedgerDraftState.ledgerAnimation !== "none" || mainLedgerDraftState.deskSealAnimation !== "none")) {
     throw new Error(`S89.60 reduced main draft animations were ${JSON.stringify({ ledger: mainLedgerDraftState.ledgerAnimation, seal: mainLedgerDraftState.deskSealAnimation })}`);
+  }
+  const roleCycleWrittenSnapshot = await page.evaluate(() => {
+    const roleCycleReader = document.querySelector("[data-polish-role-cycle-reader='s91-13-role-cycle-reader']");
+    return {
+      marker: roleCycleReader?.getAttribute("data-polish-role-cycle-reader") || "",
+      state: roleCycleReader?.getAttribute("data-role-cycle-reader-state") || "",
+      text: roleCycleReader?.textContent || ""
+    };
+  });
+  if (roleCycleWrittenSnapshot.marker !== "s91-13-role-cycle-reader" || roleCycleWrittenSnapshot.state !== "written" || !roleCycleWrittenSnapshot.text.includes("身份循环草稿已入底部奏折") || roleCycleWrittenSnapshot.text.includes("携旧作拜见老师")) {
+    throw new Error(`S91.13 role cycle reader written state failed: ${JSON.stringify({ marker: roleCycleWrittenSnapshot.marker, state: roleCycleWrittenSnapshot.state, text: roleCycleWrittenSnapshot.text.slice(0, 220) })}`);
   }
   await page.getByLabel("本回合行动").fill("");
 

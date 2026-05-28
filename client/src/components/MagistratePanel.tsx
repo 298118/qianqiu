@@ -17,6 +17,7 @@ type MagistratePanelProps = {
   readonly economyTraceView?: EconomyTraceView | null;
   readonly domainConsequenceView?: JsonObject | null;
   readonly roleBackgroundPath?: string;
+  readonly localRoleSurfaceDraftWritten?: boolean;
   readonly onDraft: (text: string) => void;
   readonly resolveRoleCycleRouteHref?: (routeId: string) => string | null;
   readonly onOpenRoleCycleSurface?: (surface: LocalSurface) => void;
@@ -286,6 +287,7 @@ export function MagistratePanel({
   economyTraceView,
   domainConsequenceView,
   roleBackgroundPath,
+  localRoleSurfaceDraftWritten = false,
   onDraft,
   resolveRoleCycleRouteHref,
   onOpenRoleCycleSurface,
@@ -352,6 +354,7 @@ export function MagistratePanel({
           runnable={runnable}
           resolveRouteHref={resolveRoleCycleRouteHref}
           onOpenSurface={onOpenRoleCycleSurface}
+          localRoleSurfaceDraftWritten={localRoleSurfaceDraftWritten}
           onDraft={onDraft}
         />
         <article className="scholarPanelCard paperMotionPanel rolePanel magistratePanelDocket" aria-labelledby="magistrate-ledger-title">

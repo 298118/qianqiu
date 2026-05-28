@@ -6620,6 +6620,19 @@ describe("S74.1 React client shell", () => {
     expect(boundary?.textContent || "").toContain("只整理当前身份公开事务");
     expect(boundary?.textContent || "").toContain("资源、官职和事务结果仍由主卷定夺");
     expect(document.body.textContent || "").not.toMatch(/providerPayload|\/Users\/alice|\.env/);
+    const roleCycleReader = document.querySelector("[data-polish-role-cycle-reader='s91-13-role-cycle-reader']");
+    expect(roleCycleReader?.getAttribute("data-role-cycle-reader-state")).toBe("ready");
+    expect(roleCycleReader?.querySelectorAll("dl > div").length).toBe(4);
+    expect(roleCycleReader?.textContent || "").toContain("身份候复校阅");
+    expect(roleCycleReader?.textContent || "").toContain("入仕官员");
+    expect(roleCycleReader?.textContent || "").toContain("1 项事务");
+    expect(roleCycleReader?.textContent || "").toContain("1 条风险须留意");
+    expect(roleCycleReader?.textContent || "").toContain("2 类取材");
+    expect(roleCycleReader?.textContent || "").toContain("官职履历、奏议回应");
+    expect(roleCycleReader?.textContent || "").toContain("1 项可拟");
+    expect(roleCycleReader?.textContent || "").toContain("可拟草稿只写本地奏折");
+    expect(roleCycleReader?.textContent || "").toContain("不把身份切换、任免、调兵、审案、交易、考试或时间推进写成已生效事实");
+    expect(roleCycleReader?.textContent || "").not.toContain("整理本职差遣的公开凭据");
     const matrix = screen.getByRole("list", { name: "六身份矩阵" });
     expect(within(matrix).getByText("书生")).toBeTruthy();
     expect(within(matrix).getByText("地方官")).toBeTruthy();
@@ -6639,6 +6652,67 @@ describe("S74.1 React client shell", () => {
     expect(useUiStateStore.getState().actionDraft).toBeNull();
     const matrixRequestedUrls = fetchMock.mock.calls.map((call) => String((call as unknown[])[0]));
     expect(matrixRequestedUrls).not.toContain("/api/game/turn");
+  });
+
+  it("shows the S91.13 role-cycle written state without echoing the local draft body", () => {
+    mockAssetManifestFetch(buildMockAssetManifest(0));
+    const sessionId = "s74-preview";
+    useGameSessionStore.setState({
+      currentSessionId: sessionId,
+      currentSession: {
+        sessionId,
+        worldState: {
+          player: {
+            name: "候复官",
+            role: "official",
+            officeTitle: "翰林院编修"
+          }
+        },
+        roleCycleView: {
+          activeRole: "official",
+          currentRole: {
+            roleLabel: "入仕官员",
+            loopLabel: "本职差使与考成",
+            statusLabel: "署中承差",
+            summary: "从安全视图整理本职材料。",
+            items: [{ title: "整理回署材料", publicSummary: "只读公开凭据。" }],
+            riskSignals: [{ title: "考成压力", publicSummary: "需补公开凭据。" }],
+            entryPoints: [{ id: "court-entry", label: "入朝议", targetRouteId: "court", publicSummary: "只读进入朝议页。" }],
+            nextActions: [{ label: "拟呈报", text: "整理本职差遣的公开凭据。" }]
+          },
+          roleMatrix: [],
+          aiReadScope: {
+            allowedSourceViews: ["officialCareerView", "courtResponseView"]
+          },
+          safety: {
+            readOnlyView: true,
+            draftOnlyFrontend: true,
+            serverAdjudicatedOutcomes: true
+          }
+        }
+      } as unknown as ReturnType<typeof useGameSessionStore.getState>["currentSession"],
+      status: "ready"
+    });
+    useUiStateStore.setState({
+      currentSessionId: sessionId,
+      actionDraft: {
+        id: "draft-role-cycle-reader",
+        sessionId,
+        source: "role-surface",
+        targetPage: "game",
+        text: "身份循环本地草稿正文不应进入校阅读法。"
+      }
+    });
+
+    renderRoute(`/game/${sessionId}`);
+
+    const roleCycleReader = document.querySelector("[data-polish-role-cycle-reader='s91-13-role-cycle-reader']");
+    expect(roleCycleReader?.getAttribute("data-role-cycle-reader-state")).toBe("written");
+    expect(roleCycleReader?.textContent || "").toContain("主卷待呈");
+    expect(roleCycleReader?.textContent || "").toContain("身份循环草稿已入底部奏折，仍候主卷回音。");
+    expect(roleCycleReader?.textContent || "").toContain("不回显正文");
+    expect(roleCycleReader?.textContent || "").not.toContain("身份循环本地草稿正文不应进入校阅读法");
+    expect(screen.getByLabelText("本回合行动")).toHaveProperty("value", "身份循环本地草稿正文不应进入校阅读法。");
   });
 
   it("opens S88.9 role-cycle surfaces against the route session and drops stale main drafts", async () => {

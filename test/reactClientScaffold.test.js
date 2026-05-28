@@ -2359,7 +2359,8 @@ test("S91.11 official monthly reader stays existing-monthly-view-only and fronte
   assert.match(officialPanelSource, /type OfficialMonthlyReaderRow/);
   assert.match(officialPanelSource, /function buildOfficialMonthlyReaderRows/);
   assert.match(officialPanelSource, /readonly localRoleSurfaceDraftWritten\?: boolean/);
-  assert.match(gamePageSource, /localRoleSurfaceDraftWritten=\{activeActionDraft\?\.source === "role-surface" && activeActionDraft\.targetPage === "game"\}/);
+  assert.match(gamePageSource, /const localRoleSurfaceDraftWritten = activeActionDraft\?\.source === "role-surface" && activeActionDraft\.targetPage === "game"/);
+  assert.match(gamePageSource, /localRoleSurfaceDraftWritten=\{localRoleSurfaceDraftWritten\}/);
   assert.match(gamePageSource, /const activeActionDraft = routeSessionSupported && actionDraft\?\.sessionId === sessionId \? actionDraft : null/);
   assert.match(readerDataBlock, /monthlyBriefing\.latest/);
   assert.match(readerDataBlock, /latestMonthly\.sections/);
@@ -2415,7 +2416,8 @@ test("S91.12 emperor edict reader stays existing-court-view-only and frontend-on
   assert.match(emperorPanelSource, /type EmperorEdictReaderRow/);
   assert.match(emperorPanelSource, /function buildEmperorEdictReaderRows/);
   assert.match(emperorPanelSource, /readonly localRoleSurfaceDraftWritten\?: boolean/);
-  assert.match(gamePageSource, /localRoleSurfaceDraftWritten=\{activeActionDraft\?\.source === "role-surface" && activeActionDraft\.targetPage === "game"\}/);
+  assert.match(gamePageSource, /const localRoleSurfaceDraftWritten = activeActionDraft\?\.source === "role-surface" && activeActionDraft\.targetPage === "game"/);
+  assert.match(gamePageSource, /localRoleSurfaceDraftWritten=\{localRoleSurfaceDraftWritten\}/);
   assert.match(gamePageSource, /const activeActionDraft = routeSessionSupported && actionDraft\?\.sessionId === sessionId \? actionDraft : null/);
   assert.match(readerDataBlock, /responseAgenda\.items/);
   assert.match(readerDataBlock, /consequenceAgenda\.items/);
@@ -2441,6 +2443,72 @@ test("S91.12 emperor edict reader stays existing-court-view-only and frontend-on
   assert.match(appTestSource, /御案草稿已入底部奏折/);
   assert.match(clientSmokeSource, /s91-12-emperor-edict-reader/);
   assert.match(clientSmokeSource, /S91\.12 emperor edict reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
+test("S91.13 role cycle reader stays current-role-cycle-view-only and frontend-only", () => {
+  const roleCycleSource = readText("client/src/components/RoleCycleSection.tsx");
+  const scholarPanelSource = readText("client/src/components/ScholarPanel.tsx");
+  const magistratePanelSource = readText("client/src/components/MagistratePanel.tsx");
+  const officialPanelSource = readText("client/src/components/OfficialMinisterPanel.tsx");
+  const generalPanelSource = readText("client/src/components/GeneralPanel.tsx");
+  const emperorPanelSource = readText("client/src/components/EmperorPanel.tsx");
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const gameStyleSource = readClientStyleModule("routes/game.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = roleCycleSource.indexOf('data-polish-role-cycle-reader="s91-13-role-cycle-reader"');
+  const readerEnd = roleCycleSource.indexOf("{currentEvidenceRefs.length", readerStart);
+  const readerMarkup = readerStart >= 0 && readerEnd > readerStart
+    ? roleCycleSource.slice(readerStart, readerEnd)
+    : "";
+  const readerDataStart = roleCycleSource.indexOf("function buildRoleCycleReader");
+  const readerDataEnd = roleCycleSource.indexOf("function cycleBoundarySummary", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? roleCycleSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const roleCycleWithoutGuard = stripSafeGuardPatterns(
+    roleCycleSource.replace(/const unsafeRoleCycleFragments[\s\S]*?\] as const;\r?\n/, "")
+  );
+  const runtimeCombined = `${roleCycleWithoutGuard}\n${gamePageSource}\n${gameStyleSource}`;
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.match(roleCycleSource, /type RoleCycleReaderRow/);
+  assert.match(roleCycleSource, /function buildRoleCycleReader/);
+  assert.match(roleCycleSource, /readonly localRoleSurfaceDraftWritten\?: boolean/);
+  assert.match(gamePageSource, /const localRoleSurfaceDraftWritten = activeActionDraft\?\.source === "role-surface" && activeActionDraft\.targetPage === "game"/);
+  assert.equal((gamePageSource.match(/localRoleSurfaceDraftWritten=\{localRoleSurfaceDraftWritten\}/g) || []).length, 5);
+  for (const source of [scholarPanelSource, magistratePanelSource, officialPanelSource, generalPanelSource, emperorPanelSource]) {
+    assert.match(source, /localRoleSurfaceDraftWritten=\{localRoleSurfaceDraftWritten\}/);
+  }
+  assert.match(readerDataBlock, /items\.length/);
+  assert.match(readerDataBlock, /risks\.length/);
+  assert.match(readerDataBlock, /entryPoints\.length/);
+  assert.match(readerDataBlock, /actions\.length/);
+  assert.match(readerDataBlock, /sourceLabels\.length/);
+  assert.match(readerDataBlock, /safetyLabels\.length/);
+  assert.match(readerDataBlock, /身份循环草稿已入底部奏折，仍候主卷回音/);
+  assert.match(readerDataBlock, /可拟草稿只写本地奏折；不回显正文/);
+  assert.match(readerMarkup, /身份候复校阅/);
+  assert.match(readerMarkup, /只读当前身份循环公开事务、风险、入口与取材/);
+  assert.match(readerMarkup, /只认当前案卷本页的本地草稿状态/);
+  assert.match(readerMarkup, /不回显正文/);
+  assert.match(readerMarkup, /不把身份切换、任免、调兵、审案、交易、考试或时间推进写成已生效事实/);
+  assert.doesNotMatch(readerDataBlock, /actionDraft|submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|resolver|worldState|payload|outcomeId|auditRecord/);
+  assert.doesNotMatch(readerMarkup, /actionDraft|submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|resolver|worldState|payload|outcomeId|auditRecord|草拟一道明发谕旨|若有弹劾风声|整理本职差遣/);
+  assert.doesNotMatch(roleCycleSource, /ActionDraft|actionDraft\.text/);
+
+  assert.match(gameStyleSource, /\.roleCycleReader \{/);
+  assert.match(gameStyleSource, /\.roleCycleReader dl \{[\s\S]*grid-template-columns: minmax\(0, 1\.15fr\) minmax\(0, \.95fr\) minmax\(0, 1\.05fr\) minmax\(0, \.95fr\)/);
+  assert.match(gameStyleSource, /@media \(max-width: 760px\)[\s\S]*\.roleCycleReader,[\s\S]*\.roleCycleReader dl \{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(appTestSource, /s91-13-role-cycle-reader/);
+  assert.match(appTestSource, /身份循环草稿已入底部奏折/);
+  assert.match(clientSmokeSource, /s91-13-role-cycle-reader/);
+  assert.match(clientSmokeSource, /S91\.13 role cycle reader/);
   assert.doesNotMatch(
     runtimeCombined,
     /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/

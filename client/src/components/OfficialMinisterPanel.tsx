@@ -688,6 +688,7 @@ export function OfficialMinisterPanel({
           runnable={runnable}
           resolveRouteHref={resolveRoleCycleRouteHref}
           onOpenSurface={onOpenRoleCycleSurface}
+          localRoleSurfaceDraftWritten={localRoleSurfaceDraftWritten}
           onDraft={onDraft}
         />
         <article

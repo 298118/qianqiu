@@ -257,6 +257,7 @@ export function GamePage() {
   const activeLastTurn = routeSessionSupported && lastTurn?.sessionId === sessionId ? lastTurn : null;
   const activePlayerPayload = routeSessionSupported && currentPlayerPayload?.sessionId === sessionId ? currentPlayerPayload : null;
   const activeActionDraft = routeSessionSupported && actionDraft?.sessionId === sessionId ? actionDraft : null;
+  const localRoleSurfaceDraftWritten = activeActionDraft?.source === "role-surface" && activeActionDraft.targetPage === "game";
   const activeQuickActionSuggestions = quickActions?.sessionId === sessionId ? quickActions.quickActionSuggestions : null;
   const player = activeSession?.worldState?.player;
   const runnable = isRunnableSessionId(sessionId);
@@ -565,6 +566,7 @@ export function GamePage() {
           rankingHref={sessionHref(routeCatalog.find((entry) => entry.id === "ranking")?.href ?? "/game/s74-preview/ranking")}
           resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
           onOpenRoleCycleSurface={openRoleCycleSurface}
+          localRoleSurfaceDraftWritten={localRoleSurfaceDraftWritten}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         />
@@ -583,6 +585,7 @@ export function GamePage() {
           roleBackgroundPath={roleBackgroundAsset?.path}
           resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
           onOpenRoleCycleSurface={openRoleCycleSurface}
+          localRoleSurfaceDraftWritten={localRoleSurfaceDraftWritten}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         />
@@ -601,7 +604,7 @@ export function GamePage() {
           courtResponseView={activeSession?.courtResponseView ?? null}
           economyTraceView={activeSession?.economyTraceView ?? null}
           domainConsequenceView={activeSession?.domainConsequenceView ?? null}
-          localRoleSurfaceDraftWritten={activeActionDraft?.source === "role-surface" && activeActionDraft.targetPage === "game"}
+          localRoleSurfaceDraftWritten={localRoleSurfaceDraftWritten}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
           resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
@@ -625,6 +628,7 @@ export function GamePage() {
           archiveHref={sessionHref(routeCatalog.find((entry) => entry.id === "archive")?.href ?? "/game/s74-preview/archive")}
           resolveRoleCycleRouteHref={resolveRoleCycleRouteHref}
           onOpenRoleCycleSurface={openRoleCycleSurface}
+          localRoleSurfaceDraftWritten={localRoleSurfaceDraftWritten}
           runnable={runnable}
           onDraft={(text) => setActionDraft({ source: "role-surface", targetPage: "game", text })}
         />
@@ -643,7 +647,7 @@ export function GamePage() {
           courtResponseView={activeSession?.courtResponseView ?? null}
           domainConsequenceView={activeSession?.domainConsequenceView ?? null}
           mapRuntimeView={activeSession?.mapRuntimeView ?? null}
-          localRoleSurfaceDraftWritten={activeActionDraft?.source === "role-surface" && activeActionDraft.targetPage === "game"}
+          localRoleSurfaceDraftWritten={localRoleSurfaceDraftWritten}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
           archiveHref={sessionHref(routeCatalog.find((entry) => entry.id === "archive")?.href ?? "/game/s74-preview/archive")}
