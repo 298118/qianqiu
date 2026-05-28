@@ -1583,6 +1583,24 @@ function buildTopicReadRows(options: {
   ];
 }
 
+function topicLiveStatusText(options: {
+  readonly draftStatus: "idle" | "loading" | "ready" | "error";
+  readonly draftWrittenToMain: boolean;
+  readonly evidenceCount: number;
+  readonly materialState: "loading" | "error" | "ready" | "empty";
+  readonly selectedEvidenceCount: number;
+}) {
+  if (options.draftWrittenToMain) return "专题草稿已写入底部奏折，仍候主卷回音。";
+  if (options.draftStatus === "loading") return "正在拟专题草稿，暂候回音。";
+  if (options.materialState === "loading") return "正在整理公开专题材料，暂候回音。";
+  if (options.materialState === "error") return "专题材料暂未取回；可先保留本地草稿候复。";
+  if (options.evidenceCount) {
+    return `当前已引 ${options.selectedEvidenceCount} / ${options.evidenceCount} 枚公开证据；写入后仍候主卷复核。`;
+  }
+  if (options.materialState === "ready") return "当前材料可读，但暂无可勾选公开证据；可先按材料草拟，仍候主卷复核。";
+  return "专题材料与证据候载；本地草稿不会改写案卷事实。";
+}
+
 function TopicSurfaceWorkbench({
   activeSurface,
   canLoad,
@@ -1622,7 +1640,8 @@ function TopicSurfaceWorkbench({
   readonly onToggleEvidenceRef: (refId: string) => void;
   readonly onWriteDraft: () => void;
 }) {
-  const evidenceByRef = new Map((topicView?.evidenceRefs || []).map((ref) => [ref.refId, ref]));
+  const evidenceRefs = topicView?.evidenceRefs || [];
+  const evidenceByRef = new Map(evidenceRefs.map((ref) => [ref.refId, ref]));
   const selectedLabels = selectedEvidenceRefs.map((refId) => safeSurfaceText(evidenceByRef.get(refId)?.label || refId, "线索", 36));
   const hasMaterials = Boolean(topicView && (topicView.items.length || topicView.evidenceRefs.length));
   const draftSource = topicView ? "推演拟稿" : "本地草稿";
@@ -1637,6 +1656,14 @@ function TopicSurfaceWorkbench({
     selectedEvidenceRefs,
     topicView
   });
+  const topicLiveStatus = topicLiveStatusText({
+    draftStatus,
+    draftWrittenToMain,
+    evidenceCount: evidenceRefs.length,
+    materialState,
+    selectedEvidenceCount: selectedEvidenceRefs.length
+  });
+  const topicLiveState = draftWrittenToMain ? "written" : draftStatus === "loading" ? "drafting" : materialState;
 
   if (!canLoad) {
     return (
@@ -1659,13 +1686,21 @@ function TopicSurfaceWorkbench({
       data-draft-state={draftState}
       data-topic-written-state={draftWrittenToMain ? "written" : "idle"}
     >
+      <p
+        className="topicSurfaceMeta topicSurfaceLiveStatus"
+        aria-live="polite"
+        aria-atomic="true"
+        data-polish-topic-live-status="s91-18-topic-live-status"
+        data-topic-live-state={topicLiveState}
+      >
+        {topicLiveStatus}
+      </p>
       <dl
         className="surfaceSafetyList topicSurfaceReadRail"
         aria-label="专题层读法"
         data-polish-topic-reader="s90-4-archive-court-reader"
         data-topic-reader-state={materialState}
         data-topic-written-state={draftWrittenToMain ? "written" : "idle"}
-        aria-live="polite"
       >
         {topicReadRows.map((row) => (
           <div className="surfaceSafetyRow paperMotionSurface" key={row.label}>
@@ -1719,19 +1754,23 @@ function TopicSurfaceWorkbench({
           </div>
         ) : null}
         <div className="topicEvidenceList" aria-label="证据勾选">
-          {(topicView?.evidenceRefs || []).slice(0, 8).map((ref) => (
-            <label className="topicEvidenceRow" key={ref.refId}>
-              <input
-                type="checkbox"
-                checked={selectedEvidenceRefs.includes(ref.refId)}
-                onChange={() => onToggleEvidenceRef(ref.refId)}
-              />
-              <span>
-                <strong>{safeSurfaceText(ref.label, "公开线索", 48)}</strong>
-                <small>{topicEvidenceMeta(ref)}</small>
-              </span>
-            </label>
-          ))}
+          {evidenceRefs.length ? (
+            evidenceRefs.slice(0, 8).map((ref) => (
+              <label className="topicEvidenceRow" key={ref.refId}>
+                <input
+                  type="checkbox"
+                  checked={selectedEvidenceRefs.includes(ref.refId)}
+                  onChange={() => onToggleEvidenceRef(ref.refId)}
+                />
+                <span>
+                  <strong>{safeSurfaceText(ref.label, "公开线索", 48)}</strong>
+                  <small>{topicEvidenceMeta(ref)}</small>
+                </span>
+              </label>
+            ))
+          ) : (
+            <p className="topicSurfaceMeta topicEvidenceEmpty">暂无可勾选公开证据；可先按材料草拟，仍候主卷复核。</p>
+          )}
         </div>
         <label className="topicNoteField">
           按语

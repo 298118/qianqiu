@@ -3791,9 +3791,15 @@ describe("S74.1 React client shell", () => {
     expect(topicReader).toBeTruthy();
     expect(topicReader.getAttribute("data-topic-reader-state")).toBe("ready");
     expect(topicReader.getAttribute("data-topic-written-state")).toBe("idle");
+    expect(topicReader.getAttribute("aria-live")).toBeNull();
     expect(topicReader.querySelectorAll("dt").length).toBe(4);
     expect(topicReader.textContent || "").toContain("1 条可阅");
     await waitFor(() => expect(topicReader.textContent || "").toContain("1/4 已引"));
+    const topicLiveStatus = dialog.querySelector("[data-polish-topic-live-status='s91-18-topic-live-status']") as HTMLElement;
+    expect(topicLiveStatus).toBeTruthy();
+    expect(topicLiveStatus.getAttribute("aria-live")).toBe("polite");
+    expect(topicLiveStatus.getAttribute("aria-atomic")).toBe("true");
+    expect(topicLiveStatus.textContent || "").toContain("当前已引 1 / 4 枚公开证据");
     expect(topicReader.textContent || "").toContain("可写入底部奏折");
     expect(topicReader.textContent || "").toContain("写入底部奏折只留案头草稿，不推进回合。");
     expect(topicReader.textContent || "").toContain("候复");
@@ -3814,6 +3820,7 @@ describe("S74.1 React client shell", () => {
     expect(dialog.textContent || "").not.toMatch(/AI|NPC|安全投影|安全视图|后端裁决|resolver|safe view|\bserver\b|provider|model/i);
 
     fireEvent.click(screen.getByLabelText(/纸价议价解释/));
+    await waitFor(() => expect(topicLiveStatus.textContent || "").toContain("当前已引 2 / 4 枚公开证据"));
     fireEvent.click(screen.getByRole("button", { name: "推演拟稿" }));
     await waitFor(() => expect((screen.getByLabelText("专题草稿正文") as HTMLTextAreaElement).value).toBe("请召诸臣廷议，先核边饷催报与纸价议价解释，再拟稳妥章程。"));
     fireEvent.click(screen.getByRole("button", { name: "写入底部奏折" }));
@@ -3831,6 +3838,8 @@ describe("S74.1 React client shell", () => {
       }
     });
     expect(topicReader.getAttribute("data-topic-written-state")).toBe("written");
+    await waitFor(() => expect(topicLiveStatus.getAttribute("data-topic-live-state")).toBe("written"));
+    expect(topicLiveStatus.textContent || "").toContain("专题草稿已写入底部奏折，仍候主卷回音。");
     expect(topicReader.textContent || "").toContain("主卷待呈");
     expect(topicReader.textContent || "").toContain("专题草稿已入底部奏折，仍候主卷回音。");
     expect(topicReader.textContent || "").not.toContain("请召诸臣廷议，先核边饷催报与纸价议价解释，再拟稳妥章程。");

@@ -134,32 +134,43 @@
 | S91.15 | DONE | 领域后果追踪校阅与候复状态 polish | 已完成既有 `DomainConsequenceSection` “后果追踪校阅”四读：只从现有 `domainConsequenceView` 公开后果、公开 next actions、sourceType 过滤、来源/牵连/指标标签和调用处传入的当前案卷本地草稿布尔派生后果、凭据、牵连与候复；不读取或回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.16 | DONE | 史册议程月报互证校阅 polish | 已完成史册页“议程月报互证”四读：只从当前案卷公开 `worldThreadView`、`playerMonthlyBriefingView`、`sessionSummaryView`、史册旁证计数和本地史册草稿状态派生议程、月报、互证与候复；不回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.17 | DONE | 领域后果范围上限口径 polish | 已收束 `DomainConsequenceSection` 在调用处传入 `sourceTypes` 时的顶部 summary/cap 文案：只按过滤后的公开后果说明当前页范围，不再用全局 `view.caps` 暗示本页可读不存在的领域后果；不新增 route/API/schema、AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.18 | DONE | 专题层候复播报与证据空态 polish | 已收束既有 `SurfaceHost` 专题层读法播报：把整组四读 live region 改为单行候复状态播报，并在公开证据为空时显示明确空态；browser smoke 旧案列表等待同步加固为等待当前案卷刷新完成；不新增 route/API/schema、AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现 S91.17：领域后果范围上限口径 polish 已完成，代码实现提交为 `7f4fb463`（`Polish domain consequence scoped counts`）。`DomainConsequenceSection` 在调用处传入 `sourceTypes` 时，顶部 summary/cap line 只按过滤后的公开后果说明当前页范围；过滤后无可见后果时不再按全局 `view.caps` 显示公开追踪数；过滤后有可见后果时，只按本页可见范围说明数量与本地 `maxItems` 上限。仍只改 React 前端读法、source canary、Vitest 和文档，不新增 route/API/schema、AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。
-- S91.17 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全 `domainConsequenceView` 与调用处传入的 sourceTypes/maxItems，不把范围摘要、上限说明、后果追踪或空态改写成资源、任免、赏罚、定罪、交易、调兵、人物资产、关系或时间推进事实。
-- 最近完整运行态验证来自 S91.17：`npm run typecheck:client`、`npm run typecheck:server`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js --test-name-pattern "S91.17 domain consequence scoped cap|S91.15 domain consequence reader"`（实际完整 118 tests 通过）、S91.17 focused Vitest（3 passed / 75 skipped）、完整 App Vitest（78 tests）、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-17-domain-consequence-scope-smoke`、`npm run check:docs-governance`、`git diff --check`（仅既有未触碰归档/素材 CRLF warning）和 `npm test`（1232 tests）已通过；提交前只读复审代理 `019e69e1-f179-75a3-9098-77945ffd0138` 未发现阻塞问题。
+- 当前步骤 S91.18：专题层候复播报与证据空态 polish 已完成。`SurfaceHost` 专题层把 `aria-live` 从整组四读 `dl` 移到单行 `s91-18-topic-live-status` 状态提示；证据勾选数、拟稿中、材料候取、公开证据空态和写入底部奏折后的候复状态只在单行 live region 播报，四读 `dl` 保持静态；`topicView.evidenceRefs` 为空时，“筹议”栏显示明确证据候载空态。browser smoke 旧案列表等待同步加固为等待当前案卷刷新完成。仍只改 React 前端读法、overlay CSS、source canary、Vitest、browser smoke 和文档，不新增 route/API/schema、AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。
+- S91.18 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全 `topicSurfaceView`、本地证据勾选、本地草稿和当前案卷 route 状态，不把候复播报、证据空态、勾选或专题草稿写入状态改写成资源、交易、任免、赏罚、罪名、战和、关系或时间推进事实。
+- 最近完整运行态验证来自 S91.18：`npm run typecheck:client`、`npm run typecheck:server`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js --test-name-pattern "S91.18 topic surface live status|S91.14 topic surface reply reader"`（实际完整 119 tests 通过）、S91.18 focused Vitest（2 passed / 76 skipped）、完整 App Vitest（78 tests）、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-18-topic-live-status-smoke`、`npm run check:docs-governance`、`git diff --check`（仅既有未触碰归档/素材 CRLF warning）和 `npm test`（1233 tests）已通过；提交前只读复审代理 `019e6e30-b9f6-7e11-ac26-f76088a44256` 未发现阻塞问题。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.17：
+最新运行态完整验证锚点来自 S91.18：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js --test-name-pattern "S91.17 domain consequence scoped cap|S91.15 domain consequence reader"`（实际完整 118 tests 通过）
+- `node --test test/reactClientScaffold.test.js --test-name-pattern "S91.18 topic surface live status|S91.14 topic surface reply reader"`（实际完整 119 tests 通过）
 - `npm run typecheck:client`
 - `npm run typecheck:server`
-- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx -t "domain consequence|S72 map"`（3 passed / 75 skipped）
+- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx -t "S78 topic surface|registry-backed local surfaces"`（2 passed / 76 skipped）
 - `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 78 tests）
 - `npm run build:client`
-- `npm run budget:client`（JS 715.3 KiB / CSS 179.2 KiB / fonts 26288.4 KiB / client-assets 27182.9 KiB）
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-17-domain-consequence-scope-smoke`
+- `npm run budget:client`（JS 716.9 KiB / CSS 179.4 KiB / fonts 26288.4 KiB / client-assets 27184.7 KiB）
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-18-topic-live-status-smoke`
 - `npm run check:docs-governance`
 - `git diff --check`（仅既有未触碰归档/素材 CRLF warning）
-- `npm test`（1232 tests）
+- `npm test`（1233 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-28：S91.18 专题层候复播报与证据空态 polish 完成
+
+- 范围：既有 `TopicSurfaceWorkbench` 新增 `topicLiveStatusText`，把材料候取、拟稿中、证据勾选数量、公开证据空态和写入底部奏折后的候复状态收束到 `data-polish-topic-live-status="s91-18-topic-live-status"` 的单行状态提示。
+- 体验修正：原“材料 / 证据 / 草稿 / 候复”四读 `dl` 移除 `aria-live`，只保留静态读法，避免证据勾选或写稿时整组读法反复播报；单行提示使用 `aria-live="polite"` 与 `aria-atomic="true"`。公开 `topicView.evidenceRefs` 为空时，“筹议”栏显示“暂无可勾选公开证据；可先按材料草拟，仍候主卷复核。”，不补造证据、不回显草稿正文。
+- 验证脚本修正：browser smoke 前两次在进入 S91.18 专题断言前停在既有旧案抽屉“当前案卷”等待；API 检查确认当前 session 已写入 `/api/game/saves` 且排序靠前。`scripts/clientSmoke.js` 已把旧案列表等待加固为等待 `/api/game/saves`、刷新按钮从 loading 恢复并重试当前案卷查找；复跑同一完整 smoke 已通过。
+- 边界：本步只改 React 前端专题层读法、共享 overlay CSS、客户端测试、browser smoke、source canary 和文档；不新增 route/API/schema、AI 权限、provider/prompt 能力、依赖、素材、存档字段或服务器裁决。浏览器仍只消费现有安全 `topicSurfaceView`、本地证据勾选、本地草稿和当前案卷 route 状态；候复播报、证据空态、勾选或专题草稿写入状态不得被改写成资源、交易、任免、赏罚、罪名、战和、关系或时间推进事实。
+- 验证：已通过 `npm run typecheck:client`、`node --test test/reactClientScaffold.test.js --test-name-pattern "S91.18 topic surface live status|S91.14 topic surface reply reader"`（实际完整 119 tests）、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx -t "S78 topic surface|registry-backed local surfaces"`（2 passed / 76 skipped）、`node --check scripts/clientSmoke.js`、完整 App Vitest（78 tests）、`npm run build:client`、`npm run typecheck:server`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-18-topic-live-status-smoke`、`npm run check:docs-governance`、`git diff --check`（仅既有未触碰归档/素材 CRLF warning）和 `npm test`（1233 tests）。
+- 子代理：开工前只读审计代理 `019e6e30-b9f6-7e11-ac26-f76088a44256` 建议收束 S91.14 的整组 `aria-live` 风险，并确认未编辑文件、未运行 Git 命令。提交前同一只读复审代理复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为旧 S91.14 source canary 的 `aria-live` 断言较宽泛，S91.18 新 canary 已精确守住 reader opening 无 `aria-live`，当前不阻塞。代理确认未编辑文件、未运行任何 Git 命令、未创建 PR。
+- 提交：S91.18 实现随本次 coherent change 提交；最终哈希提交后补记。
 
 ### 2026-05-28：S91.17 领域后果范围上限口径 polish 完成
 

@@ -2722,6 +2722,48 @@ test("S91.14 topic surface reply reader stays local-topic-write-state-only and f
   );
 });
 
+test("S91.18 topic surface live status stays scoped and evidence-empty aware", () => {
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const overlaysStyle = readClientStyleModule("components/overlays-surfaces.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const workbenchStart = surfaceHostSource.indexOf("function TopicSurfaceWorkbench");
+  const workbenchBlock = workbenchStart >= 0 ? surfaceHostSource.slice(workbenchStart) : "";
+  const liveMarkerIndex = workbenchBlock.indexOf('data-polish-topic-live-status="s91-18-topic-live-status"');
+  const readerStart = workbenchBlock.indexOf("<dl", liveMarkerIndex);
+  const readerOpeningEnd = workbenchBlock.indexOf(">", readerStart);
+  const readerOpening = readerStart >= 0 && readerOpeningEnd > readerStart
+    ? workbenchBlock.slice(readerStart, readerOpeningEnd)
+    : "";
+
+  assert.match(surfaceHostSource, /function topicLiveStatusText/);
+  assert.match(surfaceHostSource, /专题草稿已写入底部奏折，仍候主卷回音/);
+  assert.match(surfaceHostSource, /当前已引 \$\{options\.selectedEvidenceCount\} \/ \$\{options\.evidenceCount\} 枚公开证据/);
+  assert.match(surfaceHostSource, /暂无可勾选公开证据；可先按材料草拟，仍候主卷复核/);
+  assert.match(workbenchBlock, /const evidenceRefs = topicView\?\.evidenceRefs \|\| \[\]/);
+  assert.ok(liveMarkerIndex >= 0);
+  assert.match(workbenchBlock, /aria-live="polite"/);
+  assert.match(workbenchBlock, /aria-atomic="true"/);
+  assert.match(workbenchBlock, /data-topic-live-state=\{topicLiveState\}/);
+  assert.doesNotMatch(readerOpening, /aria-live/);
+  assert.match(overlaysStyle, /\.topicSurfaceLayout > \.topicSurfaceLiveStatus \{[\s\S]*grid-column: 1 \/ -1/);
+  assert.match(overlaysStyle, /\.topicSurfaceLayout > \.topicSurfaceLiveStatus \{[\s\S]*--qq-surface-status-line/);
+  assert.match(appTestSource, /s91-18-topic-live-status/);
+  assert.match(appTestSource, /getAttribute\("aria-live"\)\)\.toBe\("polite"\)/);
+  assert.match(appTestSource, /getAttribute\("aria-live"\)\)\.toBeNull\(\)/);
+  assert.match(appTestSource, /当前已引 2 \/ 4 枚公开证据/);
+  assert.match(clientSmokeSource, /S91\.18 topic live status/);
+  assert.match(clientSmokeSource, /topicReaderAriaLive/);
+  assert.match(clientSmokeSource, /专题草稿已写入底部奏折/);
+  assert.match(clientSmokeSource, /function waitForGameSavesResponse/);
+  assert.match(clientSmokeSource, /async function waitForCurrentInkboxSaveCase/);
+  assert.match(clientSmokeSource, /Inkbox save list did not include current case/);
+  assert.doesNotMatch(
+    stripSafeGuardPatterns(`${surfaceHostSource}\n${overlaysStyle}`),
+    /qianqiuApi|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.60 main and court desk keyframes use semantic names", () => {
   const keyframesSource = readText("client/src/styles/motion/keyframes.css");
   const gameStyleSource = readText("client/src/styles/routes/game.css");

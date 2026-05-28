@@ -1043,6 +1043,15 @@
   margin-top: 18px;
 }
 
+.topicSurfaceLayout > .topicSurfaceLiveStatus {
+  grid-column: 1 / -1;
+  margin: 0;
+  border: 1px solid var(--qq-color-vermilion-border-soft);
+  border-radius: 8px;
+  background: var(--qq-surface-status-line);
+  padding: 9px 12px;
+}
+
 .topicSurfaceLayout > .topicSurfaceReadRail {
   grid-column: 1 / -1;
   display: grid;

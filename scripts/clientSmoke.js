@@ -3173,6 +3173,74 @@ async function assertInkboxTab(page, drawer, tabName, expectedText) {
   }
 }
 
+function waitForGameSavesResponse(page, timeout = 15000) {
+  return page.waitForResponse((response) => {
+    try {
+      const url = new URL(response.url());
+      return url.pathname === "/api/game/saves" && response.request().method() === "GET";
+    } catch {
+      return false;
+    }
+  }, { timeout }).catch(() => undefined);
+}
+
+async function waitForInkboxRefreshReady(refreshButton, timeout = 15000) {
+  await refreshButton.waitFor({ timeout: 10000 });
+  if (!(await refreshButton.isDisabled())) return;
+  await refreshButton.evaluate((button, waitMs) => new Promise((resolve) => {
+    if (!(button instanceof HTMLButtonElement) || !button.disabled) {
+      resolve("ready");
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      if (!button.disabled) {
+        observer.disconnect();
+        resolve("ready");
+      }
+    });
+    observer.observe(button, { attributes: true, attributeFilter: ["disabled"] });
+    window.setTimeout(() => {
+      observer.disconnect();
+      resolve("timeout");
+    }, waitMs);
+  }), timeout);
+}
+
+async function waitForCurrentInkboxSaveCase(page, drawer, sessionShortCode) {
+  const currentCase = drawer.locator(".saveCaseItem", { hasText: `案 ${sessionShortCode}` }).first();
+  const refreshButton = drawer.getByRole("button", { name: "刷新" });
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await currentCase.waitFor({ timeout: attempt === 0 ? 10000 : 15000 });
+      return currentCase;
+    } catch {
+    }
+
+    await waitForInkboxRefreshReady(refreshButton);
+    try {
+      if (!(await refreshButton.isDisabled())) {
+        const savesResponse = waitForGameSavesResponse(page);
+        await refreshButton.click();
+        await savesResponse;
+      }
+    } catch {
+    }
+  }
+
+  const snapshot = await drawer.evaluate(() => {
+    const panel = document.querySelector(".inkboxPanel");
+    return {
+      panelText: (panel?.textContent || "").slice(0, 800),
+      saveCodes: [...document.querySelectorAll(".saveCaseCode")].map((element) => element.textContent || "").slice(0, 8),
+      refreshDisabled: document.querySelector(".inkboxPanel button") instanceof HTMLButtonElement
+        ? document.querySelector(".inkboxPanel button")?.disabled
+        : null
+    };
+  });
+  throw new Error(`Inkbox save list did not include current case 案 ${sessionShortCode}: ${JSON.stringify(snapshot)}`);
+}
+
 async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
   const gamePath = `/game/${sessionId}`;
   const sessionShortCode = sessionId.slice(0, 8);
@@ -3268,22 +3336,14 @@ async function assertInkboxTabsAndSaveLoad(page, sessionId, screenshotsDir) {
   await drawer.waitFor({ timeout: 10000 });
   await assertInkboxTab(page, drawer, "旧案", "旧案");
   const refreshButton = drawer.getByRole("button", { name: "刷新" });
-  await refreshButton.waitFor({ timeout: 10000 });
+  await waitForInkboxRefreshReady(refreshButton);
   if (!(await refreshButton.isDisabled())) {
-    const savesResponse = page.waitForResponse((response) => {
-      try {
-        const url = new URL(response.url());
-        return url.pathname === "/api/game/saves" && response.request().method() === "GET";
-      } catch {
-        return false;
-      }
-    }, { timeout: 15000 });
+    const savesResponse = waitForGameSavesResponse(page);
     await refreshButton.click();
     await savesResponse;
   }
 
-  const currentCase = drawer.locator(".saveCaseItem", { hasText: `案 ${sessionShortCode}` }).first();
-  await currentCase.waitFor({ timeout: 10000 });
+  const currentCase = await waitForCurrentInkboxSaveCase(page, drawer, sessionShortCode);
   const saveSnapshot = await currentCase.evaluate((element, tokens) => {
     const text = document.body.innerText || "";
     return {
@@ -3759,6 +3819,7 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     const dialogSnapshot = await page.evaluate(({ expectedLabel, tokens }) => {
       const dialog = document.querySelector(".localSurfacePanel");
       const topicReader = dialog?.querySelector("[data-polish-topic-reader='s90-4-archive-court-reader']");
+      const topicLiveStatus = dialog?.querySelector("[data-polish-topic-live-status='s91-18-topic-live-status']");
       const bodyText = document.body.innerText || "";
       const dialogText = dialog?.textContent || "";
       return {
@@ -3766,8 +3827,13 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
         topicReaderMarker: topicReader?.getAttribute("data-polish-topic-reader") || "",
         topicReaderState: topicReader?.getAttribute("data-topic-reader-state") || "",
         topicWrittenState: topicReader?.getAttribute("data-topic-written-state") || "",
+        topicReaderAriaLive: topicReader?.getAttribute("aria-live") || "",
         topicReaderText: topicReader?.textContent || "",
         topicReaderRows: topicReader?.querySelectorAll("dt").length || 0,
+        topicLiveMarker: topicLiveStatus?.getAttribute("data-polish-topic-live-status") || "",
+        topicLiveAria: topicLiveStatus?.getAttribute("aria-live") || "",
+        topicLiveAtomic: topicLiveStatus?.getAttribute("aria-atomic") || "",
+        topicLiveText: topicLiveStatus?.textContent || "",
         hasTitle: dialogText.includes(expectedLabel),
         hasLedgerSource: dialogText.includes("卷宗取材"),
         hasMaterials: dialogText.includes("材料"),
@@ -3798,6 +3864,7 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
       dialogSnapshot.topicReaderMarker !== "s90-4-archive-court-reader" ||
       !/^(ready|empty|loading|error)$/.test(dialogSnapshot.topicReaderState) ||
       dialogSnapshot.topicWrittenState !== "idle" ||
+      dialogSnapshot.topicReaderAriaLive ||
       dialogSnapshot.topicReaderRows !== 4 ||
       !dialogSnapshot.topicReaderText.includes("材料") ||
       !dialogSnapshot.topicReaderText.includes("证据") ||
@@ -3805,6 +3872,14 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
       !dialogSnapshot.topicReaderText.includes("候复")
     ) {
       perSurfaceFailures.push(`S90.4 topic reader missing: ${JSON.stringify({ marker: dialogSnapshot.topicReaderMarker, state: dialogSnapshot.topicReaderState, text: dialogSnapshot.topicReaderText.slice(0, 160) })}`);
+    }
+    if (
+      dialogSnapshot.topicLiveMarker !== "s91-18-topic-live-status" ||
+      dialogSnapshot.topicLiveAria !== "polite" ||
+      dialogSnapshot.topicLiveAtomic !== "true" ||
+      !/公开证据|专题材料|草稿/.test(dialogSnapshot.topicLiveText)
+    ) {
+      perSurfaceFailures.push(`S91.18 topic live status missing: ${JSON.stringify({ marker: dialogSnapshot.topicLiveMarker, aria: dialogSnapshot.topicLiveAria, text: dialogSnapshot.topicLiveText.slice(0, 120) })}`);
     }
     if (!dialogSnapshot.hasReplyBoundary) perSurfaceFailures.push("missing player-facing reply boundary");
     if (dialogSnapshot.hiddenLeaks.length) perSurfaceFailures.push(`hidden text leaked: ${dialogSnapshot.hiddenLeaks.join(", ")}`);
@@ -3836,6 +3911,7 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
   const surfaceSnapshot = await page.evaluate((tokens) => {
     const dialog = document.querySelector(".localSurfacePanel");
     const topicReader = dialog?.querySelector("[data-polish-topic-reader='s90-4-archive-court-reader']");
+    const topicLiveStatus = dialog?.querySelector("[data-polish-topic-live-status='s91-18-topic-live-status']");
     const bodyText = document.body.innerText || "";
     const courtDraftReader = document.querySelector('[data-polish-court-draft-reader="s91-10-court-draft-reader"]');
     return {
@@ -3844,6 +3920,8 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
       topicReaderMarker: topicReader?.getAttribute("data-polish-topic-reader") || "",
       topicWrittenState: topicReader?.getAttribute("data-topic-written-state") || "",
       topicReaderText: topicReader?.textContent || "",
+      topicLiveState: topicLiveStatus?.getAttribute("data-topic-live-state") || "",
+      topicLiveText: topicLiveStatus?.textContent || "",
       courtDraftReaderMarker: courtDraftReader?.getAttribute("data-polish-court-draft-reader") || "",
       courtDraftReaderState: courtDraftReader?.getAttribute("data-court-draft-state") || "",
       courtDraftReaderText: courtDraftReader?.textContent || "",
@@ -3862,6 +3940,9 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     surfaceSnapshot.topicReaderText.includes(surfaceSnapshot.draft)
   ) {
     dialogFailures.push(`S91.14 topic reply reader did not enter written local-only state: ${JSON.stringify({ marker: surfaceSnapshot.topicReaderMarker, written: surfaceSnapshot.topicWrittenState, text: surfaceSnapshot.topicReaderText.slice(0, 180) })}`);
+  }
+  if (surfaceSnapshot.topicLiveState !== "written" || !surfaceSnapshot.topicLiveText.includes("专题草稿已写入底部奏折")) {
+    dialogFailures.push(`S91.18 topic live status did not enter written state: ${JSON.stringify({ state: surfaceSnapshot.topicLiveState, text: surfaceSnapshot.topicLiveText.slice(0, 120) })}`);
   }
   if (
     surfaceSnapshot.courtDraftReaderMarker !== "s91-10-court-draft-reader" ||
