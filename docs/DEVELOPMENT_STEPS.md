@@ -135,17 +135,36 @@
 | S91.16 | DONE | 史册议程月报互证校阅 polish | 已完成史册页“议程月报互证”四读：只从当前案卷公开 `worldThreadView`、`playerMonthlyBriefingView`、`sessionSummaryView`、史册旁证计数和本地史册草稿状态派生议程、月报、互证与候复；不回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.17 | DONE | 领域后果范围上限口径 polish | 已收束 `DomainConsequenceSection` 在调用处传入 `sourceTypes` 时的顶部 summary/cap 文案：只按过滤后的公开后果说明当前页范围，不再用全局 `view.caps` 暗示本页可读不存在的领域后果；不新增 route/API/schema、AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.18 | DONE | 专题层候复播报与证据空态 polish | 已收束既有 `SurfaceHost` 专题层读法播报：把整组四读 live region 改为单行候复状态播报，并在公开证据为空时显示明确空态；browser smoke 旧案列表等待同步加固为等待当前案卷刷新完成；不新增 route/API/schema、AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S92.1 | DONE | AI 编排 v2 路线图与 baseline | 已新增 `docs/AI_ORCHESTRATION_V2_ROADMAP.md`、`docs/AI_V2_BASELINE_REPORT.md`、`scripts/aiBaselineSnapshot.js`、`npm run ai:baseline` 和 baseline/eval artifact 测试；只生成 hidden-safe 结构摘要与 ignored artifact，不改变运行时 AI 行为、provider facade、prompt、tool 权限、API/schema、存档、SQLite、浏览器 UI 或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 当前步骤 S91.18：专题层候复播报与证据空态 polish 已完成。`SurfaceHost` 专题层把 `aria-live` 从整组四读 `dl` 移到单行 `s91-18-topic-live-status` 状态提示；证据勾选数、拟稿中、材料候取、公开证据空态和写入底部奏折后的候复状态只在单行 live region 播报，四读 `dl` 保持静态；`topicView.evidenceRefs` 为空时，“筹议”栏显示明确证据候载空态。browser smoke 旧案列表等待同步加固为等待当前案卷刷新完成。仍只改 React 前端读法、overlay CSS、source canary、Vitest、browser smoke 和文档，不新增 route/API/schema、AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。
-- S91.18 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全 `topicSurfaceView`、本地证据勾选、本地草稿和当前案卷 route 状态，不把候复播报、证据空态、勾选或专题草稿写入状态改写成资源、交易、任免、赏罚、罪名、战和、关系或时间推进事实。
-- 最近完整运行态验证来自 S91.18：`npm run typecheck:client`、`npm run typecheck:server`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js --test-name-pattern "S91.18 topic surface live status|S91.14 topic surface reply reader"`（实际完整 119 tests 通过）、S91.18 focused Vitest（2 passed / 76 skipped）、完整 App Vitest（78 tests）、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-18-topic-live-status-smoke`、`npm run check:docs-governance`、`git diff --check`（仅既有未触碰归档/素材 CRLF warning）和 `npm test`（1233 tests）已通过；提交前只读复审代理 `019e6e30-b9f6-7e11-ac26-f76088a44256` 未发现阻塞问题。
+- 当前步骤 S92.1：AI 编排 v2 路线图与 baseline 已完成。`docs/AI_ORCHESTRATION_V2_ROADMAP.md` 固定 Ticket 0-8 的后续方向，`docs/AI_V2_BASELINE_REPORT.md` 记录基线摘要；`scripts/aiBaselineSnapshot.js` 与 `npm run ai:baseline` 输出 prompt pack、schema、model route、tool definitions 和 provider capability 的 hidden-safe JSON 到 ignored `artifacts/ai-baseline/latest.json`；`npm run eval:ai` 额外输出 ignored `artifacts/ai-eval/latest.json` 安全摘要。
+- S92.1 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变运行时 AI 行为、provider facade、prompt 内容、tool 权限、后端 API/schema、AI 权限、SQLite schema、存档格式、runtime manifest、素材 manifest、浏览器 UI 或服务器裁决；baseline 和 eval artifact 不得包含 key、base URL、raw prompt、provider payload、本地路径、raw SQLite row、hidden notes、`worldState` 或内部 `server.*` resolver 名称。
+- S92.1 聚焦验证已通过 `node --check scripts/aiBaselineSnapshot.js`、`node --check scripts/aiEvaluationRunner.js`、`npm run ai:baseline`、`npm run eval:ai`、`npm run typecheck:server`、`npm run check:docs-governance`、`git diff --check`、`node --test test/aiBaselineSnapshot.test.js` 和 `node --test test/aiEvaluationRunner.test.js test/aiBaselineSnapshot.test.js`；全量 Node 测试已按 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4` 跑完，合计 1238 tests。单条 `npm test` 在 124s/304s 外层超时截断且无断言失败输出，等价分片全量已通过；提交前只读复审代理 `019e6f0d-53c6-7a61-8924-dd7706cdd2a6` 未发现阻塞问题，非阻塞建议已采纳，补充复审确认 follow-up 无新增风险。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.18：
+S92.1 当前验证锚点：
+
+- `node --check scripts/aiBaselineSnapshot.js`
+- `node --check scripts/aiEvaluationRunner.js`
+- `npm run ai:baseline`
+- `node --test test/aiBaselineSnapshot.test.js`
+- `node --test test/aiEvaluationRunner.test.js test/aiBaselineSnapshot.test.js`
+- `npm run eval:ai`
+- `npm run typecheck:server`
+- `npm run check:docs-governance`
+- `git diff --check`
+- `node --test --test-shard=1/4 test/*.test.js`（236 tests）
+- `node --test --test-shard=2/4 test/*.test.js`（298 tests）
+- `node --test --test-shard=3/4 test/*.test.js`（312 tests）
+- `node --test --test-shard=4/4 test/*.test.js`（392 tests）
+
+说明：单条 `npm test` 两次受外层 124s/304s 超时截断且无断言失败输出；等价全量分片合计 1238 tests 已全部通过。上一完整运行态锚点来自 S91.18：
+
+S91.18 运行态完整验证锚点：
 
 - `node --check scripts/clientSmoke.js`
 - `node --test test/reactClientScaffold.test.js --test-name-pattern "S91.18 topic surface live status|S91.14 topic surface reply reader"`（实际完整 119 tests 通过）
@@ -161,6 +180,15 @@
 - `npm test`（1233 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-28：S92.1 AI 编排 v2 路线图与 baseline 完成
+
+- 范围：新增 [AI_ORCHESTRATION_V2_ROADMAP.md](AI_ORCHESTRATION_V2_ROADMAP.md) 与 [AI_V2_BASELINE_REPORT.md](AI_V2_BASELINE_REPORT.md)，把后续 AI Task Runtime、ProviderAdapter、Mock-first tool loop、Prompt Registry、scenario eval、evidenceRef、trace/provider health 和前端 public trace debug 面板拆成 Ticket 0-8；新增 `scripts/aiBaselineSnapshot.js`、`npm run ai:baseline` 和 `test/aiBaselineSnapshot.test.js`。
+- 工具行为：`ai:baseline` 只摘要 prompt pack、schema、model route、tool definitions 与 provider capability，默认写入 ignored `artifacts/ai-baseline/latest.json`；`npm run eval:ai` 保持原有 eval 逻辑，并额外写入 ignored `artifacts/ai-eval/latest.json` 安全摘要。两类 artifact 都可重建，不作为 canonical state 或玩家 API。
+- 边界：本步不改变运行时 AI 行为、provider facade、prompt、schema、tool 权限、route/API、存档、SQLite、浏览器 UI、素材或服务器裁决；baseline 只记录 provider key 是否配置的布尔，不保存 key、base URL、raw request、raw response、raw prompt、provider payload、本地路径、raw SQLite row、hidden notes、`worldState` 或内部 `server.*` resolver 名称，并已补通用 `server.` safety scan。
+- 验证：已通过 `node --check scripts/aiBaselineSnapshot.js`、`node --check scripts/aiEvaluationRunner.js`、`npm run ai:baseline`、`npm run eval:ai`、`npm run typecheck:server`、`npm run check:docs-governance`、`git diff --check`、`node --test test/aiBaselineSnapshot.test.js` 和 `node --test test/aiEvaluationRunner.test.js test/aiBaselineSnapshot.test.js`；全量 Node 测试已按 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4` 跑完（236 + 298 + 312 + 392 = 1238 tests）。单条 `npm test` 两次受外层 124s/304s 超时截断且无断言失败输出，等价分片全量已通过。
+- 子代理：实施子代理 `019e6ef0-56a9-7ad2-99de-11f981118727` 只负责 `docs/AI_ORCHESTRATION_V2_ROADMAP.md`，已报告通过 `npm run check:docs-governance` 与 `git diff --check`，未运行 `git add`、`git commit`、`git push`，未创建 PR；提交前只读复审代理 `019e6f0d-53c6-7a61-8924-dd7706cdd2a6` 未发现阻塞问题，非阻塞建议中的回滚文档、复审补记和通用 `server.` 防线已采纳；补充复审确认 follow-up 无新增风险。代理确认未编辑文件、未运行任何 Git 命令、未创建 PR。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-28：S91.18 专题层候复播报与证据空态 polish 完成
 

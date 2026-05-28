@@ -1,5 +1,8 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
 
 const {
   collectForbiddenTermHits,
@@ -7,6 +10,10 @@ const {
   runAiEvaluation
 } = require("../src/ai/aiEvaluationRunner");
 const { buildDefaultModelRoutePolicy } = require("../src/ai/modelRoutePolicy");
+const {
+  buildPrintableEvalResult,
+  writeAiEvalArtifact
+} = require("../scripts/aiEvaluationRunner");
 
 test("S70.8 AI evaluation runner accepts valid fixtures and reviewer-only output", () => {
   const result = runAiEvaluation({
@@ -41,6 +48,32 @@ test("S70.8 AI evaluation runner accepts valid fixtures and reviewer-only output
 
   assert.equal(result.ok, true);
   assert.deepEqual(result.costSummary.reviewerOnlyTasks.sort(), ["critic", "safety_gate"]);
+});
+
+test("S92.1 AI evaluation script writes hidden-safe JSON artifact summary", () => {
+  const result = runAiEvaluation({
+    routePolicy: buildDefaultModelRoutePolicy({ AI_PROVIDER: "mock" }),
+    fixtures: []
+  });
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "qianqiu-ai-eval-"));
+  const outPath = path.join(tmpDir, "latest.json");
+
+  writeAiEvalArtifact(outPath, result);
+  const artifact = JSON.parse(fs.readFileSync(outPath, "utf8"));
+  assert.deepEqual(artifact, buildPrintableEvalResult(result));
+
+  const serialized = JSON.stringify(artifact);
+  for (const forbidden of [
+    "rawPrompt",
+    "providerPayload",
+    "worldState",
+    "hiddenNotes",
+    "OPENAI_API_KEY",
+    "sk-test-secret",
+    "E:\\LSMNQ"
+  ]) {
+    assert.equal(serialized.includes(forbidden), false, `eval artifact must not include ${forbidden}`);
+  }
 });
 
 test("S70.8 AI evaluation runner fails reviewer state writes", () => {

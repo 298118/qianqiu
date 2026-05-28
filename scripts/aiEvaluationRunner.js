@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 require("dotenv").config({ quiet: true });
 
+const fs = require("node:fs");
+const path = require("node:path");
+
 const { runAiEvaluation } = require("../src/ai/aiEvaluationRunner");
 const {
   PROMPT_PACK_OUTPUT_FIXTURES,
   PROMPT_PACK_AUTHORITY_RED_TEAM_FIXTURES,
   VALID_OUTPUT_FIXTURES
 } = require("../testdata/aiEvalFixtures");
+
+const DEFAULT_AI_EVAL_ARTIFACT_PATH = path.join("artifacts", "ai-eval", "latest.json");
 
 function buildLocalEvalFixtures() {
   const validFixtures = [...VALID_OUTPUT_FIXTURES, ...PROMPT_PACK_OUTPUT_FIXTURES].map((fixture) => ({
@@ -36,11 +41,18 @@ function buildLocalEvalFixtures() {
   return [...validFixtures, ...authorityFixtures, reviewerFixture];
 }
 
-function main() {
-  const result = runAiEvaluation({
-    fixtures: buildLocalEvalFixtures()
-  });
-  const printable = {
+function readArg(argv, name) {
+  const exact = argv.find((arg) => arg.startsWith(`${name}=`));
+  if (exact) return exact.slice(name.length + 1);
+  const index = argv.indexOf(name);
+  if (index !== -1 && argv[index + 1] && !argv[index + 1].startsWith("--")) {
+    return argv[index + 1];
+  }
+  return "";
+}
+
+function buildPrintableEvalResult(result) {
+  return {
     ok: result.ok,
     schemaVersion: result.schemaVersion,
     costSummary: result.costSummary,
@@ -48,6 +60,24 @@ function main() {
     redTeamFindingCount: result.redTeamFindings.length,
     failures: result.failures
   };
+}
+
+function writeAiEvalArtifact(filePath, result) {
+  const resolved = path.resolve(process.cwd(), filePath);
+  fs.mkdirSync(path.dirname(resolved), { recursive: true });
+  fs.writeFileSync(resolved, `${JSON.stringify(buildPrintableEvalResult(result), null, 2)}\n`, "utf8");
+  return resolved;
+}
+
+function main(argv = process.argv) {
+  const result = runAiEvaluation({
+    fixtures: buildLocalEvalFixtures()
+  });
+  const printable = buildPrintableEvalResult(result);
+  const artifactPath = readArg(argv, "--out") || DEFAULT_AI_EVAL_ARTIFACT_PATH;
+  if (!argv.includes("--no-artifact")) {
+    writeAiEvalArtifact(artifactPath, result);
+  }
 
   console.log(JSON.stringify(printable, null, 2));
   if (!result.ok) {
@@ -60,5 +90,9 @@ if (require.main === module) {
 }
 
 module.exports = {
-  buildLocalEvalFixtures
+  DEFAULT_AI_EVAL_ARTIFACT_PATH,
+  buildLocalEvalFixtures,
+  buildPrintableEvalResult,
+  main,
+  writeAiEvalArtifact
 };
