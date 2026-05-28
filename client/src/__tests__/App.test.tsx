@@ -3,6 +3,7 @@ import { RouterProvider, createMemoryRouter } from "react-router";
 import { act, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetAssetRegistryCache, type InkUiManifest } from "../assets/assetRegistry";
+import { DomainConsequenceSection } from "../components/DomainConsequenceSection";
 import { SurfaceHost } from "../components/SurfaceHost";
 import { ErrorPage } from "../pages/ErrorPage";
 import { routes } from "../router";
@@ -7201,7 +7202,7 @@ describe("S74.1 React client shell", () => {
 
     expect(screen.getByText("舆图后果追踪")).toBeTruthy();
     expect(screen.getByText("边镇调粮余波")).toBeTruthy();
-    expect(screen.getAllByText(/当前显示近次 1 条/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/当前本页公开追踪 1 条/).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "续记后果" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "map-runtime",
@@ -7238,6 +7239,82 @@ describe("S74.1 React client shell", () => {
     expect(screen.getByRole("link", { name: "入局势簿" }).getAttribute("href")).toBe("/game/74747474-7474-4774-8774-747474747474/archive");
     expect(document.body.textContent || "").not.toMatch(/raw audit|provider payload|hiddenNotes|OPENAI_API_KEY|data\/sessions|sk-test-secret|tp-test-secret|\/Users|C:\\|path=/i);
     expect(document.body.textContent || "").not.toMatch(/安全投影|安全专题投影|舆图投影摘要|后端裁决|resolver|safe view|\bserver\b|provider|model/i);
+  });
+
+  it("keeps filtered domain consequence caps scoped to the visible caller range", () => {
+    const onDraft = vi.fn();
+    const { rerender } = render(
+      <DomainConsequenceSection
+        domainConsequenceView={{
+          summary: "当前有2条公开领域后果可追踪，已接入全局后果追踪。",
+          caps: { visibleConsequences: 2, publicCandidates: 5, capped: true },
+          recentConsequences: [{
+            id: "DC-filtered-npc-economy",
+            sourceType: "npc_economy",
+            sourceLabel: "人物经济",
+            kindLabel: "经济后果",
+            title: "商贾月账余波",
+            publicSummary: "人物经济余波只在人物经济页可读。"
+          }],
+          nextActions: [{
+            id: "trace-DC-filtered-npc-economy",
+            label: "续记人物经济",
+            text: "把商贾月账余波列入人物经济追踪。"
+          }]
+        }}
+        sourceTypes={["military_diplomacy"]}
+        title="舆图后果追踪"
+        summaryFallback="舆图页只并列显示公开后果与地图近事；画面位置不作为行军、查案或任免凭据。"
+        emptyText="暂无可与舆图并列追踪的公开领域后果。"
+        maxItems={1}
+        onDraft={onDraft}
+      />
+    );
+    const emptyReader = document.querySelector("[data-polish-domain-consequence-reader='s91-15-domain-consequence-reader']") as HTMLElement;
+    expect(emptyReader).toBeTruthy();
+    expect(emptyReader.getAttribute("data-domain-consequence-reader-state")).toBe("empty");
+    expect(document.body.textContent || "").toContain("舆图页只并列显示公开后果与地图近事");
+    expect(document.body.textContent || "").toContain("暂无可与舆图并列追踪的公开领域后果。");
+    expect(document.body.textContent || "").not.toContain("当前有2条公开领域后果可追踪");
+    expect(document.body.textContent || "").not.toMatch(/当前显示近次|当前公开追踪|当前本页公开追踪/);
+    expect(screen.queryByRole("button", { name: "续记人物经济" })).toBeNull();
+
+    rerender(
+      <DomainConsequenceSection
+        domainConsequenceView={{
+          summary: "当前有4条公开领域后果可追踪，已接入全局后果追踪。",
+          caps: { visibleConsequences: 4, publicCandidates: 8, capped: true },
+          recentConsequences: [{
+            id: "DC-map-military-1",
+            sourceType: "military_diplomacy",
+            sourceLabel: "军务外交",
+            kindLabel: "军务后果",
+            title: "边镇粮道余波",
+            publicSummary: "边镇粮道公开归档，仍候主卷复核。",
+            nextStep: "把边镇粮道余波列入军务后果追踪。"
+          }, {
+            id: "DC-map-military-2",
+            sourceType: "military_diplomacy",
+            sourceLabel: "军务外交",
+            kindLabel: "军务后果",
+            title: "驿路军报余波",
+            publicSummary: "驿路军报公开归档，仍候主卷复核。",
+            nextStep: "把驿路军报余波列入军务后果追踪。"
+          }]
+        }}
+        sourceTypes={["military_diplomacy"]}
+        title="舆图后果追踪"
+        summaryFallback="舆图页只并列显示公开后果与地图近事；画面位置不作为行军、查案或任免凭据。"
+        emptyText="暂无可与舆图并列追踪的公开领域后果。"
+        maxItems={1}
+        onDraft={onDraft}
+      />
+    );
+    const readyReader = document.querySelector("[data-polish-domain-consequence-reader='s91-15-domain-consequence-reader']") as HTMLElement;
+    expect(readyReader.getAttribute("data-domain-consequence-reader-state")).toBe("ready");
+    expect(document.body.textContent || "").toContain("本页只并列 2 条军务公开后果；未匹配领域不在此处补写。");
+    expect(document.body.textContent || "").toContain("当前显示本页近次 1 条，可见范围另有 1 条按本页上限收束。");
+    expect(document.body.textContent || "").not.toContain("当前有4条公开领域后果可追踪");
   });
 
   it("renders archive route entries and domain consequence tracking from safe views", () => {

@@ -302,7 +302,29 @@ function buildDomainConsequenceReader({
   };
 }
 
-function capSummaryText(view: JsonObject) {
+function sectionSummaryText(
+  view: JsonObject,
+  allowedSourceTypes: readonly string[] | undefined,
+  summaryFallback: string,
+  domainLabels: readonly string[]
+) {
+  if (!allowedSourceTypes?.length) return cleanDomainConsequenceText(view.summary, summaryFallback, 164);
+  const visibleRows = visibleConsequenceRows(view, allowedSourceTypes);
+  if (!visibleRows.length) return cleanDomainConsequenceText(summaryFallback, summaryFallback, 164);
+  const scope = domainLabels.length ? `${domainLabels.join("、")}公开后果` : "当前范围公开后果";
+  return `本页只并列 ${visibleRows.length} 条${scope}；未匹配领域不在此处补写。`;
+}
+
+function capSummaryText(view: JsonObject, allowedSourceTypes: readonly string[] | undefined, maxItems: number) {
+  if (allowedSourceTypes?.length) {
+    const scopedCount = visibleConsequenceRows(view, allowedSourceTypes).length;
+    if (!scopedCount) return undefined;
+    const shown = Math.min(scopedCount, maxItems);
+    if (scopedCount > shown) {
+      return `当前显示本页近次 ${shown} 条，可见范围另有 ${scopedCount - shown} 条按本页上限收束。`;
+    }
+    return `当前本页公开追踪 ${scopedCount} 条。`;
+  }
   const caps = asRecord(view.caps);
   const visible = cleanNumber(caps.visibleConsequences, 0);
   const candidates = cleanNumber(caps.publicCandidates, visible);
@@ -327,11 +349,12 @@ export function DomainConsequenceSection({
   const view = asRecord(domainConsequenceView);
   const items = consequenceItems(view, sourceTypes, maxItems);
   const actions = draftActions(view, items, sourceTypes);
-  const capLine = capSummaryText(view);
-  const readerCapLine = items.length ? capLine : undefined;
   const sourceLabels = consequenceSourceLabels(view, sourceTypes);
   const domainLabels = consequenceDomainLabels(view, sourceTypes);
   const metricLabels = consequenceMetricLabels(view, sourceTypes);
+  const summaryText = sectionSummaryText(view, sourceTypes, summaryFallback, domainLabels);
+  const capLine = capSummaryText(view, sourceTypes, maxItems);
+  const readerCapLine = items.length ? capLine : undefined;
   const consequenceReader = buildDomainConsequenceReader({
     items,
     actions,
@@ -346,7 +369,7 @@ export function DomainConsequenceSection({
   return (
     <article className="scholarPanelCard paperMotionPanel domainConsequenceSection" aria-labelledby={`${title.replace(/\s+/g, "-")}-title`}>
       <h3 id={`${title.replace(/\s+/g, "-")}-title`}>{title}</h3>
-      <p>{cleanDomainConsequenceText(view.summary, summaryFallback, 164)}</p>
+      <p>{summaryText}</p>
       {capLine ? <p className="domainConsequenceCapLine">{capLine}</p> : null}
       <section
         className="domainConsequenceReader"

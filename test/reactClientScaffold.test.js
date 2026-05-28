@@ -2547,6 +2547,7 @@ test("S91.15 domain consequence reader stays public-consequence-view-only and fr
   assert.match(domainConsequenceSource, /type DomainConsequenceReaderRow/);
   assert.match(domainConsequenceSource, /function buildDomainConsequenceReader/);
   assert.match(domainConsequenceSource, /readonly localDraftWritten\?: boolean/);
+  assert.match(domainConsequenceSource, /function sectionSummaryText/);
   assert.match(readerDataBlock, /items\.length/);
   assert.match(readerDataBlock, /actions\.length/);
   assert.match(readerDataBlock, /sourceLabels\.length/);
@@ -2554,6 +2555,8 @@ test("S91.15 domain consequence reader stays public-consequence-view-only and fr
   assert.match(readerDataBlock, /metricLabels\.length/);
   assert.match(readerDataBlock, /本页草稿已入底部奏折，仍候主卷回音/);
   assert.match(readerDataBlock, /只作复盘与呈稿线索；不回显正文/);
+  assert.match(domainConsequenceSource, /const summaryText = sectionSummaryText\(view, sourceTypes, summaryFallback, domainLabels\)/);
+  assert.match(domainConsequenceSource, /const capLine = capSummaryText\(view, sourceTypes, maxItems\)/);
   assert.match(domainConsequenceSource, /const readerCapLine = items\.length \? capLine : undefined/);
   assert.match(readerMarkup, /后果追踪校阅/);
   assert.match(readerMarkup, /只读已入卷公开余波、来源标签、牵连指标与候复状态/);
@@ -2581,6 +2584,39 @@ test("S91.15 domain consequence reader stays public-consequence-view-only and fr
     runtimeCombined,
     /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
   );
+});
+
+test("S91.17 domain consequence scoped cap avoids global counts after source filtering", () => {
+  const domainConsequenceSource = readText("client/src/components/DomainConsequenceSection.tsx");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const summaryStart = domainConsequenceSource.indexOf("function sectionSummaryText");
+  const summaryEnd = domainConsequenceSource.indexOf("function capSummaryText", summaryStart);
+  const summaryBlock = summaryStart >= 0 && summaryEnd > summaryStart
+    ? domainConsequenceSource.slice(summaryStart, summaryEnd)
+    : "";
+  const capStart = domainConsequenceSource.indexOf("function capSummaryText");
+  const capEnd = domainConsequenceSource.indexOf("export function DomainConsequenceSection", capStart);
+  const capBlock = capStart >= 0 && capEnd > capStart
+    ? domainConsequenceSource.slice(capStart, capEnd)
+    : "";
+
+  assert.ok(summaryStart >= 0 && summaryEnd > summaryStart);
+  assert.ok(capStart >= 0 && capEnd > capStart);
+  assert.match(summaryBlock, /allowedSourceTypes\?\.length/);
+  assert.match(summaryBlock, /visibleConsequenceRows\(view, allowedSourceTypes\)/);
+  assert.match(summaryBlock, /本页只并列 \$\{visibleRows\.length\} 条/);
+  assert.match(summaryBlock, /未匹配领域不在此处补写/);
+  assert.match(capBlock, /allowedSourceTypes\?\.length/);
+  assert.match(capBlock, /visibleConsequenceRows\(view, allowedSourceTypes\)\.length/);
+  assert.match(capBlock, /if \(!scopedCount\) return undefined/);
+  assert.match(capBlock, /当前显示本页近次 \$\{shown\} 条/);
+  assert.match(capBlock, /当前本页公开追踪 \$\{scopedCount\} 条/);
+  assert.match(capBlock, /const caps = asRecord\(view\.caps\)/);
+  assert.doesNotMatch(capBlock, /capSummaryText\(view\)/);
+  assert.match(appTestSource, /keeps filtered domain consequence caps scoped to the visible caller range/);
+  assert.match(appTestSource, /当前有2条公开领域后果可追踪/);
+  assert.match(appTestSource, /not\.toMatch\(\/当前显示近次\|当前公开追踪\|当前本页公开追踪\//);
+  assert.match(appTestSource, /当前显示本页近次 1 条，可见范围另有 1 条按本页上限收束/);
 });
 
 test("S91.16 archive agenda reader stays safe-view-only and frontend-only", () => {
