@@ -1488,6 +1488,106 @@
   font-weight: 800;
 }
 
+.domainConsequenceReader {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  border: 1px solid rgb(142 47 39 / .22);
+  background: rgb(248 235 219 / .34);
+  padding: 10px;
+}
+
+.domainConsequenceReaderHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.domainConsequenceReaderHeader > div {
+  min-width: 0;
+}
+
+.domainConsequenceReaderHeader h4,
+.domainConsequenceReaderHeader p,
+.domainConsequenceReader dt,
+.domainConsequenceReader dd,
+.domainConsequenceReader span,
+.domainConsequenceReaderBoundary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.domainConsequenceReaderHeader h4 {
+  margin: 0;
+  color: #5e382d;
+  font-size: 0.96rem;
+}
+
+.domainConsequenceReaderHeader p {
+  margin: 3px 0 0;
+  color: #6d5844;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.domainConsequenceReaderHeader > span {
+  flex: 0 0 auto;
+  border: 1px solid rgb(142 47 39 / .26);
+  background: rgb(255 252 238 / .66);
+  color: #76372d;
+  font-size: 0.76rem;
+  font-weight: 900;
+  line-height: 1.25;
+  padding: 4px 7px;
+}
+
+.domainConsequenceReader dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0;
+}
+
+.domainConsequenceReader dl div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .17);
+  background: rgb(255 252 238 / .58);
+  padding: 8px;
+}
+
+.domainConsequenceReader dt {
+  color: #6d5844;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.domainConsequenceReader dd {
+  margin: 0;
+  color: #3e2b1f;
+  font-size: 0.9rem;
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.domainConsequenceReader dl span {
+  color: #5c4939;
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.42;
+}
+
+.domainConsequenceReaderBoundary {
+  margin: 0;
+  color: #6e4b42;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.52;
+}
+
 .npcFollowUpEvidenceSection {
   min-width: 0;
   border-color: rgb(106 89 55 / .3);
@@ -2448,6 +2548,16 @@
   }
 
   .roleCycleReaderHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .domainConsequenceReader,
+  .domainConsequenceReader dl {
+    grid-template-columns: 1fr;
+  }
+
+  .domainConsequenceReaderHeader {
     align-items: flex-start;
     flex-direction: column;
   }

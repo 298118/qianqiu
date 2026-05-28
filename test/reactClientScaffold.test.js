@@ -2261,7 +2261,10 @@ test("S91.9 archive draft reader stays local-draft-only and frontend-only", () =
   assert.match(archivePageSource, /function buildArchiveDraftReaderRows/);
   assert.match(archivePageSource, /const actionDraft = useUiStateStore\(\(state\) => state\.actionDraft\)/);
   assert.match(archivePageSource, /sideEvidenceCount = domainCount \+ entityImpactCount \+ followUpCount/);
-  assert.match(archivePageSource, /actionDraft\?\.sessionId === sessionId && actionDraft\.source === "archive-view"/);
+  assert.match(
+    archivePageSource,
+    /actionDraft\?\.sessionId === sessionId &&[\s\S]*actionDraft\.source === "archive-view" &&[\s\S]*actionDraft\.targetPage === "game"/
+  );
   assert.match(readerDataBlock, /只取本页已公开史册条目/);
   assert.match(readerDataBlock, /后果、实体余波与来函只作读卷线索/);
   assert.match(readerDataBlock, /本地史册札记已入底部奏折，仍候主卷回音/);
@@ -2509,6 +2512,71 @@ test("S91.13 role cycle reader stays current-role-cycle-view-only and frontend-o
   assert.match(appTestSource, /身份循环草稿已入底部奏折/);
   assert.match(clientSmokeSource, /s91-13-role-cycle-reader/);
   assert.match(clientSmokeSource, /S91\.13 role cycle reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
+test("S91.15 domain consequence reader stays public-consequence-view-only and frontend-only", () => {
+  const domainConsequenceSource = readText("client/src/components/DomainConsequenceSection.tsx");
+  const magistratePanelSource = readText("client/src/components/MagistratePanel.tsx");
+  const officialPanelSource = readText("client/src/components/OfficialMinisterPanel.tsx");
+  const generalPanelSource = readText("client/src/components/GeneralPanel.tsx");
+  const emperorPanelSource = readText("client/src/components/EmperorPanel.tsx");
+  const mapPageSource = readText("client/src/pages/MapPage.tsx");
+  const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
+  const gameStyleSource = readClientStyleModule("routes/game.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerDataStart = domainConsequenceSource.indexOf("function buildDomainConsequenceReader");
+  const readerDataEnd = domainConsequenceSource.indexOf("function capSummaryText", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? domainConsequenceSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const markupStart = domainConsequenceSource.indexOf('data-polish-domain-consequence-reader="s91-15-domain-consequence-reader"');
+  const markupEnd = domainConsequenceSource.indexOf("{items.length", markupStart);
+  const readerMarkup = markupStart >= 0 && markupEnd > markupStart
+    ? domainConsequenceSource.slice(markupStart, markupEnd)
+    : "";
+  const domainWithoutGuard = stripSafeGuardPatterns(domainConsequenceSource);
+  const runtimeCombined = `${domainWithoutGuard}\n${gameStyleSource}`;
+
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.ok(markupStart >= 0 && markupEnd > markupStart);
+  assert.match(domainConsequenceSource, /type DomainConsequenceReaderRow/);
+  assert.match(domainConsequenceSource, /function buildDomainConsequenceReader/);
+  assert.match(domainConsequenceSource, /readonly localDraftWritten\?: boolean/);
+  assert.match(readerDataBlock, /items\.length/);
+  assert.match(readerDataBlock, /actions\.length/);
+  assert.match(readerDataBlock, /sourceLabels\.length/);
+  assert.match(readerDataBlock, /domainLabels\.length/);
+  assert.match(readerDataBlock, /metricLabels\.length/);
+  assert.match(readerDataBlock, /本页草稿已入底部奏折，仍候主卷回音/);
+  assert.match(readerDataBlock, /只作复盘与呈稿线索；不回显正文/);
+  assert.match(domainConsequenceSource, /const readerCapLine = items\.length \? capLine : undefined/);
+  assert.match(readerMarkup, /后果追踪校阅/);
+  assert.match(readerMarkup, /只读已入卷公开余波、来源标签、牵连指标与候复状态/);
+  assert.match(readerMarkup, /只认调用处传入的当前案卷本地草稿状态/);
+  assert.match(readerMarkup, /不回显正文/);
+  assert.match(readerMarkup, /不把后果追踪、凭据、牵连或续记写成资源、任免、赏罚、定罪、交易、调兵或时间推进事实/);
+  assert.doesNotMatch(readerDataBlock, /actionDraft|submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|resolver|worldState|payload|outcomeId|auditRecord|stateDelta|playerDelta|evidenceRefs|cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|npcEconomyLedger/);
+  assert.doesNotMatch(readerMarkup, /actionDraft|submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|resolver|worldState|payload|outcomeId|auditRecord|stateDelta|playerDelta|evidenceRefs|cityPolicyLedger|militaryDiplomacyLedger|judicialCaseLedger|npcEconomyLedger|升堂核问积案|把清河县平抑米价余波列入月报/);
+  assert.doesNotMatch(domainConsequenceSource, /ActionDraft|actionDraft\.text/);
+
+  for (const source of [magistratePanelSource, officialPanelSource, generalPanelSource, emperorPanelSource]) {
+    assert.match(source, /localDraftWritten=\{localRoleSurfaceDraftWritten\}/);
+  }
+  assert.match(mapPageSource, /const localDomainConsequenceDraftWritten = Boolean\(/);
+  assert.match(mapPageSource, /localDraftWritten=\{localDomainConsequenceDraftWritten\}/);
+  assert.match(archivePageSource, /localDraftWritten=\{hasArchiveDraft\}/);
+  assert.match(gameStyleSource, /\.domainConsequenceReader \{/);
+  assert.match(gameStyleSource, /\.domainConsequenceReader dl \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(gameStyleSource, /@media \(max-width: 760px\)[\s\S]*\.domainConsequenceReader,[\s\S]*\.domainConsequenceReader dl \{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(appTestSource, /s91-15-domain-consequence-reader/);
+  assert.match(appTestSource, /本页草稿已入底部奏折/);
+  assert.match(clientSmokeSource, /s91-15-domain-consequence-reader/);
+  assert.match(clientSmokeSource, /S91\.15 domain consequence reader/);
   assert.doesNotMatch(
     runtimeCombined,
     /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/

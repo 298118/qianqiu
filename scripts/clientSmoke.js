@@ -2543,6 +2543,7 @@ async function assertMagistratePanel(page, sessionId, screenshotsDir) {
   await page.getByRole("heading", { name: "地方官署" }).waitFor({ timeout: 10000 });
   const panelSnapshot = await page.evaluate((id) => {
     const panel = document.querySelector(".magistratePanel");
+    const domainReader = panel?.querySelector("[data-polish-domain-consequence-reader='s91-15-domain-consequence-reader']");
     const text = panel?.textContent || "";
     const buttons = [...document.querySelectorAll(".magistratePanel button")].map((button) => ({
       text: (button.textContent || "").trim(),
@@ -2558,6 +2559,10 @@ async function assertMagistratePanel(page, sessionId, screenshotsDir) {
       hasPatrol: text.includes("水利盗警"),
       hasGentry: text.includes("士绅乡约"),
       hasDomainConsequence: text.includes("领域后果追踪"),
+      domainReaderMarker: domainReader?.getAttribute("data-polish-domain-consequence-reader") || "",
+      domainReaderState: domainReader?.getAttribute("data-domain-consequence-reader-state") || "",
+      domainReaderRows: domainReader?.querySelectorAll("dl > div").length || 0,
+      domainReaderText: domainReader?.textContent || "",
       hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险") && text.includes("可查入口") && text.includes("证据："),
       hasBoundary: text.includes("审案、征税、开仓、水利、缉捕、任免和考成都须候案卷回批"),
       buttons,
@@ -2576,6 +2581,12 @@ async function assertMagistratePanel(page, sessionId, screenshotsDir) {
   if (!panelSnapshot.hasPatrol) failures.push("missing waterworks and patrol block");
   if (!panelSnapshot.hasGentry) failures.push("missing gentry block");
   if (!panelSnapshot.hasDomainConsequence) failures.push("missing domain consequence tracking block");
+  if (panelSnapshot.domainReaderMarker !== "s91-15-domain-consequence-reader" || panelSnapshot.domainReaderRows !== 4) {
+    failures.push(`S91.15 domain consequence reader missing: ${JSON.stringify({ marker: panelSnapshot.domainReaderMarker, state: panelSnapshot.domainReaderState, rows: panelSnapshot.domainReaderRows, text: panelSnapshot.domainReaderText.slice(0, 180) })}`);
+  }
+  if (!panelSnapshot.domainReaderText.includes("后果追踪校阅") || !panelSnapshot.domainReaderText.includes("后果") || !panelSnapshot.domainReaderText.includes("凭据") || !panelSnapshot.domainReaderText.includes("牵连") || !panelSnapshot.domainReaderText.includes("候复") || !panelSnapshot.domainReaderText.includes("不回显正文") || !panelSnapshot.domainReaderText.includes("不把后果追踪、凭据、牵连或续记写成资源")) {
+    failures.push(`S91.15 domain consequence reader copy incomplete: ${panelSnapshot.domainReaderText.slice(0, 220)}`);
+  }
   if (!panelSnapshot.hasRoleCycle) failures.push("missing role cycle block");
   if (!panelSnapshot.hasBoundary) failures.push("missing server boundary");
   if (panelSnapshot.metricCount < 8) failures.push(`expected local docket metrics, saw ${panelSnapshot.metricCount}`);
@@ -2612,6 +2623,16 @@ async function assertMagistratePanel(page, sessionId, screenshotsDir) {
   const draft = await page.getByLabel("本回合行动").inputValue();
   if (!draft.includes("升堂核问积案")) {
     throw new Error(`S76.3 magistrate draft did not enter the memorial composer: ${draft}`);
+  }
+  const writtenDomainReader = await page.evaluate(() => {
+    const reader = document.querySelector("[data-polish-domain-consequence-reader='s91-15-domain-consequence-reader']");
+    return {
+      state: reader?.getAttribute("data-domain-consequence-reader-state") || "",
+      text: reader?.textContent || ""
+    };
+  });
+  if (writtenDomainReader.state !== "written" || !writtenDomainReader.text.includes("本页草稿已入底部奏折") || writtenDomainReader.text.includes("升堂核问积案")) {
+    throw new Error(`S91.15 domain consequence reader written state failed: ${JSON.stringify({ state: writtenDomainReader.state, text: writtenDomainReader.text.slice(0, 220) })}`);
   }
   await page.getByLabel("本回合行动").fill("");
 

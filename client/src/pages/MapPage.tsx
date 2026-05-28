@@ -662,11 +662,18 @@ export function MapPage() {
   const status = useGameSessionStore((state) => state.status);
   const openSurfaceForSession = useUiStateStore((state) => state.openSurfaceForSession);
   const displayPreferences = useUiStateStore((state) => state.displayPreferences);
+  const actionDraft = useUiStateStore((state) => state.actionDraft);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
   const prefersReducedMotion = usePrefersReducedMotion();
   const isRunnable = isRunnableSessionId(sessionId);
   const routeSessionSupported = isRouteLocalSessionId(sessionId);
   const hasCurrentSession = routeSessionSupported && currentSession?.sessionId === sessionId;
+  const localDomainConsequenceDraftWritten = Boolean(
+    routeSessionSupported &&
+    actionDraft?.sessionId === sessionId &&
+    actionDraft.source === "map-runtime" &&
+    actionDraft.targetPage === "game"
+  );
   const mapRuntimeView = hasCurrentSession ? currentSession.mapRuntimeView : null;
   const domainConsequenceView = hasCurrentSession ? currentSession.domainConsequenceView : null;
   const refCount = mapRuntimeView?.refs?.length ?? 0;
@@ -1254,6 +1261,7 @@ export function MapPage() {
             summaryFallback="舆图页只并列显示公开后果与地图近事；画面位置不作为行军、查案或任免凭据。"
             emptyText="暂无可与舆图并列追踪的公开领域后果。"
             maxItems={3}
+            localDraftWritten={localDomainConsequenceDraftWritten}
             runnable={hasCurrentSession}
             onDraft={(text) => setActionDraft({ source: "map-runtime", targetPage: "game", text })}
           />

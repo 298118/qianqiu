@@ -611,6 +611,7 @@ export function EmperorPanel({
           title="天下余波"
           summaryFallback="天下余波只读已经入卷的地方、军务、刑名和人物经济公开后果；问责、赏罚、调兵、拨款和处分仍候普通回合回批。"
           emptyText="暂无公开领域后果；不得从内廷私档、隐藏证据或模型提案补造事实。"
+          localDraftWritten={localRoleSurfaceDraftWritten}
           runnable={runnable}
           onDraft={onDraft}
         />

@@ -442,6 +442,7 @@ export function MagistratePanel({
           title="领域后果追踪"
           summaryFallback="地方后果只读已经入卷的政策、刑名和人物经济公开余波；库银、案牍、人物资产与关系变化仍逐旬或月结回响。"
           emptyText="暂无地方公开后果；不得从内部案卷、隐藏证据或模型提案补造事实。"
+          localDraftWritten={localRoleSurfaceDraftWritten}
           runnable={runnable}
           onDraft={onDraft}
         />

@@ -876,6 +876,7 @@ export function OfficialMinisterPanel({
           title="领域后果"
           summaryFallback="跨域后果只读已经入卷的地方、军务、刑名和人物经济公开余波；考成、弹劾、财政和天下议程仍继续回响。"
           emptyText="暂无可公开追踪的跨域后果；不得从内部账本、隐藏证据或模型提案补造事实。"
+          localDraftWritten={localRoleSurfaceDraftWritten}
           runnable={runnable}
           onDraft={onDraft}
         />

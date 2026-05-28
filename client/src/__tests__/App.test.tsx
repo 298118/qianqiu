@@ -1558,6 +1558,17 @@ describe("S74.1 React client shell", () => {
     expect(screen.queryByText("库银账面快照")).toBeNull();
     expect(screen.queryByText("污染经济解释")).toBeNull();
     expect(screen.getByText("领域后果追踪")).toBeTruthy();
+    const domainConsequenceReader = document.querySelector("[data-polish-domain-consequence-reader='s91-15-domain-consequence-reader']") as HTMLElement;
+    expect(domainConsequenceReader).toBeTruthy();
+    expect(domainConsequenceReader.getAttribute("data-domain-consequence-reader-state")).toBe("ready");
+    expect(domainConsequenceReader.querySelectorAll("dl > div")).toHaveLength(4);
+    expect(domainConsequenceReader.textContent || "").toContain("后果追踪校阅");
+    expect(domainConsequenceReader.textContent || "").toContain("2 条公开余波");
+    expect(domainConsequenceReader.textContent || "").toContain("2 类来源");
+    expect(domainConsequenceReader.textContent || "").toContain("地方、人物");
+    expect(domainConsequenceReader.textContent || "").toContain("影响：府库、民心");
+    expect(domainConsequenceReader.textContent || "").toContain("不回显正文");
+    expect(domainConsequenceReader.textContent || "").not.toContain("把清河县平抑米价余波列入月报");
     expect(screen.getByText("清河县平抑米价余波")).toBeTruthy();
     expect(screen.getByText("人物经济月账")).toBeTruthy();
     expect(screen.getByText("水利盗警")).toBeTruthy();
@@ -1571,6 +1582,11 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: "升堂核问积案，核对公开证词、案卷日期与里甲呈报，不自行结案。"
     });
+    await waitFor(() => {
+      expect(domainConsequenceReader.getAttribute("data-domain-consequence-reader-state")).toBe("written");
+      expect(domainConsequenceReader.textContent || "").toContain("本页草稿已入底部奏折，仍候主卷回音。");
+    });
+    expect(domainConsequenceReader.textContent || "").not.toContain("升堂核问积案");
     fireEvent.click(screen.getByRole("button", { name: "续记地方后果" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",
@@ -7185,7 +7201,7 @@ describe("S74.1 React client shell", () => {
 
     expect(screen.getByText("舆图后果追踪")).toBeTruthy();
     expect(screen.getByText("边镇调粮余波")).toBeTruthy();
-    expect(screen.getByText(/当前显示近次 1 条/)).toBeTruthy();
+    expect(screen.getAllByText(/当前显示近次 1 条/).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "续记后果" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "map-runtime",

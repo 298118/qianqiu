@@ -365,7 +365,12 @@ export function ArchivePage() {
     status
   });
   const archiveCount = archiveItems.length || totalItems;
-  const hasArchiveDraft = Boolean(routeSessionSupported && actionDraft?.sessionId === sessionId && actionDraft.source === "archive-view");
+  const hasArchiveDraft = Boolean(
+    routeSessionSupported &&
+    actionDraft?.sessionId === sessionId &&
+    actionDraft.source === "archive-view" &&
+    actionDraft.targetPage === "game"
+  );
   const archiveDraftReaderRows = buildArchiveDraftReaderRows({
     archiveCount,
     sideEvidenceCount,
@@ -628,6 +633,7 @@ export function ArchivePage() {
             summaryFallback="史册页只显示已经入卷的公开后果；内账、私记和未公开证据不会进入玩家视野。"
             emptyText="暂无公开领域后果归档。"
             maxItems={4}
+            localDraftWritten={hasArchiveDraft}
             runnable={canDraft}
             onDraft={(text) => setActionDraft({ source: "archive-view", targetPage: "game", text })}
           />

@@ -131,32 +131,44 @@
 | S91.12 | DONE | 皇帝御案朱批校阅与候复状态 polish | 已完成既有皇帝面板“御案朱批校阅”四读：只从 `eventArchiveView`、`worldThreadView`、`courtResponseView`、`courtConsequenceView`、公开朝议/任免/赏罚线索和当前案卷本地 `role-surface` 草稿写入状态派生御案、章奏、朝议与候复；不回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.13 | DONE | 六身份循环候复校阅与本地草稿状态 polish | 已完成既有 `RoleCycleSection` “身份候复校阅”四读，并把当前案卷本地 `role-surface` 草稿写入布尔透传到书生、地方官、官员/大臣、将领和皇帝主卷：读法只从 `roleCycleView.currentRole`、安全取材标签、入口/草稿建议和本地草稿状态派生身份、事务、取材与候复；不读取或回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.14 | DONE | SurfaceHost 专题层候复校阅与写入状态 polish | 已完成既有 `SurfaceHost` 专题层“材料 / 证据 / 草稿 / 候复”四读：只从当前案卷专题材料、证据勾选、拟稿状态和本地 `role-surface` 专题草稿是否已写入主卷派生候复状态；不读取或回显草稿正文，不新增 topic surface 类型、route/API/schema、AI 权限、依赖、素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.15 | DONE | 领域后果追踪校阅与候复状态 polish | 已完成既有 `DomainConsequenceSection` “后果追踪校阅”四读：只从现有 `domainConsequenceView` 公开后果、公开 next actions、sourceType 过滤、来源/牵连/指标标签和调用处传入的当前案卷本地草稿布尔派生后果、凭据、牵连与候复；不读取或回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.14：SurfaceHost 专题层候复校阅与写入状态 polish 已完成。既有 `SurfaceHost` 专题层读法从三格扩为“材料 / 证据 / 草稿 / 候复”四读，只从当前案卷专题材料、证据勾选、`topicDraftStatus`、草稿 textarea 是否有文和当前案卷本地 `role-surface` 专题草稿 `draftContext.surfaceId` 是否命中当前专题派生写入状态；写入底部奏折后只显示“主卷待呈 / 专题草稿已入底部奏折，仍候主卷回音”，不读取或回显 `actionDraft.text`。
-- S91.14 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全 `topicSurfaceView`、`topicDraft` 回包、本地证据勾选、本地草稿和当前案卷 route 状态，不把证据勾选、专题草稿或写入状态改写成资源、交易、任免、赏罚、罪名、战和、关系或时间推进事实。
-- 最近完整运行态验证来自 S91.14：`npm run typecheck:client`、`npm run typecheck:server`、`node --test test/reactClientScaffold.test.js`（115 tests；首次 S91.14 source canary 因新切片终点写错失败，已修正后复跑通过）、`node --check scripts/clientSmoke.js`、S91.14 串行 Vitest（77 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-14-topic-reply-reader-smoke`、`npm run check:docs-governance`、`git diff --check`（120 秒首次只输出既有 CRLF warning 后超时，300 秒重跑通过且仍仅既有 CRLF warning）和 `npm test`（1229 tests）已通过；提交前只读复审代理 `019e6dcb-301f-7600-bba1-0a5f9cc87074` 未发现阻塞问题。
+- 最新实现步骤 S91.15：领域后果追踪校阅与候复状态 polish 已完成。既有 `DomainConsequenceSection` 新增“后果 / 凭据 / 牵连 / 候复”四读，只从清洗后的公开后果条目、公开 next actions、sourceType 过滤、来源/牵连/指标标签和调用处传入的当前案卷本地草稿布尔派生；主卷四类权力面板传入当前案卷 `role-surface` 草稿布尔，史册页传入当前案卷 `archive-view` 草稿布尔，舆图页传入当前案卷 `map-runtime` 草稿布尔。写稿后只显示“主卷待呈 / 本页草稿已入底部奏折，仍候主卷回音”，不读取或回显 `actionDraft.text`。
+- S91.15 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全 `domainConsequenceView`、route 状态和调用处本地草稿标记，不把后果追踪、凭据、牵连、续记或本地草稿状态改写成资源、任免、赏罚、定罪、交易、调兵、人物资产、关系或时间推进事实。
+- 最近完整运行态验证来自 S91.15：`npm run typecheck:client`、`npm run typecheck:server`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js --test-name-pattern "S91.15 domain consequence reader"`（实际完整 116 tests 通过）、S91.15 focused Vitest（1 passed / 76 skipped）、完整 App Vitest（77 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-15-domain-consequence-reader-smoke`（首次首页 `networkidle` 超时未进入断言，同命令复跑通过）、`npm run check:docs-governance`、`git diff --check`（仅既有未触碰归档/素材 CRLF warning）和 `npm test`（1230 tests）已通过；两轮提交前只读复审均无阻塞，首次低风险建议已采纳，补充复审仅余全局 cap line 口径风险，随本步记录。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.14：
+最新运行态完整验证锚点来自 S91.15：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（115 tests；首次 S91.14 source canary 切片终点错误，修正后复跑通过）
+- `node --test test/reactClientScaffold.test.js --test-name-pattern "S91.15 domain consequence reader"`（实际完整 116 tests 通过）
 - `npm run typecheck:client`
 - `npm run typecheck:server`
-- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 77 tests）
+- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx -t "magistrate panel"`（1 passed / 76 skipped）
+- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 77 tests；首次因新增 reader 复述公开上限行导致旧 `getByText` 命中两处失败，已改成 `getAllByText` 后复跑通过）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-14-topic-reply-reader-smoke`
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-15-domain-consequence-reader-smoke`（首次首页 `networkidle` 超时未进入 S91.15 断言，同命令复跑通过）
 - `npm run check:docs-governance`
-- `git diff --check`（首次 120 秒超时且仅输出既有 CRLF warning；300 秒重跑通过，仍仅既有 CRLF warning）
-- `npm test`（1229 tests）
+- `git diff --check`（仅既有未触碰归档/素材 CRLF warning）
+- `npm test`（1230 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-28：S91.15 领域后果追踪校阅与候复状态 polish 完成
+
+- 范围：既有 `DomainConsequenceSection` 新增 `data-polish-domain-consequence-reader="s91-15-domain-consequence-reader"` 的“后果追踪校阅”，四格显示后果、凭据、牵连与候复；组件内部复用既有公开后果过滤和安全清洗，只从 `domainConsequenceView.recentConsequences`、`nextActions`、sourceType 过滤、来源/领域/指标标签和调用处传入的本地草稿布尔派生读法。
+- 体验修正：主卷地方官、官员/大臣、将领、皇帝面板传入当前案卷 `role-surface` 草稿布尔；史册页传入当前案卷 `archive-view` 草稿布尔；舆图页传入当前案卷 `map-runtime` 草稿布尔。未写稿时显示公开余波数量、来源数量、牵连域和可拟项；写稿后只显示“主卷待呈”和“本页草稿已入底部奏折，仍候主卷回音”，不读取或回显 `actionDraft.text`、按钮正文或草稿正文。样式放在 `routes/game.css`，移动端单列。
+- 边界：本步只改 React 前端共享后果卡、主卷/史册/舆图调用处、主卷 route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema、AI 权限、provider/prompt 能力、依赖、素材、存档字段或服务器裁决。浏览器仍只消费现有安全 `domainConsequenceView`、route 状态和调用处本地草稿标记；后果追踪、凭据、牵连、续记或本地草稿状态不得被改写成资源、任免、赏罚、定罪、交易、调兵、人物资产、关系或时间推进事实。
+- 复审后修正：首次提交前只读复审代理 `019e6e05-1b50-74d2-9d44-363e135c7e3e` 未发现阻塞问题，确认未编辑文件、未运行任何 Git 命令；非阻塞提醒为史册页 `hasArchiveDraft` 可补 `targetPage === "game"`、过滤后无后果条目时 reader 不宜因全局 caps 变成 ready。两项均已采纳：史册本地草稿状态补目标页校验，`readerCapLine` 只在过滤后有可见后果条目时进入四读；S91.9/S91.15 source canary 已补相应守门。
+- 验证：已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js --test-name-pattern "S91.15 domain consequence reader"`（实际完整 116 tests）、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx -t "magistrate panel"`（1 passed / 76 skipped）、`npm run qa:runtime-manifest`、`npm run typecheck:server`、完整 App Vitest（77 tests）、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-15-domain-consequence-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1230 tests）。首次完整 App Vitest 因旧舆图断言用 `getByText(/当前显示近次 1 条/)` 而新增 reader 复述同一公开上限文案失败，已改为 `getAllByText` 后复跑通过；browser smoke 首次在首页 `networkidle` 30 秒超时，未进入 S91.15 断言，同命令复跑通过；采纳复审建议后重新通过 client typecheck、S91.9/S91.15 source canary、完整 App Vitest、runtime manifest QA、build、budget、browser smoke、docs governance、server typecheck、`git diff --check` 和 `npm test`；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
+- 子代理：首次提交前只读复审代理 `019e6e05-1b50-74d2-9d44-363e135c7e3e` 未发现阻塞问题，低风险建议已采纳；补充只读复审代理 `019e6e1e-1b08-7e03-a1db-dba2b592b6e1` 未发现阻塞问题，确认未编辑文件、未运行任何 Git 命令，并额外运行 S91.9/S91.15 source canary（实际 116 tests）和 `node --check scripts/clientSmoke.js` 通过。残余低风险：当调用处传入 `sourceTypes` 且过滤后无可见后果条目时，组件顶部独立 `domainConsequenceCapLine` 仍按全局 `view.caps` 显示公开追踪数；reader 已不再因此进入 ready，当前作为 UX 口径风险记录，不阻塞提交。
+- 提交：S91.15 实现提交待完成后补记。
 
 ### 2026-05-28：S91.14 SurfaceHost 专题层候复校阅与写入状态 polish 完成
 

@@ -427,6 +427,7 @@ export function GeneralPanel({
           title="军务后果追踪"
           summaryFallback="军务后果只读已经入卷的公开余波；侦察、调粮、战险、和战与赏罚仍须回合候批。"
           emptyText="暂无公开军务后果；不得从隐藏军情、内部账簿或模型提案补造战果。"
+          localDraftWritten={localRoleSurfaceDraftWritten}
           runnable={runnable}
           onDraft={onDraft}
         />

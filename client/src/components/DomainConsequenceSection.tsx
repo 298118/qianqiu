@@ -8,6 +8,7 @@ type DomainConsequenceSectionProps = {
   readonly summaryFallback?: string;
   readonly emptyText?: string;
   readonly maxItems?: number;
+  readonly localDraftWritten?: boolean;
   readonly runnable?: boolean;
   readonly onDraft: (text: string) => void;
 };
@@ -24,6 +25,18 @@ type SafeDraftAction = {
   readonly id: string;
   readonly label: string;
   readonly text: string;
+};
+
+type DomainConsequenceReaderRow = {
+  readonly id: string;
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
+type DomainConsequenceReader = {
+  readonly state: "empty" | "ready" | "written";
+  readonly rows: readonly DomainConsequenceReaderRow[];
 };
 
 const unsafeDomainConsequenceFragments = [
@@ -84,6 +97,13 @@ const unsafeDomainConsequenceFragments = [
   "开发诊断"
 ] as const;
 
+const sourceTypeLabels: Record<string, string> = {
+  city_policy: "地方",
+  military_diplomacy: "军务",
+  judicial_case: "刑名",
+  npc_economy: "人物"
+};
+
 function isRecord(value: JsonValue | unknown): value is JsonObject {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
@@ -138,10 +158,47 @@ function metricLabelText(value: JsonValue | unknown) {
     .join("、");
 }
 
-function consequenceItems(view: JsonObject, allowedSourceTypes: readonly string[] | undefined, maxItems: number): SafeConsequenceItem[] {
+function visibleConsequenceRows(view: JsonObject, allowedSourceTypes: readonly string[] | undefined) {
   return asArray(view.recentConsequences)
     .map(asRecord)
-    .filter((row) => sourceTypeAllowed(cleanDomainConsequenceText(row.sourceType, "", 48), allowedSourceTypes))
+    .filter((row) => sourceTypeAllowed(cleanDomainConsequenceText(row.sourceType, "", 48), allowedSourceTypes));
+}
+
+function uniqueVisibleLabels(labels: readonly (string | undefined)[], limit = 4) {
+  return [...new Set(labels.filter((label): label is string => Boolean(label)))].slice(0, limit);
+}
+
+function consequenceSourceLabels(view: JsonObject, allowedSourceTypes: readonly string[] | undefined) {
+  return uniqueVisibleLabels(
+    visibleConsequenceRows(view, allowedSourceTypes).map((row) => (
+      cleanOptionalText(row.sourceLabel || row.kindLabel || row.kind, 24)
+    ))
+  );
+}
+
+function consequenceDomainLabels(view: JsonObject, allowedSourceTypes: readonly string[] | undefined) {
+  return uniqueVisibleLabels(
+    visibleConsequenceRows(view, allowedSourceTypes).map((row) => {
+      const sourceType = cleanDomainConsequenceText(row.sourceType, "", 48);
+      return sourceTypeLabels[sourceType] || cleanOptionalText(row.sourceLabel || row.kindLabel, 20);
+    })
+  );
+}
+
+function consequenceMetricLabels(view: JsonObject, allowedSourceTypes: readonly string[] | undefined) {
+  const labels: string[] = [];
+  for (const row of visibleConsequenceRows(view, allowedSourceTypes)) {
+    for (const label of asArray(row.affectedMetricLabels)) {
+      const cleaned = cleanOptionalText(label, 18);
+      if (cleaned && !labels.includes(cleaned)) labels.push(cleaned);
+      if (labels.length >= 4) return labels;
+    }
+  }
+  return labels;
+}
+
+function consequenceItems(view: JsonObject, allowedSourceTypes: readonly string[] | undefined, maxItems: number): SafeConsequenceItem[] {
+  return visibleConsequenceRows(view, allowedSourceTypes)
     .slice(-maxItems)
     .reverse()
     .map((row, index) => {
@@ -164,8 +221,7 @@ function consequenceItems(view: JsonObject, allowedSourceTypes: readonly string[
 }
 
 function draftActions(view: JsonObject, items: readonly SafeConsequenceItem[], allowedSourceTypes: readonly string[] | undefined): SafeDraftAction[] {
-  const allowedRows = asArray(view.recentConsequences).map(asRecord)
-    .filter((row) => sourceTypeAllowed(cleanDomainConsequenceText(row.sourceType, "", 48), allowedSourceTypes));
+  const allowedRows = visibleConsequenceRows(view, allowedSourceTypes);
   if (allowedSourceTypes?.length && !allowedRows.length) return [];
   const allowedIds = new Set(allowedRows.map((row) => cleanDomainConsequenceText(row.id, "", 88)).filter(Boolean));
   const explicitActions = asArray(view.nextActions)
@@ -194,6 +250,58 @@ function draftActions(view: JsonObject, items: readonly SafeConsequenceItem[], a
     }));
 }
 
+function buildDomainConsequenceReader({
+  items,
+  actions,
+  sourceLabels,
+  domainLabels,
+  metricLabels,
+  capLine,
+  localDraftWritten
+}: {
+  readonly items: readonly SafeConsequenceItem[];
+  readonly actions: readonly SafeDraftAction[];
+  readonly sourceLabels: readonly string[];
+  readonly domainLabels: readonly string[];
+  readonly metricLabels: readonly string[];
+  readonly capLine?: string;
+  readonly localDraftWritten: boolean;
+}): DomainConsequenceReader {
+  const hasVisibleMaterial = Boolean(items.length || actions.length || sourceLabels.length || domainLabels.length || metricLabels.length || capLine);
+  const state = localDraftWritten ? "written" : hasVisibleMaterial ? "ready" : "empty";
+  return {
+    state,
+    rows: [
+      {
+        id: "consequences",
+        label: "后果",
+        value: items.length ? `${items.length} 条公开余波` : "暂无近波",
+        detail: capLine || "只读已经入卷的公开后果；案卷未载者不补造。"
+      },
+      {
+        id: "evidence",
+        label: "凭据",
+        value: sourceLabels.length ? `${sourceLabels.length} 类来源` : "来源候载",
+        detail: sourceLabels.length ? sourceLabels.join("、") : "只据公开来源标签，不读取内账或隐藏凭据。"
+      },
+      {
+        id: "domains",
+        label: "牵连",
+        value: domainLabels.length ? domainLabels.join("、") : "牵连候载",
+        detail: metricLabels.length ? `影响：${metricLabels.join("、")}` : "地方、军务、刑名、人物等公开域仍候主卷复核。"
+      },
+      {
+        id: "reply",
+        label: "候复",
+        value: localDraftWritten ? "主卷待呈" : actions.length ? `${actions.length} 项可拟` : "候主卷",
+        detail: localDraftWritten
+          ? "本页草稿已入底部奏折，仍候主卷回音。"
+          : "只作复盘与呈稿线索；不回显正文，不写成已裁决事实。"
+      }
+    ]
+  };
+}
+
 function capSummaryText(view: JsonObject) {
   const caps = asRecord(view.caps);
   const visible = cleanNumber(caps.visibleConsequences, 0);
@@ -212,6 +320,7 @@ export function DomainConsequenceSection({
   summaryFallback = "领域后果只读已经入卷的公开余波；财政、军务、刑名、人物经济和关系变化仍逐旬或月结回响。",
   emptyText = "暂无公开领域后果；不得从内部账本、隐藏证据或模型提案补造事实。",
   maxItems = 4,
+  localDraftWritten = false,
   runnable = true,
   onDraft
 }: DomainConsequenceSectionProps) {
@@ -219,6 +328,19 @@ export function DomainConsequenceSection({
   const items = consequenceItems(view, sourceTypes, maxItems);
   const actions = draftActions(view, items, sourceTypes);
   const capLine = capSummaryText(view);
+  const readerCapLine = items.length ? capLine : undefined;
+  const sourceLabels = consequenceSourceLabels(view, sourceTypes);
+  const domainLabels = consequenceDomainLabels(view, sourceTypes);
+  const metricLabels = consequenceMetricLabels(view, sourceTypes);
+  const consequenceReader = buildDomainConsequenceReader({
+    items,
+    actions,
+    sourceLabels,
+    domainLabels,
+    metricLabels,
+    capLine: readerCapLine,
+    localDraftWritten
+  });
   const canDraft = runnable !== false;
 
   return (
@@ -226,6 +348,32 @@ export function DomainConsequenceSection({
       <h3 id={`${title.replace(/\s+/g, "-")}-title`}>{title}</h3>
       <p>{cleanDomainConsequenceText(view.summary, summaryFallback, 164)}</p>
       {capLine ? <p className="domainConsequenceCapLine">{capLine}</p> : null}
+      <section
+        className="domainConsequenceReader"
+        aria-labelledby={`${title.replace(/\s+/g, "-")}-reader-title`}
+        data-polish-domain-consequence-reader="s91-15-domain-consequence-reader"
+        data-domain-consequence-reader-state={consequenceReader.state}
+      >
+        <div className="domainConsequenceReaderHeader">
+          <div>
+            <h4 id={`${title.replace(/\s+/g, "-")}-reader-title`}>后果追踪校阅</h4>
+            <p>只读已入卷公开余波、来源标签、牵连指标与候复状态。</p>
+          </div>
+          <span>{consequenceReader.state === "written" ? "主卷待呈" : consequenceReader.state === "ready" ? "可据此拟" : "候公开卷"}</span>
+        </div>
+        <dl>
+          {consequenceReader.rows.map((row) => (
+            <div key={row.id}>
+              <dt>{row.label}</dt>
+              <dd>{row.value}</dd>
+              <span>{row.detail}</span>
+            </div>
+          ))}
+        </dl>
+        <p className="domainConsequenceReaderBoundary">
+          只认调用处传入的当前案卷本地草稿状态，不回显正文，不把后果追踪、凭据、牵连或续记写成资源、任免、赏罚、定罪、交易、调兵或时间推进事实。
+        </p>
+      </section>
       {items.length ? (
         <ul className="scholarPanelList domainConsequenceList">
           {items.map((item) => (
