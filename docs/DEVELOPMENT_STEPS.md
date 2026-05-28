@@ -130,32 +130,42 @@
 | S91.11 | DONE | 入仕官职月报校阅与候复状态 polish | 已完成既有官员/大臣面板“官职月报校阅”四读：只从 `playerMonthlyBriefingView`、官职履历、公开任所/首月差事和当前案卷本地 `role-surface` 草稿写入状态派生本职、月报、差事与候复；不回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.12 | DONE | 皇帝御案朱批校阅与候复状态 polish | 已完成既有皇帝面板“御案朱批校阅”四读：只从 `eventArchiveView`、`worldThreadView`、`courtResponseView`、`courtConsequenceView`、公开朝议/任免/赏罚线索和当前案卷本地 `role-surface` 草稿写入状态派生御案、章奏、朝议与候复；不回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.13 | DONE | 六身份循环候复校阅与本地草稿状态 polish | 已完成既有 `RoleCycleSection` “身份候复校阅”四读，并把当前案卷本地 `role-surface` 草稿写入布尔透传到书生、地方官、官员/大臣、将领和皇帝主卷：读法只从 `roleCycleView.currentRole`、安全取材标签、入口/草稿建议和本地草稿状态派生身份、事务、取材与候复；不读取或回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.14 | DONE | SurfaceHost 专题层候复校阅与写入状态 polish | 已完成既有 `SurfaceHost` 专题层“材料 / 证据 / 草稿 / 候复”四读：只从当前案卷专题材料、证据勾选、拟稿状态和本地 `role-surface` 专题草稿是否已写入主卷派生候复状态；不读取或回显草稿正文，不新增 topic surface 类型、route/API/schema、AI 权限、依赖、素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.13：六身份循环候复校阅与本地草稿状态 polish 已完成。共享 `RoleCycleSection` 新增 `s91-13-role-cycle-reader` 的“身份 / 事务 / 取材 / 候复”四读，把当前安全 `roleCycleView.currentRole`、`aiReadScope.allowedSourceViews` 派生的中文取材标签、可查入口/可拟草稿数量和当前案卷本地 `role-surface` 草稿写入状态整理为可扫读候复校阅；写稿后只显示“主卷待呈 / 身份循环草稿已入底部奏折，仍候主卷回音”，不读取或回显 `actionDraft.text`。
-- S91.13 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全 `roleCycleView`、route 状态和本地草稿标记，不把身份切换、任免、调兵、审案、交易、考试或时间推进写成已生效事实。
-- 最近完整运行态验证来自 S91.13：`npm run typecheck:client`、`npm run typecheck:server`、`node --test test/reactClientScaffold.test.js`（114 tests）、`node --check scripts/clientSmoke.js`、S91.13 串行 Vitest（77 tests；首次因测试期望取材数与 fixture 实际 allowed source scope 不一致失败，已收紧断言后复跑通过）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-13-role-cycle-reader-smoke`（首次首页 `networkidle` 超时未进入 S91.13 断言，同命令重跑通过）、`npm run check:docs-governance`、`git diff --check`（仅既有 CRLF warning）和 `npm test`（1228 tests）已通过；提交前只读复审代理 `019e6d9c-9251-7b23-86d1-4da148389ca0` 未发现阻塞问题。
+- 最新实现步骤 S91.14：SurfaceHost 专题层候复校阅与写入状态 polish 已完成。既有 `SurfaceHost` 专题层读法从三格扩为“材料 / 证据 / 草稿 / 候复”四读，只从当前案卷专题材料、证据勾选、`topicDraftStatus`、草稿 textarea 是否有文和当前案卷本地 `role-surface` 专题草稿 `draftContext.surfaceId` 是否命中当前专题派生写入状态；写入底部奏折后只显示“主卷待呈 / 专题草稿已入底部奏折，仍候主卷回音”，不读取或回显 `actionDraft.text`。
+- S91.14 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全 `topicSurfaceView`、`topicDraft` 回包、本地证据勾选、本地草稿和当前案卷 route 状态，不把证据勾选、专题草稿或写入状态改写成资源、交易、任免、赏罚、罪名、战和、关系或时间推进事实。
+- 最近完整运行态验证来自 S91.14：`npm run typecheck:client`、`npm run typecheck:server`、`node --test test/reactClientScaffold.test.js`（115 tests；首次 S91.14 source canary 因新切片终点写错失败，已修正后复跑通过）、`node --check scripts/clientSmoke.js`、S91.14 串行 Vitest（77 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-14-topic-reply-reader-smoke`、`npm run check:docs-governance`、`git diff --check`（120 秒首次只输出既有 CRLF warning 后超时，300 秒重跑通过且仍仅既有 CRLF warning）和 `npm test`（1229 tests）已通过；提交前只读复审代理 `019e6dcb-301f-7600-bba1-0a5f9cc87074` 未发现阻塞问题。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.13：
+最新运行态完整验证锚点来自 S91.14：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（114 tests）
+- `node --test test/reactClientScaffold.test.js`（115 tests；首次 S91.14 source canary 切片终点错误，修正后复跑通过）
 - `npm run typecheck:client`
 - `npm run typecheck:server`
 - `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 77 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-13-role-cycle-reader-smoke`（首次首页 `networkidle` 超时，重跑通过）
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-14-topic-reply-reader-smoke`
 - `npm run check:docs-governance`
-- `git diff --check`（仅既有 CRLF warning）
-- `npm test`（1228 tests）
+- `git diff --check`（首次 120 秒超时且仅输出既有 CRLF warning；300 秒重跑通过，仍仅既有 CRLF warning）
+- `npm test`（1229 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-28：S91.14 SurfaceHost 专题层候复校阅与写入状态 polish 完成
+
+- 范围：既有 `SurfaceHost` 专题层读法从“材料 / 证据 / 草稿”扩为“材料 / 证据 / 草稿 / 候复”四格；`LocalSurfaceHost` 订阅当前案卷本地 `actionDraft`，只在 `sessionId`、`source === "role-surface"`、`targetPage === "game"` 且 `draftContext.surfaceId` 命中当前专题时，把专题层 reader 标为已写入主卷。
+- 体验修正：初始或未写入时，“候复”格显示“候落稿 / 可写入 / 材料候取”和“专题层只整理草稿线索；呈递后才由主卷回批”；点击“写入底部奏折”后，reader 的 `data-topic-written-state` 变为 `written`，只显示“主卷待呈”和“专题草稿已入底部奏折，仍候主卷回音”。读法不读取或回显 `actionDraft.text`、专题草稿正文或污染测试句；overlay CSS 将专题层 reader 改为四列，移动端仍沿用既有单列规则。
+- 边界：本步只改 React 前端读法、共享 overlay CSS、客户端测试、browser smoke 和文档；不新增后端 topic surface 类型、route/API/schema、AI 权限、provider/prompt 能力、依赖、素材、存档字段或服务器裁决。浏览器仍只消费现有安全 `topicSurfaceView`、`topicDraft` 回包、本地证据勾选、本地草稿和当前案卷 route 状态；证据勾选、专题草稿或写入状态不得被改写成资源、交易、任免、赏罚、罪名、战和、关系或时间推进事实。
+- 验证：已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（115 tests）、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（77 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-14-topic-reply-reader-smoke`、`npm run check:docs-governance`、`npm run typecheck:server`、`git diff --check` 和 `npm test`（1229 tests）；首次 source canary 因 S91.14 新增测试把 `TopicSurfaceWorkbench` 切片终点设在函数之前失败，已改为切到文件末尾后复跑通过；首次 `git diff --check` 120 秒超时，仅输出未触碰归档/素材文件的既有 CRLF warning，300 秒重跑通过且仍仅既有 CRLF warning。
+- 子代理：提交前只读复审代理 `019e6dcb-301f-7600-bba1-0a5f9cc87074` 已复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为 `aria-live="polite"` 放在整个专题 reader `dl` 上，写入态切换时可能播报整组四读内容，当前范围可接受。代理确认未编辑文件、未运行任何 Git 命令；额外运行 `node --test test/reactClientScaffold.test.js --test-name-pattern "S91.14 topic surface reply reader"`，实际完整 115 tests 通过。
+- 提交：S91.14 实现提交待生成；本哈希将在低风险纯文档后续提交中补记。
 
 ### 2026-05-28：S91.13 六身份循环候复校阅与本地草稿状态 polish 完成
 

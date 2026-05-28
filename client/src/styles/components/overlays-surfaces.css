@@ -1046,7 +1046,7 @@
 .topicSurfaceLayout > .topicSurfaceReadRail {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin: 0;
 }
@@ -1203,6 +1203,7 @@
 }
 
 .topicSurfaceColumn[data-state="selected"],
+.topicSurfaceReadRail[data-topic-written-state="written"] .surfaceSafetyRow:last-child,
 .localSurfacePanel[data-surface-state="ready"] .surfaceSafetyRow:first-child {
   border-color: var(--qq-color-vermilion-border-medium);
 }

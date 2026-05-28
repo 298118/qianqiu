@@ -2515,6 +2515,52 @@ test("S91.13 role cycle reader stays current-role-cycle-view-only and frontend-o
   );
 });
 
+test("S91.14 topic surface reply reader stays local-topic-write-state-only and frontend-only", () => {
+  const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
+  const overlaysStyle = readClientStyleModule("components/overlays-surfaces.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerDataStart = surfaceHostSource.indexOf("function buildTopicReadRows");
+  const readerDataEnd = surfaceHostSource.indexOf("function TopicSurfaceWorkbench", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? surfaceHostSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const workbenchStart = surfaceHostSource.indexOf("function TopicSurfaceWorkbench");
+  const workbenchEnd = surfaceHostSource.length;
+  const workbenchBlock = workbenchStart >= 0 && workbenchEnd > workbenchStart
+    ? surfaceHostSource.slice(workbenchStart, workbenchEnd)
+    : "";
+  const runtimeCombined = stripSafeGuardPatterns(`${surfaceHostSource}\n${overlaysStyle}`);
+
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.ok(workbenchStart >= 0 && workbenchEnd > workbenchStart);
+  assert.match(surfaceHostSource, /const actionDraft = useUiStateStore\(\(state\) => state\.actionDraft\)/);
+  assert.match(
+    surfaceHostSource,
+    /const activeTopicDraftWrittenToMain = isTopicSurface\(activeSurface\) &&[\s\S]*actionDraft\?\.sessionId === currentSessionId &&[\s\S]*actionDraft\.source === "role-surface" &&[\s\S]*actionDraft\.targetPage === "game" &&[\s\S]*actionDraft\.draftContext\?\.surfaceId === activeSurface/
+  );
+  assert.match(readerDataBlock, /readonly draftWrittenToMain: boolean/);
+  assert.match(readerDataBlock, /label: "候复"/);
+  assert.match(readerDataBlock, /专题草稿已入底部奏折，仍候主卷回音/);
+  assert.match(readerDataBlock, /专题层只整理草稿线索；呈递后才由主卷回批/);
+  assert.match(surfaceHostSource, /draftWrittenToMain=\{activeTopicDraftWrittenToMain\}/);
+  assert.match(workbenchBlock, /data-topic-written-state=\{draftWrittenToMain \? "written" : "idle"\}/);
+  assert.match(workbenchBlock, /aria-live="polite"/);
+  assert.doesNotMatch(readerDataBlock, /actionDraft|submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|actionDraft\.text/);
+  assert.doesNotMatch(workbenchBlock, /actionDraft\.text|submitTurn|\/api\/game\/turn|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|data\/sessions|完整提示词|本地路径|密钥/);
+
+  assert.match(overlaysStyle, /\.topicSurfaceLayout > \.topicSurfaceReadRail \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(overlaysStyle, /\.topicSurfaceReadRail\[data-topic-written-state="written"\] \.surfaceSafetyRow:last-child/);
+  assert.match(appTestSource, /data-topic-written-state/);
+  assert.match(appTestSource, /专题草稿已入底部奏折，仍候主卷回音/);
+  assert.match(appTestSource, /专题层只整理草稿线索/);
+  assert.match(clientSmokeSource, /S91\.14 topic reply reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.60 main and court desk keyframes use semantic names", () => {
   const keyframesSource = readText("client/src/styles/motion/keyframes.css");
   const gameStyleSource = readText("client/src/styles/routes/game.css");

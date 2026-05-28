@@ -3773,10 +3773,14 @@ describe("S74.1 React client shell", () => {
     const topicReader = dialog.querySelector("[data-polish-topic-reader='s90-4-archive-court-reader']") as HTMLElement;
     expect(topicReader).toBeTruthy();
     expect(topicReader.getAttribute("data-topic-reader-state")).toBe("ready");
+    expect(topicReader.getAttribute("data-topic-written-state")).toBe("idle");
+    expect(topicReader.querySelectorAll("dt").length).toBe(4);
     expect(topicReader.textContent || "").toContain("1 条可阅");
     await waitFor(() => expect(topicReader.textContent || "").toContain("1/4 已引"));
     expect(topicReader.textContent || "").toContain("可写入底部奏折");
     expect(topicReader.textContent || "").toContain("写入底部奏折只留案头草稿，不推进回合。");
+    expect(topicReader.textContent || "").toContain("候复");
+    expect(topicReader.textContent || "").toContain("专题层只整理草稿线索");
     expect(dialog.textContent || "").toContain("材料");
     expect(dialog.textContent || "").toContain("筹议");
     expect(dialog.textContent || "").toContain("草稿");
@@ -3809,6 +3813,10 @@ describe("S74.1 React client shell", () => {
         generatedAtTurn: 3
       }
     });
+    expect(topicReader.getAttribute("data-topic-written-state")).toBe("written");
+    expect(topicReader.textContent || "").toContain("主卷待呈");
+    expect(topicReader.textContent || "").toContain("专题草稿已入底部奏折，仍候主卷回音。");
+    expect(topicReader.textContent || "").not.toContain("请召诸臣廷议，先核边饷催报与纸价议价解释，再拟稳妥章程。");
     expect(courtDraftReader.getAttribute("data-court-draft-state")).toBe("written");
     expect(courtDraftReader.textContent || "").toContain("朝议");
     expect(courtDraftReader.textContent || "").toContain("已入主卷");

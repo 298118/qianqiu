@@ -3719,7 +3719,9 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
         dialogText,
         topicReaderMarker: topicReader?.getAttribute("data-polish-topic-reader") || "",
         topicReaderState: topicReader?.getAttribute("data-topic-reader-state") || "",
+        topicWrittenState: topicReader?.getAttribute("data-topic-written-state") || "",
         topicReaderText: topicReader?.textContent || "",
+        topicReaderRows: topicReader?.querySelectorAll("dt").length || 0,
         hasTitle: dialogText.includes(expectedLabel),
         hasLedgerSource: dialogText.includes("卷宗取材"),
         hasMaterials: dialogText.includes("材料"),
@@ -3749,9 +3751,12 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
     if (
       dialogSnapshot.topicReaderMarker !== "s90-4-archive-court-reader" ||
       !/^(ready|empty|loading|error)$/.test(dialogSnapshot.topicReaderState) ||
+      dialogSnapshot.topicWrittenState !== "idle" ||
+      dialogSnapshot.topicReaderRows !== 4 ||
       !dialogSnapshot.topicReaderText.includes("材料") ||
       !dialogSnapshot.topicReaderText.includes("证据") ||
-      !dialogSnapshot.topicReaderText.includes("草稿")
+      !dialogSnapshot.topicReaderText.includes("草稿") ||
+      !dialogSnapshot.topicReaderText.includes("候复")
     ) {
       perSurfaceFailures.push(`S90.4 topic reader missing: ${JSON.stringify({ marker: dialogSnapshot.topicReaderMarker, state: dialogSnapshot.topicReaderState, text: dialogSnapshot.topicReaderText.slice(0, 160) })}`);
     }
@@ -3784,11 +3789,15 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
 
   const surfaceSnapshot = await page.evaluate((tokens) => {
     const dialog = document.querySelector(".localSurfacePanel");
+    const topicReader = dialog?.querySelector("[data-polish-topic-reader='s90-4-archive-court-reader']");
     const bodyText = document.body.innerText || "";
     const courtDraftReader = document.querySelector('[data-polish-court-draft-reader="s91-10-court-draft-reader"]');
     return {
       dialogText: dialog?.textContent || "",
       draft: document.querySelector("textarea")?.value || "",
+      topicReaderMarker: topicReader?.getAttribute("data-polish-topic-reader") || "",
+      topicWrittenState: topicReader?.getAttribute("data-topic-written-state") || "",
+      topicReaderText: topicReader?.textContent || "",
       courtDraftReaderMarker: courtDraftReader?.getAttribute("data-polish-court-draft-reader") || "",
       courtDraftReaderState: courtDraftReader?.getAttribute("data-court-draft-state") || "",
       courtDraftReaderText: courtDraftReader?.textContent || "",
@@ -3799,6 +3808,15 @@ async function assertTopicSurfaces(page, sessionId, screenshotsDir) {
 
   const dialogFailures = [];
   if (!surfaceSnapshot.draft.includes("廷议")) dialogFailures.push(`draft did not enter memorial composer: ${surfaceSnapshot.draft}`);
+  if (
+    surfaceSnapshot.topicReaderMarker !== "s90-4-archive-court-reader" ||
+    surfaceSnapshot.topicWrittenState !== "written" ||
+    !surfaceSnapshot.topicReaderText.includes("主卷待呈") ||
+    !surfaceSnapshot.topicReaderText.includes("专题草稿已入底部奏折") ||
+    surfaceSnapshot.topicReaderText.includes(surfaceSnapshot.draft)
+  ) {
+    dialogFailures.push(`S91.14 topic reply reader did not enter written local-only state: ${JSON.stringify({ marker: surfaceSnapshot.topicReaderMarker, written: surfaceSnapshot.topicWrittenState, text: surfaceSnapshot.topicReaderText.slice(0, 180) })}`);
+  }
   if (
     surfaceSnapshot.courtDraftReaderMarker !== "s91-10-court-draft-reader" ||
     surfaceSnapshot.courtDraftReaderState !== "written" ||

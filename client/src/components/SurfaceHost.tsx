@@ -979,6 +979,7 @@ function buildTopicTurnDraftContext(options: {
 function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurface }) {
   const closeSurface = useUiStateStore((state) => state.closeSurface);
   const setActionDraft = useUiStateStore((state) => state.setActionDraft);
+  const actionDraft = useUiStateStore((state) => state.actionDraft);
   const currentSessionId = useUiStateStore((state) => state.currentSessionId);
   const currentSession = useGameSessionStore((state) => state.currentSession);
   const loadTopicSurface = useGameSessionStore((state) => state.loadTopicSurface);
@@ -998,6 +999,11 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
   const activeTopicDraft = isTopicSurface(activeSurface) && topicDraft?.sessionId === currentSessionId && topicDraft.surfaceId === activeSurface
     ? topicDraft
     : null;
+  const activeTopicDraftWrittenToMain = isTopicSurface(activeSurface) &&
+    actionDraft?.sessionId === currentSessionId &&
+    actionDraft.source === "role-surface" &&
+    actionDraft.targetPage === "game" &&
+    actionDraft.draftContext?.surfaceId === activeSurface;
   const [selectedEvidenceRefs, setSelectedEvidenceRefs] = useState<readonly string[]>([]);
   const [draftKind, setDraftKind] = useState("");
   const [playerNote, setPlayerNote] = useState("");
@@ -1170,6 +1176,7 @@ function LocalSurfaceHost({ activeSurface }: { readonly activeSurface: LocalSurf
             selectedEvidenceRefs={activeSelectedEvidenceRefs}
             status={topicSurfaceStatus}
             draftStatus={topicDraftStatus}
+            draftWrittenToMain={activeTopicDraftWrittenToMain}
             topicView={topicView}
             onDraftKindChange={updateDraftKind}
             onDraftTextChange={updateDraftText}
@@ -1523,6 +1530,7 @@ type TopicReadRow = {
 function buildTopicReadRows(options: {
   readonly draftStatus: "idle" | "loading" | "ready" | "error";
   readonly draftText: string;
+  readonly draftWrittenToMain: boolean;
   readonly materialState: "loading" | "error" | "ready" | "empty";
   readonly selectedEvidenceRefs: readonly string[];
   readonly topicView: TopicSurfaceView | null;
@@ -1558,6 +1566,19 @@ function buildTopicReadRows(options: {
         ? "可写入底部奏折"
         : "草稿待拟",
       detail: "写入底部奏折只留案头草稿，不推进回合。"
+    },
+    {
+      label: "候复",
+      value: options.draftWrittenToMain
+        ? "主卷待呈"
+        : options.draftText.trim()
+        ? "可写入"
+        : options.materialState === "error"
+        ? "材料候取"
+        : "候落稿",
+      detail: options.draftWrittenToMain
+        ? "专题草稿已入底部奏折，仍候主卷回音。"
+        : "专题层只整理草稿线索；呈递后才由主卷回批。"
     }
   ];
 }
@@ -1568,6 +1589,7 @@ function TopicSurfaceWorkbench({
   draftKind,
   draftStatus,
   draftText,
+  draftWrittenToMain,
   entryDraft,
   error,
   playerNote,
@@ -1586,6 +1608,7 @@ function TopicSurfaceWorkbench({
   readonly draftKind: string;
   readonly draftStatus: "idle" | "loading" | "ready" | "error";
   readonly draftText: string;
+  readonly draftWrittenToMain: boolean;
   readonly entryDraft: string;
   readonly error: string | null;
   readonly playerNote: string;
@@ -1609,6 +1632,7 @@ function TopicSurfaceWorkbench({
   const topicReadRows = buildTopicReadRows({
     draftStatus,
     draftText: finalDraftText,
+    draftWrittenToMain,
     materialState,
     selectedEvidenceRefs,
     topicView
@@ -1628,12 +1652,20 @@ function TopicSurfaceWorkbench({
   }
 
   return (
-    <div className="topicSurfaceLayout" data-surface-id={activeSurface} data-material-state={materialState} data-draft-state={draftState}>
+    <div
+      className="topicSurfaceLayout"
+      data-surface-id={activeSurface}
+      data-material-state={materialState}
+      data-draft-state={draftState}
+      data-topic-written-state={draftWrittenToMain ? "written" : "idle"}
+    >
       <dl
         className="surfaceSafetyList topicSurfaceReadRail"
         aria-label="专题层读法"
         data-polish-topic-reader="s90-4-archive-court-reader"
         data-topic-reader-state={materialState}
+        data-topic-written-state={draftWrittenToMain ? "written" : "idle"}
+        aria-live="polite"
       >
         {topicReadRows.map((row) => (
           <div className="surfaceSafetyRow paperMotionSurface" key={row.label}>
