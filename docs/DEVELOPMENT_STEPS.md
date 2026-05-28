@@ -138,7 +138,7 @@
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现 S91.17：领域后果范围上限口径 polish 已完成，提交哈希待补记。`DomainConsequenceSection` 在调用处传入 `sourceTypes` 时，顶部 summary/cap line 只按过滤后的公开后果说明当前页范围；过滤后无可见后果时不再按全局 `view.caps` 显示公开追踪数；过滤后有可见后果时，只按本页可见范围说明数量与本地 `maxItems` 上限。仍只改 React 前端读法、source canary、Vitest 和文档，不新增 route/API/schema、AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。
+- 最新实现 S91.17：领域后果范围上限口径 polish 已完成，代码实现提交为 `7f4fb463`（`Polish domain consequence scoped counts`）。`DomainConsequenceSection` 在调用处传入 `sourceTypes` 时，顶部 summary/cap line 只按过滤后的公开后果说明当前页范围；过滤后无可见后果时不再按全局 `view.caps` 显示公开追踪数；过滤后有可见后果时，只按本页可见范围说明数量与本地 `maxItems` 上限。仍只改 React 前端读法、source canary、Vitest 和文档，不新增 route/API/schema、AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。
 - S91.17 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全 `domainConsequenceView` 与调用处传入的 sourceTypes/maxItems，不把范围摘要、上限说明、后果追踪或空态改写成资源、任免、赏罚、定罪、交易、调兵、人物资产、关系或时间推进事实。
 - 最近完整运行态验证来自 S91.17：`npm run typecheck:client`、`npm run typecheck:server`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js --test-name-pattern "S91.17 domain consequence scoped cap|S91.15 domain consequence reader"`（实际完整 118 tests 通过）、S91.17 focused Vitest（3 passed / 75 skipped）、完整 App Vitest（78 tests）、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-17-domain-consequence-scope-smoke`、`npm run check:docs-governance`、`git diff --check`（仅既有未触碰归档/素材 CRLF warning）和 `npm test`（1232 tests）已通过；提交前只读复审代理 `019e69e1-f179-75a3-9098-77945ffd0138` 未发现阻塞问题。
 
@@ -168,7 +168,7 @@
 - 边界：本步只改 React 前端共享后果卡、客户端测试、source canary 和文档；不新增 route/API/schema、AI 权限、provider/prompt 能力、依赖、素材、存档字段或服务器裁决。浏览器仍只消费现有安全 `domainConsequenceView` 与调用处传入的 sourceTypes/maxItems；范围摘要、上限说明、后果追踪或空态不得被改写成资源、任免、赏罚、定罪、交易、调兵、人物资产、关系或时间推进事实。
 - 验证：已通过 `npm run typecheck:client`、`node --test test/reactClientScaffold.test.js --test-name-pattern "S91.17 domain consequence scoped cap|S91.15 domain consequence reader"`（实际完整 118 tests）、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx -t "domain consequence|S72 map"`（3 passed / 75 skipped）、`node --check scripts/clientSmoke.js`、完整 App Vitest（78 tests）、`npm run build:client`、`npm run budget:client`、`npm run check:docs-governance`、`npm run typecheck:server`、`git diff --check`、`node scripts/clientSmoke.js --screenshots artifacts/s91-17-domain-consequence-scope-smoke` 和 `npm test`（1232 tests）；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
 - 子代理复审：提交前只读复审代理 `019e69e1-f179-75a3-9098-77945ffd0138` 未发现阻塞问题；低风险提醒为 scoped summary/cap 统计 `visibleConsequenceRows` 而非最终 `items`，若未来出现 sourceType 匹配但标题、摘要和后续均被清洗为空的异常行，顶部数量可能略高于列表条目，当前 safe view 预期下不阻塞。代理额外复跑 `node --check scripts/clientSmoke.js`、S91.17/S91.15 source canary、S91.17 focused Vitest 和 docs governance，确认未编辑文件、未运行任何 Git 命令、未创建 PR。
-- 提交：S91.17 实现提交待完成后补记。
+- 提交：S91.17 实现提交 `7f4fb463`（`Polish domain consequence scoped counts`）；本哈希记录随低风险纯文档后续提交补入台账。
 
 ### 2026-05-28：S91.16 史册议程月报互证校阅 polish 完成
 
