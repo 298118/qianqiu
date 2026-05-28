@@ -137,10 +137,13 @@
 | S91.18 | DONE | 专题层候复播报与证据空态 polish | 已收束既有 `SurfaceHost` 专题层读法播报：把整组四读 live region 改为单行候复状态播报，并在公开证据为空时显示明确空态；browser smoke 旧案列表等待同步加固为等待当前案卷刷新完成；不新增 route/API/schema、AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S92.1 | DONE | AI 编排 v2 路线图与 baseline | 已新增 `docs/AI_ORCHESTRATION_V2_ROADMAP.md`、`docs/AI_V2_BASELINE_REPORT.md`、`scripts/aiBaselineSnapshot.js`、`npm run ai:baseline` 和 baseline/eval artifact 测试；只生成 hidden-safe 结构摘要与 ignored artifact，不改变运行时 AI 行为、provider facade、prompt、tool 权限、API/schema、存档、SQLite、浏览器 UI 或服务器裁决。 |
 | S92.2 | DONE | AI Task Runtime 骨架 | 已新增旁路 `src/ai/runtime/` 骨架、ProviderAdapter 合约、预算/trace/fallback 与 Mock-only 结构化任务单测；先覆盖 `opening`、`quick_action`、`topic_draft`，默认 provider facade、现有 route/API、prompt、存档、SQLite、浏览器 UI 和服务器裁决保持不接管。 |
+| S92.3 | DONE | OpenAI ProviderAdapter strict structured output 兼容层 | 已新增旁路 OpenAI adapter 与 provider response normalizer：支持 route opt-in `allowStrictSchema` 的 strict JSON schema 请求、strict 不支持时降级重试、Responses/Chat 输出归一化、usage 摘要、fake client 测试和 Ajv/runtime fallback 兜底；不替换旧 `createOpenAiProvider` / `getProvider` 路径，不新增默认真实 provider 触发面或服务器裁决权。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
+- 当前步骤 S92.3：OpenAI ProviderAdapter strict structured output 兼容层已完成。新增 `src/ai/providers/providerResponseNormalizer.js` 与 `src/ai/providers/openaiAdapter.js`，先作为旁路 adapter 暴露，不接管旧 `createOpenAiProvider`、`getProvider`、streaming、route/API、prompt、存档、SQLite、浏览器 UI 或服务器裁决。
+- S92.3 支持 route opt-in `allowStrictSchema` 时向 OpenAI Responses / Chat-compatible fake client 发送 `json_schema strict:true`；未 opt-in 或 provider/capability 不支持 strict 时保持 `strict:false`，strict 请求被 provider 拒绝时会以非 strict schema 请求重试。无论 strict 与否，返回都必须经 `normalizeModelPayload()` 与 `validatePayload()`，失败交给 runtime fallback，adapter 返回值不携带 raw request/response/prompt/provider payload/key/base URL。
 - 当前步骤 S92.2：AI Task Runtime 骨架已完成。新增旁路 `AiTaskRuntime`、ProviderAdapter 合约、runtime budget、public-safe trace 和 fallback policy；先覆盖 Mock-only/test-only 的 `opening`、`quick_action`、`topic_draft` 三类低风险结构化任务，默认 `getProvider` / route/API / provider facade 不切换。
 - S92.2 保持 no-tool / no-adjudication / no-state-write / no-server-resolver 边界；非 mock route 或 adapter 默认不会触达真实 provider，而是落入 schema-valid Mock fallback。public trace 只发布 task/route/provider/model/budget/validation/usage/tool/fallback 等 bounded metadata，不发布 raw prompt、provider payload、`worldState`、`statePatch`、key、base URL、本地路径或内部 `server.*` 引用。
 - S92.2 验证已通过 `node --check src/ai/providerSafety.js`、`node --check src/ai/providers/adapterContract.js`、`node --check src/ai/runtime/aiBudgetManager.js`、`node --check src/ai/runtime/aiFallbackPolicy.js`、`node --check src/ai/runtime/aiTaskTrace.js`、`node --check src/ai/runtime/aiTaskRuntime.js`、`node --test test/aiTaskRuntime.test.js test/aiTaskTrace.test.js test/aiFallbackPolicy.test.js`、`node --test test/streamingTurnRoute.test.js --test-name-pattern "S88.12 no-key real provider falls back"`、`npm run eval:ai`、`npm run typecheck:server`、`npm run check:docs-governance`、`git diff --check`，以及 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4`（合计 1252 tests）。单条 `npm test` 两次在全量并发下停于旧 `S88.12 no-key real provider falls back ...` 的 `fetch failed / ECONNRESET`，同一文件聚焦复跑和分片全量均通过。
@@ -149,6 +152,25 @@
 - S92.1 聚焦验证已通过 `node --check scripts/aiBaselineSnapshot.js`、`node --check scripts/aiEvaluationRunner.js`、`npm run ai:baseline`、`npm run eval:ai`、`npm run typecheck:server`、`npm run check:docs-governance`、`git diff --check`、`node --test test/aiBaselineSnapshot.test.js` 和 `node --test test/aiEvaluationRunner.test.js test/aiBaselineSnapshot.test.js`；全量 Node 测试已按 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4` 跑完，合计 1238 tests。单条 `npm test` 在 124s/304s 外层超时截断且无断言失败输出，等价分片全量已通过；提交前只读复审代理 `019e6f0d-53c6-7a61-8924-dd7706cdd2a6` 未发现阻塞问题，非阻塞建议已采纳，补充复审确认 follow-up 无新增风险。
 
 ## 6. 最近完整验证口径
+
+S92.3 当前验证锚点：
+
+- `node --check src/ai/providers/providerResponseNormalizer.js`
+- `node --check src/ai/providers/openaiAdapter.js`
+- `node --check test/providerResponseNormalizer.test.js`
+- `node --check test/openaiAdapter.test.js`
+- `node --test test/providerResponseNormalizer.test.js test/openaiAdapter.test.js`（12 tests）
+- `node --test test/aiTaskRuntime.test.js test/aiTaskTrace.test.js test/aiFallbackPolicy.test.js test/remoteHelpers.test.js test/modelRoutePolicy.test.js`（39 tests）
+- `npm run eval:ai`
+- `npm run typecheck:server`
+- `npm run check:docs-governance`
+- `git diff --check`（仅 `src/contracts/serverContracts.ts` 既有/平台换行提示）
+- `node --test --test-shard=1/4 test/*.test.js`（410 tests）
+- `node --test --test-shard=2/4 test/*.test.js`（279 tests）
+- `node --test --test-shard=3/4 test/*.test.js`（262 tests）
+- `node --test --test-shard=4/4 test/*.test.js`（312 tests）
+
+说明：四片全量 Node 测试合计 1263 tests 已全部通过；本轮未运行单条 `npm test`，以同一 Node test runner 的四片全量替代，避免旧全量并发下偶发 SSE `ECONNRESET` 干扰。
 
 S92.2 当前验证锚点：
 
@@ -205,6 +227,17 @@ S91.18 运行态完整验证锚点：
 - `npm test`（1233 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-28：S92.3 OpenAI ProviderAdapter strict structured output 兼容层完成
+
+- 范围：新增 `src/ai/providers/providerResponseNormalizer.js`、`src/ai/providers/openaiAdapter.js`、`test/providerResponseNormalizer.test.js`、`test/openaiAdapter.test.js`；`src/contracts/serverContracts.ts` 增加可选 `AiModelRoute.allowStrictSchema`，`tsconfig.server-check.json` 纳入两个新 provider 模块。
+- ProviderAdapter：`createOpenAiAdapter()` 只作为旁路 adapter 使用，支持 fake `responses.create`、fake `chat.completions.create` 和 `requestJson` 注入；`buildOpenAiStructuredRequest()` 按 route/model/token/temperature 构造 Responses `text.format.type=json_schema`，只有 route 显式 `allowStrictSchema` 且 capability 支持时才发 `strict:true`。
+- 降级与校验：strict schema 请求被 provider 拒绝时会以 `strict:false` 重试；未 opt-in 或不支持 strict 时仍发送 schema-constrained JSON 请求。无论 strict 与否，响应都通过 `providerResponseNormalizer` 抽取 Responses `output_text`、`output[].content[].text`、Chat `choices[].message.content` 或 parsed object，再经 `normalizeModelPayload()` 与 `validatePayload()`；坏 JSON、额外字段、raw provider 字段或 schema 失败不会进入 ok payload，会交给 runtime fallback。
+- 安全边界：adapter 返回值只含 `payload/provider/model/usage/strictStructuredOutput` 等 bounded metadata，不返回 raw request、raw response、prompt、instructions、input、key、base URL、本地路径或 provider payload；runtime fallback trace 继续沿用 S92.2 public-safe trace 和 `providerSafety` redaction。
+- 旧路径：不修改旧 `src/ai/providers/openai.js`、`createOpenAiProvider()`、`getProvider()`、`streamTurn()`、route/API、prompt/schema/tool 权限、存档、SQLite、浏览器 UI、素材或服务器裁决；Mock/no-key 默认可玩路径不切换。
+- 子代理：只读探查代理 `019e6f57-05d0-70d2-b93b-a09ba29b3c7f` 检查旧 provider、remote helpers、adapter contract、route policy、schema 与测试，建议保留旧 facade、补 Responses/Chat fake client、strict 降级、Ajv 兜底和 raw payload 安全扫描；代理未编辑文件、未运行 Git 命令、未创建 PR。提交前只读复审代理 `019e6f6c-a2a9-7c93-9798-b3347bf80220` 未发现阻塞问题；非阻塞建议为 `allowStrictSchema` 应严格要求布尔 `true`、并补 capability 不支持 strict 的测试，已采纳。补充复审确认 follow-up 无阻塞；代理确认未编辑文件、未运行 Git 命令、未创建 PR。
+- 验证：已通过 `node --check` 新增 provider/test 文件、`node --test test/providerResponseNormalizer.test.js test/openaiAdapter.test.js`（复审 follow-up 后 12 tests）、S92.2/runtime/remote/modelRoute 聚焦测试、`npm run eval:ai`、`npm run typecheck:server`、`npm run check:docs-governance`、`git diff --check`（仅 `src/contracts/serverContracts.ts` 既有/平台换行提示），以及 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4`（410 + 279 + 262 + 312 = 1263 tests）。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-28：S92.2 AI Task Runtime 骨架完成
 

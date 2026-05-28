@@ -730,6 +730,7 @@ export type AiModelRoute = {
   readonly mayCallServerResolvers: false;
   readonly reviewerOnly: boolean;
   readonly fallbackProvider: "mock";
+  readonly allowStrictSchema?: boolean;
   readonly audit?: JsonObject;
 };
 

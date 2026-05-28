@@ -151,10 +151,17 @@ git diff --check
 - 测试使用 fake client，不调用真实网络。
 - 不支持 strict 的 provider 必须降级到 `strict=false + Ajv validate + normalization/fallback`，不得直接信任 provider 输出。
 
+S92.3 已落地范围：
+
+- 新增 `src/ai/providers/providerResponseNormalizer.js`，支持 Responses `output_text`、Responses `output[].content[].text`、Chat `choices[].message.content` / content parts、parsed object 和 usage 摘要，最终仍调用 `normalizeModelPayload()` 与 `validatePayload()`。
+- 新增 `src/ai/providers/openaiAdapter.js`，支持 OpenAI Responses / Chat-compatible fake client 与 `requestJson` 注入；route 显式 `allowStrictSchema` 且 capability 支持时发送 `json_schema strict:true`，否则保持 `strict:false`。
+- strict schema 请求被 provider 拒绝时，以非 strict schema 请求重试；坏 JSON、schema 失败或 raw/provider 污染不进入 ok payload，而交由 runtime fallback。
+- `src/ai/providers/openai.js`、`getProvider()`、streaming、route/API、prompt/tool 权限、存档和服务器裁决均未切换。
+
 验收：
 
 ```bash
-node --test test/openAiAdapter.test.js test/providerResponseNormalizer.test.js
+node --test test/openaiAdapter.test.js test/providerResponseNormalizer.test.js
 npm run eval:ai
 npm run smoke:provider:tools
 ```

@@ -23,6 +23,8 @@
     "src/ai/index.js",
     "src/ai/modelRoutePolicy.js",
     "src/ai/providerSafety.js",
+    "src/ai/providers/openaiAdapter.js",
+    "src/ai/providers/providerResponseNormalizer.js",
     "src/ai/providers/remoteHelpers.js",
     "src/routes/routeResponses.js",
     "src/storage/sessionRecord.js",
