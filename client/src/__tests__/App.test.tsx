@@ -7347,6 +7347,46 @@ describe("S74.1 React client shell", () => {
               riskTags: ["风宪"]
             }]
           }
+        },
+        worldThreadView: {
+          activeThreads: [{
+            id: "WT-archive-agenda-1",
+            sourceLabel: "朝议后续",
+            statusLabel: "待筹议",
+            title: "河工钱粮议程",
+            summary: "河工钱粮仍候诸司公开议程互证，不在史册页定夺。",
+            followUpHint: "可入朝议页整理材料。"
+          }, {
+            id: "WT-archive-polluted",
+            sourceLabel: "raw audit",
+            statusLabel: "hidden",
+            title: "provider payload",
+            summary: "backend model server /home/alice/world-thread.json"
+          }],
+          recentResolved: [{ id: "WT-archive-done", title: "旧议程已结", outcome: "已归档" }]
+        },
+        playerMonthlyBriefingView: {
+          active: true,
+          latest: {
+            reportId: "PMB-1644-03",
+            periodLabel: "明1644年三月月报",
+            title: "清河县月报",
+            publicSummary: "首月差事与平粜余波已归入公开官职月报。",
+            sections: [{ title: "钱粮", publicSummary: "公开月报摘录。" }],
+            actionItems: ["择要复核"],
+            riskItems: ["民心"]
+          },
+          recentReports: [{ reportId: "PMB-1644-03", publicSummary: "三月月报已成。" }],
+          hiddenNotice: "raw audit provider payload"
+        },
+        sessionSummaryView: {
+          recentMonthlySummaries: [{
+            periodKey: "1644-03",
+            periodLabel: "三月",
+            title: "三月经历摘要",
+            publicSummary: "本月经历摘要只记公开回批与已入册线索。"
+          }],
+          hiddenNotice: "data/sessions/private.json"
         }
       },
       status: "ready"
@@ -7412,6 +7452,20 @@ describe("S74.1 React client shell", () => {
     expect(within(archiveTrace).getByRole("link", { name: "查人物" }).getAttribute("href")).toBe("/game/74747474-1111-4111-8111-747474747474/people");
     expect(within(archiveTrace).getByRole("link", { name: "入朝议" }).getAttribute("href")).toBe("/game/74747474-1111-4111-8111-747474747474/court");
     expect(within(archiveTrace).getByRole("link", { name: "回主卷候复" }).getAttribute("href")).toBe("/game/74747474-1111-4111-8111-747474747474");
+    const agendaReader = archivePanel.querySelector("[data-polish-archive-agenda-reader='s91-16-archive-agenda-reader']") as HTMLElement;
+    expect(agendaReader).toBeTruthy();
+    expect(agendaReader.getAttribute("data-archive-agenda-state")).toBe("ready");
+    expect(agendaReader.querySelectorAll("dt")).toHaveLength(4);
+    expect(agendaReader.textContent || "").toContain("议程月报互证");
+    expect(agendaReader.textContent || "").toContain("世界议程、月报与史册旁证");
+    expect(agendaReader.textContent || "").toContain("1 条公开议程");
+    expect(agendaReader.textContent || "").toContain("明1644年三月月报");
+    expect(agendaReader.textContent || "").toContain("5 条旁证 · 1 份经历");
+    expect(agendaReader.textContent || "").toContain("河工钱粮议程");
+    expect(agendaReader.textContent || "").toContain("清河县月报");
+    expect(agendaReader.textContent || "").toContain("三月经历摘要");
+    expect(agendaReader.textContent || "").toContain("不回显草稿正文");
+    expect(agendaReader.textContent || "").not.toMatch(/provider payload|raw audit|hidden|backend|model|server|\/home\/alice|data\/sessions/i);
     expect(archive.getByRole("list", { name: "史册近次线索" })).toBeTruthy();
     expect(archive.getAllByText("平粜余波").length).toBeGreaterThan(0);
     expect(archive.getByText("同年文社压力留痕")).toBeTruthy();
@@ -7437,6 +7491,9 @@ describe("S74.1 React client shell", () => {
     expect(archiveDraftReader.textContent || "").toContain("本地史册札记已入底部奏折，仍候主卷回音。");
     expect(archiveDraftReader.textContent || "").toContain("主卷待呈");
     expect(archiveDraftReader.textContent || "").not.toContain("平粜余波");
+    expect(agendaReader.textContent || "").toContain("主卷待呈");
+    expect(agendaReader.textContent || "").toContain("本地史册札记已入底部奏折，仍候主卷回音。");
+    expect(agendaReader.textContent || "").not.toContain("据史册公开条目");
     fireEvent.click(archive.getByRole("button", { name: "续记后果" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "archive-view",

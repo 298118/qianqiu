@@ -2583,6 +2583,63 @@ test("S91.15 domain consequence reader stays public-consequence-view-only and fr
   );
 });
 
+test("S91.16 archive agenda reader stays safe-view-only and frontend-only", () => {
+  const archivePageSource = readText("client/src/pages/ArchivePage.tsx");
+  const mapArchiveStyleSource = readClientStyleModule("routes/map-archive.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerDataStart = archivePageSource.indexOf("function buildArchiveAgendaReaderRows");
+  const readerDataEnd = archivePageSource.indexOf("export function ArchivePage", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? archivePageSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const markupStart = archivePageSource.indexOf('data-polish-archive-agenda-reader="s91-16-archive-agenda-reader"');
+  const markupEnd = archivePageSource.indexOf('className="archiveTraceGrid"', markupStart);
+  const readerMarkup = markupStart >= 0 && markupEnd > markupStart
+    ? archivePageSource.slice(markupStart, markupEnd)
+    : "";
+  const runtimeCombined = stripSafeGuardPatterns(`${archivePageSource}\n${mapArchiveStyleSource}`);
+
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.ok(markupStart >= 0 && markupEnd > markupStart);
+  assert.match(archivePageSource, /type ArchiveAgendaReaderRow/);
+  assert.match(archivePageSource, /type ArchiveAgendaHighlight/);
+  assert.match(archivePageSource, /function buildArchiveThreadHighlights/);
+  assert.match(archivePageSource, /function buildMonthlyBriefingHighlight/);
+  assert.match(archivePageSource, /function buildSessionSummaryHighlights/);
+  assert.match(archivePageSource, /"server",[\s\S]*"backend",[\s\S]*"model"/);
+  assert.match(archivePageSource, /worldThreadView/);
+  assert.match(archivePageSource, /playerMonthlyBriefingView/);
+  assert.match(archivePageSource, /sessionSummaryView/);
+  assert.match(readerDataBlock, /threadCount/);
+  assert.match(readerDataBlock, /monthlyHighlight/);
+  assert.match(readerDataBlock, /sessionSummaryCount/);
+  assert.match(readerDataBlock, /sideEvidenceCount/);
+  assert.match(readerDataBlock, /hasArchiveDraft/);
+  assert.match(readerDataBlock, /本地史册札记已入底部奏折，仍候主卷回音/);
+  assert.match(readerMarkup, /议程月报互证/);
+  assert.match(readerMarkup, /世界议程、月报与史册旁证/);
+  assert.match(readerMarkup, /只读本案公开世界议程、官职月报、经历摘要与史册旁证/);
+  assert.match(readerMarkup, /不回显草稿正文/);
+  assert.match(readerMarkup, /不把互证读法改写成考成、任免、关系、交易、定罪或时间推进事实/);
+  assert.doesNotMatch(readerDataBlock, /setActionDraft|submitTurn|\/api\/game\/turn|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|provider payload|raw audit|hiddenNotes|\bserver\b|\bbackend\b|\bmodel\b|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/);
+  assert.doesNotMatch(readerMarkup, /setActionDraft|actionDraft\.text|submitTurn|\/api\/game\/turn|provider payload|raw audit|hiddenNotes|\bserver\b|\bbackend\b|\bmodel\b|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|\/home\/alice|data\/sessions/);
+  assert.doesNotMatch(archivePageSource, /worldThreadView[\s\S]{0,260}setActionDraft/);
+
+  assert.match(mapArchiveStyleSource, /\.archiveAgendaReader \{/);
+  assert.match(mapArchiveStyleSource, /\.archiveAgendaReaderGrid \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(mapArchiveStyleSource, /\.archiveAgendaHighlightList \{[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(mapArchiveStyleSource, /@media \(max-width: 760px\)[\s\S]*\.archiveAgendaReaderGrid,[\s\S]*\.archiveAgendaHighlightList \{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(appTestSource, /s91-16-archive-agenda-reader/);
+  assert.match(appTestSource, /议程月报互证/);
+  assert.match(clientSmokeSource, /s91-16-archive-agenda-reader/);
+  assert.match(clientSmokeSource, /S91\.16 archive agenda reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S91.14 topic surface reply reader stays local-topic-write-state-only and frontend-only", () => {
   const surfaceHostSource = readText("client/src/components/SurfaceHost.tsx");
   const overlaysStyle = readClientStyleModule("components/overlays-surfaces.css");

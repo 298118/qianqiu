@@ -874,6 +874,7 @@ async function assertArchiveDigestPolish(page, label) {
     const draftReader = document.querySelector("[data-polish-archive-draft-reader='s91-9-archive-draft-reader']");
     const flow = document.querySelector("[data-polish-archive-flow='s90-4-archive-court-reader']");
     const crossTrace = document.querySelector("[data-polish-cross-trace='s89-36-cross-page-trace'][data-cross-trace-page='archive']");
+    const agendaReader = document.querySelector("[data-polish-archive-agenda-reader='s91-16-archive-agenda-reader']");
     const crossTraceCard = crossTrace?.querySelector(".crossPageTraceGrid article");
     const crossTraceCardStyle = crossTraceCard ? window.getComputedStyle(crossTraceCard) : null;
     const traceGrid = document.querySelector(".archiveTraceGrid");
@@ -900,6 +901,10 @@ async function assertArchiveDigestPolish(page, label) {
       flowMarker: flow?.getAttribute("data-polish-archive-flow") || "",
       flowState: flow?.getAttribute("data-archive-flow-state") || "",
       flowText: flow?.textContent || "",
+      agendaReaderMarker: agendaReader?.getAttribute("data-polish-archive-agenda-reader") || "",
+      agendaReaderState: agendaReader?.getAttribute("data-archive-agenda-state") || "",
+      agendaReaderRows: agendaReader ? agendaReader.querySelectorAll("dt").length : 0,
+      agendaReaderText: agendaReader?.textContent || "",
       shellMotion: document.querySelector(".appShell")?.getAttribute("data-motion") || "",
       reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       hasCrossTrace: Boolean(crossTrace),
@@ -958,6 +963,19 @@ async function assertArchiveDigestPolish(page, label) {
   ) {
     failures.push(`S90.4 archive flow reader missing: ${JSON.stringify({ marker: snapshot.flowMarker, state: snapshot.flowState, text: snapshot.flowText.slice(0, 160) })}`);
   }
+  const agendaReaderRequiredText = ["议程月报互证", "世界议程、月报与史册旁证", "议程", "月报", "互证", "候复", "不回显草稿正文", "不把互证读法改写成考成、任免、关系、交易、定罪或时间推进事实"];
+  const missingAgendaReaderText = agendaReaderRequiredText.filter((requiredText) => !snapshot.agendaReaderText.includes(requiredText));
+  if (
+    snapshot.agendaReaderMarker !== "s91-16-archive-agenda-reader" ||
+    !/^(ready|empty|unsupported)$/.test(snapshot.agendaReaderState) ||
+    snapshot.agendaReaderRows !== 4 ||
+    missingAgendaReaderText.length
+  ) {
+    failures.push(`S91.16 archive agenda reader missing: ${JSON.stringify({ marker: snapshot.agendaReaderMarker, state: snapshot.agendaReaderState, rows: snapshot.agendaReaderRows, text: snapshot.agendaReaderText.slice(0, 180) })}`);
+  }
+  if (/\/api\/game\/turn|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|draftContext|schema|manifest|\bserver\b|\bbackend\b|\bmodel\b|server adjudication|AI read scope|proposal boundary|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/i.test(snapshot.agendaReaderText)) {
+    failures.push(`S91.16 archive agenda reader leaked unsafe copy: ${snapshot.agendaReaderText.slice(0, 180)}`);
+  }
   if (!snapshot.hasCrossTrace || !/^(ready|empty)$/.test(snapshot.crossTraceState)) {
     failures.push(`missing S89.36 archive cross trace: ${JSON.stringify({ hasCrossTrace: snapshot.hasCrossTrace, crossTraceState: snapshot.crossTraceState })}`);
   }
@@ -994,20 +1012,27 @@ async function assertArchiveDraftReaderWritten(page, label) {
   await page.getByRole("button", { name: "据此拟稿" }).first().click();
   const snapshot = await page.evaluate(() => {
     const reader = document.querySelector("[data-polish-archive-draft-reader='s91-9-archive-draft-reader']");
+    const agendaReader = document.querySelector("[data-polish-archive-agenda-reader='s91-16-archive-agenda-reader']");
     return {
       marker: reader?.getAttribute("data-polish-archive-draft-reader") || "",
       state: reader?.getAttribute("data-archive-draft-state") || "",
       text: reader?.textContent || "",
+      agendaState: agendaReader?.getAttribute("data-archive-agenda-state") || "",
+      agendaText: agendaReader?.textContent || "",
       forbiddenText: (reader?.textContent || "").match(/平粜余波|同年文社压力留痕|\/api\/game\/turn|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|draftContext|schema|manifest|server adjudication|AI read scope|proposal boundary|safe view|resolver|sourceRef|relatedRefs|scopeRefs|worldState|payload|[a-z]:[\\/]|\/(?:home|mnt|tmp|var|etc|usr|opt|workspace|workspaces|root|data|src|client|server|dist|public|node_modules)(?:[\\/]|$)/gi) || []
     };
   });
   const requiredWrittenText = ["已入主卷", "本地史册札记已入底部奏折", "主卷待呈"];
   const missingWrittenText = requiredWrittenText.filter((requiredText) => !snapshot.text.includes(requiredText));
+  const requiredAgendaWrittenText = ["本地史册札记已入底部奏折", "主卷待呈"];
+  const missingAgendaWrittenText = requiredAgendaWrittenText.filter((requiredText) => !snapshot.agendaText.includes(requiredText));
   if (
     snapshot.marker !== "s91-9-archive-draft-reader" ||
     snapshot.state !== "written" ||
     missingWrittenText.length ||
-    snapshot.forbiddenText.length
+    snapshot.forbiddenText.length ||
+    missingAgendaWrittenText.length ||
+    snapshot.agendaText.includes("据史册公开条目")
   ) {
     throw new Error(`${label} S91.9 archive draft reader written state failed: ${JSON.stringify(snapshot)}`);
   }

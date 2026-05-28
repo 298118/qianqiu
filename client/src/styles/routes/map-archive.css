@@ -1107,6 +1107,113 @@ li[data-draft-state="written"] {
   font-weight: 900;
 }
 
+.archiveAgendaReader {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .22);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .72), rgb(226 210 180 / .42)),
+    var(--qq-material-folded) center / cover no-repeat;
+  padding: 14px;
+}
+
+.archiveAgendaReader .sectionTitleRow {
+  margin-bottom: 0;
+}
+
+.archiveAgendaReader .sectionTitleRow p {
+  margin: 4px 0 0;
+  color: #604b38;
+  line-height: 1.58;
+  overflow-wrap: anywhere;
+}
+
+.archiveAgendaReader .sectionTitleRow > span {
+  border: 1px solid rgb(142 47 39 / .34);
+  background: rgb(142 47 39 / .08);
+  color: #7b241f;
+  font-size: .78rem;
+  font-weight: 900;
+  padding: 5px 8px;
+}
+
+.archiveAgendaReaderGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.archiveAgendaReaderGrid div,
+.archiveAgendaHighlightList li,
+.archiveAgendaEmpty {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .18);
+  background: rgb(255 252 238 / .58);
+  padding: 10px;
+}
+
+.archiveAgendaReaderGrid dt {
+  color: #7a6048;
+  font-size: .74rem;
+  font-weight: 900;
+}
+
+.archiveAgendaReaderGrid dd {
+  margin: 4px 0 0;
+  color: #514232;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.archiveAgendaReaderGrid dd:first-of-type {
+  color: #7b241f;
+  font-weight: 900;
+}
+
+.archiveAgendaHighlightList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.archiveAgendaHighlightList li {
+  display: grid;
+  gap: 6px;
+}
+
+.archiveAgendaHighlightList span {
+  color: #765b43;
+  font-size: .76rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.archiveAgendaHighlightList strong {
+  color: #7b241f;
+  overflow-wrap: anywhere;
+}
+
+.archiveAgendaHighlightList p,
+.archiveAgendaEmpty,
+.archiveAgendaBoundary {
+  margin: 0;
+  color: #604b38;
+  line-height: 1.58;
+  overflow-wrap: anywhere;
+}
+
+.archiveAgendaBoundary {
+  border-top: 1px dashed rgb(84 60 43 / .18);
+  padding-top: 9px;
+  font-size: .84rem;
+  font-weight: 800;
+}
+
 .archiveTraceGrid {
   display: grid;
   grid-template-columns: minmax(340px, 1.08fr) minmax(300px, 0.92fr);
@@ -1422,6 +1529,11 @@ li[data-draft-state="written"] {
 
   .archiveDraftReader,
   .archiveDraftReader dl {
+    grid-template-columns: 1fr;
+  }
+
+  .archiveAgendaReaderGrid,
+  .archiveAgendaHighlightList {
     grid-template-columns: 1fr;
   }
 

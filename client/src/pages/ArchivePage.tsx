@@ -40,6 +40,20 @@ type ArchiveDraftReaderRow = {
   readonly detail: string;
 };
 
+type ArchiveAgendaReaderRow = {
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
+};
+
+type ArchiveAgendaHighlight = {
+  readonly id: string;
+  readonly sourceLabel: string;
+  readonly statusLabel: string;
+  readonly title: string;
+  readonly summary: string;
+};
+
 const archiveVisibleItemLimit = 12;
 
 const unsafeArchiveFragments = [
@@ -54,6 +68,9 @@ const unsafeArchiveFragments = [
   "manifest",
   "hidden",
   "sealed",
+  "server",
+  "backend",
+  "model",
   "server adjudication",
   "ai read scope",
   "proposal boundary",
@@ -80,6 +97,9 @@ const unsafeArchiveFragments = [
   "DEEPSEEK_API_KEY",
   "MIMO_API_KEY",
   "ANTHROPIC_API_KEY",
+  "服务器",
+  "后端",
+  "模型",
   "完整提示词",
   "提示词",
   "本地路径",
@@ -315,6 +335,118 @@ function buildArchiveDraftReaderRows(input: {
   ];
 }
 
+function buildArchiveThreadHighlights(worldThreadView: JsonObject): ArchiveAgendaHighlight[] {
+  const seen = new Set<string>();
+  return [...asArray(worldThreadView.activeThreads), ...asArray(worldThreadView.threads)]
+    .map(asRecord)
+    .flatMap((thread, index): ArchiveAgendaHighlight[] => {
+      const id = cleanArchivePageText(thread.id || thread.sourceId, `thread-${index}`, 96);
+      if (seen.has(id)) return [];
+      const title = cleanArchivePageText(thread.title, "", 72);
+      const summary = cleanArchivePageText(thread.summary || thread.followUpHint || thread.goal || thread.followUp, "", 150);
+      if (!title && !summary) return [];
+      seen.add(id);
+      return [{
+        id,
+        sourceLabel: cleanArchivePageText(thread.sourceLabel || thread.kind || thread.sourceType, "世界议程", 32),
+        statusLabel: cleanArchivePageText(thread.statusLabel || thread.status || thread.riskLabel, "可观察", 28),
+        title: title || "公开议程",
+        summary: summary || "公开议题已留痕，后续仍候主卷回音。"
+      }];
+    })
+    .slice(0, 4);
+}
+
+function countArchiveResolvedThreads(worldThreadView: JsonObject) {
+  return asArray(worldThreadView.recentResolved)
+    .map(asRecord)
+    .filter((thread) => cleanArchivePageText(thread.title, "", 72))
+    .length;
+}
+
+function buildMonthlyBriefingHighlight(monthlyBriefingView: JsonObject): ArchiveAgendaHighlight | null {
+  const latest = asRecord(monthlyBriefingView.latest);
+  const title = cleanArchivePageText(latest.title, "官职月报", 72);
+  const summary = cleanArchivePageText(latest.publicSummary, "", 150);
+  const periodLabel = cleanArchivePageText(latest.periodLabel || latest.periodKey, "", 36);
+  if (!summary && !periodLabel && !asArray(monthlyBriefingView.recentReports).length) return null;
+  const sectionCount = asArray(latest.sections).length;
+  const actionCount = asArray(latest.actionItems).length;
+  const riskCount = asArray(latest.riskItems).length;
+  return {
+    id: cleanArchivePageText(latest.reportId || latest.id || "monthly-briefing-latest", "monthly-briefing-latest", 96),
+    sourceLabel: "官职月报",
+    statusLabel: periodLabel || `${asArray(monthlyBriefingView.recentReports).length} 份近月`,
+    title,
+    summary: summary || `月报公开摘要候细读；本页只计 ${sectionCount} 段、${actionCount} 项、${riskCount} 风险。`
+  };
+}
+
+function buildSessionSummaryHighlights(sessionSummaryView: JsonObject): ArchiveAgendaHighlight[] {
+  return asArray(sessionSummaryView.recentMonthlySummaries)
+    .map(asRecord)
+    .map((summary, index) => ({
+      id: cleanArchivePageText(summary.id || summary.periodKey, `session-summary-${index}`, 96),
+      sourceLabel: "经历摘要",
+      statusLabel: cleanArchivePageText(summary.periodLabel || summary.periodKey, "近月", 36),
+      title: cleanArchivePageText(summary.title || "月度经历", "月度经历", 64),
+      summary: cleanArchivePageText(summary.publicSummary, "", 150)
+    }))
+    .filter((summary) => summary.summary)
+    .slice(-3)
+    .reverse();
+}
+
+function buildArchiveAgendaReaderRows(input: {
+  readonly threadCount: number;
+  readonly resolvedThreadCount: number;
+  readonly monthlyHighlight: ArchiveAgendaHighlight | null;
+  readonly monthlyReportCount: number;
+  readonly sessionSummaryCount: number;
+  readonly sideEvidenceCount: number;
+  readonly hasArchiveDraft: boolean;
+  readonly routeSessionSupported: boolean;
+}): ArchiveAgendaReaderRow[] {
+  return [
+    {
+      label: "议程",
+      value: !input.routeSessionSupported
+        ? "案卷暂不可读"
+        : input.threadCount
+        ? `${input.threadCount} 条公开议程`
+        : input.resolvedThreadCount
+        ? `${input.resolvedThreadCount} 条近结议程`
+        : "议程候载",
+      detail: "只读世界议程公开题名；未公开牵连不补造。"
+    },
+    {
+      label: "月报",
+      value: !input.routeSessionSupported
+        ? "月报停开"
+        : input.monthlyHighlight
+        ? input.monthlyHighlight.statusLabel
+        : input.monthlyReportCount
+        ? `近月 ${input.monthlyReportCount} 份`
+        : "月报候载",
+      detail: input.monthlyHighlight?.summary || "官职月报与经历摘要只作公开复盘，不写成考成或任免。"
+    },
+    {
+      label: "互证",
+      value: input.sideEvidenceCount || input.sessionSummaryCount
+        ? `${input.sideEvidenceCount} 条旁证 · ${input.sessionSummaryCount} 份经历`
+        : "互证候载",
+      detail: "后果、来函、实体余波和经历摘要只作读卷证据。"
+    },
+    {
+      label: "候复",
+      value: input.hasArchiveDraft ? "主卷待呈" : input.routeSessionSupported ? "可据此校阅" : "案卷未载",
+      detail: input.hasArchiveDraft
+        ? "本地史册札记已入底部奏折，仍候主卷回音。"
+        : "校阅只整理公开线索；草稿仍回主卷候复。"
+    }
+  ];
+}
+
 export function ArchivePage() {
   const { sessionId = "s74-preview" } = useParams();
   const currentSession = useGameSessionStore((state) => state.currentSession);
@@ -325,6 +457,9 @@ export function ArchivePage() {
   const routeSessionSupported = isRouteLocalSessionId(sessionId);
   const sessionMatches = routeSessionSupported && currentSession?.sessionId === sessionId;
   const archiveView = asRecord(sessionMatches ? currentSession?.eventArchiveView : null);
+  const worldThreadView = asRecord(sessionMatches ? currentSession?.worldThreadView : null);
+  const playerMonthlyBriefingView = asRecord(sessionMatches ? currentSession?.playerMonthlyBriefingView : null);
+  const sessionSummaryView = asRecord(sessionMatches ? currentSession?.sessionSummaryView : null);
   const domainConsequenceView = sessionMatches ? currentSession?.domainConsequenceView ?? null : null;
   const npcFollowUpEvidence = sessionMatches ? currentSession?.npcActiveRequestView?.followUpEvidence ?? null : null;
   const archiveItems = buildArchiveItems(archiveView);
@@ -379,6 +514,31 @@ export function ArchivePage() {
     routeSessionSupported,
     status
   });
+  const agendaThreadHighlights = buildArchiveThreadHighlights(worldThreadView);
+  const resolvedThreadCount = countArchiveResolvedThreads(worldThreadView);
+  const monthlyHighlight = buildMonthlyBriefingHighlight(playerMonthlyBriefingView);
+  const monthlyReportCount = asArray(playerMonthlyBriefingView.recentReports).length;
+  const sessionSummaryHighlights = buildSessionSummaryHighlights(sessionSummaryView);
+  const archiveAgendaState = !routeSessionSupported
+    ? "unsupported"
+    : agendaThreadHighlights.length || resolvedThreadCount || monthlyHighlight || sessionSummaryHighlights.length || sideEvidenceCount
+    ? "ready"
+    : "empty";
+  const archiveAgendaReaderRows = buildArchiveAgendaReaderRows({
+    threadCount: agendaThreadHighlights.length,
+    resolvedThreadCount,
+    monthlyHighlight,
+    monthlyReportCount,
+    sessionSummaryCount: sessionSummaryHighlights.length,
+    sideEvidenceCount,
+    hasArchiveDraft,
+    routeSessionSupported
+  });
+  const archiveAgendaHighlights = [
+    ...agendaThreadHighlights.slice(0, 2),
+    ...(monthlyHighlight ? [monthlyHighlight] : []),
+    ...sessionSummaryHighlights.slice(0, 1)
+  ].slice(0, 4);
   const mapHref = routeSessionSupported ? `/game/${sessionId}/map` : "/";
   const peopleHref = routeSessionSupported ? `/game/${sessionId}/people` : "/";
   const courtHref = routeSessionSupported ? `/game/${sessionId}/court` : "/";
@@ -586,6 +746,44 @@ export function ArchivePage() {
         items={crossTraceItems}
         summary="史册只收已入卷条目；要查来人去人物页，要成议题入朝议页。"
       />
+      <section
+        className="archiveAgendaReader"
+        aria-label="史册议程月报互证"
+        data-polish-archive-agenda-reader="s91-16-archive-agenda-reader"
+        data-archive-agenda-state={archiveAgendaState}
+      >
+        <div className="sectionTitleRow">
+          <div>
+            <p className="eyebrow">议程月报互证</p>
+            <h2>世界议程、月报与史册旁证</h2>
+            <p>把长期议题、官职月报、经历摘要和史册旁注并读；这里只校阅公开线索。</p>
+          </div>
+          <span>{archiveAgendaState === "ready" ? "可互证" : archiveAgendaState === "empty" ? "候线索" : "案卷未载"}</span>
+        </div>
+        <dl className="archiveAgendaReaderGrid">
+          {archiveAgendaReaderRows.map((row) => (
+            <div key={row.label}>
+              <dt>{row.label}</dt>
+              <dd>{row.value}</dd>
+              <dd>{row.detail}</dd>
+            </div>
+          ))}
+        </dl>
+        {archiveAgendaHighlights.length ? (
+          <ol className="archiveAgendaHighlightList" aria-label="议程月报近次互证">
+            {archiveAgendaHighlights.map((item) => (
+              <li key={item.id}>
+                <span>{item.sourceLabel} · {item.statusLabel}</span>
+                <strong>{item.title}</strong>
+                <p>{item.summary}</p>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="archiveAgendaEmpty">暂无可互证的公开议程或月报；本页不会补造未公开线索。</p>
+        )}
+        <p className="archiveAgendaBoundary">只读本案公开世界议程、官职月报、经历摘要与史册旁证；不回显草稿正文，不把互证读法改写成考成、任免、关系、交易、定罪或时间推进事实。</p>
+      </section>
 
       <section
         className="archiveTraceGrid"

@@ -132,33 +132,44 @@
 | S91.13 | DONE | 六身份循环候复校阅与本地草稿状态 polish | 已完成既有 `RoleCycleSection` “身份候复校阅”四读，并把当前案卷本地 `role-surface` 草稿写入布尔透传到书生、地方官、官员/大臣、将领和皇帝主卷：读法只从 `roleCycleView.currentRole`、安全取材标签、入口/草稿建议和本地草稿状态派生身份、事务、取材与候复；不读取或回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.14 | DONE | SurfaceHost 专题层候复校阅与写入状态 polish | 已完成既有 `SurfaceHost` 专题层“材料 / 证据 / 草稿 / 候复”四读：只从当前案卷专题材料、证据勾选、拟稿状态和本地 `role-surface` 专题草稿是否已写入主卷派生候复状态；不读取或回显草稿正文，不新增 topic surface 类型、route/API/schema、AI 权限、依赖、素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.15 | DONE | 领域后果追踪校阅与候复状态 polish | 已完成既有 `DomainConsequenceSection` “后果追踪校阅”四读：只从现有 `domainConsequenceView` 公开后果、公开 next actions、sourceType 过滤、来源/牵连/指标标签和调用处传入的当前案卷本地草稿布尔派生后果、凭据、牵连与候复；不读取或回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.16 | DONE | 史册议程月报互证校阅 polish | 已完成史册页“议程月报互证”四读：只从当前案卷公开 `worldThreadView`、`playerMonthlyBriefingView`、`sessionSummaryView`、史册旁证计数和本地史册草稿状态派生议程、月报、互证与候复；不回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.15：领域后果追踪校阅与候复状态 polish 已完成，代码实现提交为 `7c24a7b0`（`Polish domain consequence reader`）。既有 `DomainConsequenceSection` 新增“后果 / 凭据 / 牵连 / 候复”四读，只从清洗后的公开后果条目、公开 next actions、sourceType 过滤、来源/牵连/指标标签和调用处传入的当前案卷本地草稿布尔派生；主卷四类权力面板传入当前案卷 `role-surface` 草稿布尔，史册页传入当前案卷 `archive-view` 草稿布尔，舆图页传入当前案卷 `map-runtime` 草稿布尔。写稿后只显示“主卷待呈 / 本页草稿已入底部奏折，仍候主卷回音”，不读取或回显 `actionDraft.text`。
-- S91.15 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全 `domainConsequenceView`、route 状态和调用处本地草稿标记，不把后果追踪、凭据、牵连、续记或本地草稿状态改写成资源、任免、赏罚、定罪、交易、调兵、人物资产、关系或时间推进事实。
-- 最近完整运行态验证来自 S91.15：`npm run typecheck:client`、`npm run typecheck:server`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js --test-name-pattern "S91.15 domain consequence reader"`（实际完整 116 tests 通过）、S91.15 focused Vitest（1 passed / 76 skipped）、完整 App Vitest（77 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-15-domain-consequence-reader-smoke`（首次首页 `networkidle` 超时未进入断言，同命令复跑通过）、`npm run check:docs-governance`、`git diff --check`（仅既有未触碰归档/素材 CRLF warning）和 `npm test`（1230 tests）已通过；两轮提交前只读复审均无阻塞，首次低风险建议已采纳，补充复审仅余全局 cap line 口径风险，随本步记录。
+- 最新实现步骤 S91.16：史册议程月报互证校阅 polish 已完成，代码实现提交哈希待补记。史册页新增 `data-polish-archive-agenda-reader="s91-16-archive-agenda-reader"` 的“议程月报互证”，四读为“议程 / 月报 / 互证 / 候复”，只从当前案卷公开 `worldThreadView.activeThreads`/`threads`/`recentResolved`、`playerMonthlyBriefingView.latest`/`recentReports`、`sessionSummaryView.recentMonthlySummaries`、史册旁证计数和当前案卷本地 `archive-view` 草稿状态派生；写稿后只显示“主卷待呈 / 本地史册札记已入底部奏折，仍候主卷回音”，不读取或回显草稿正文。
+- S91.16 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全史册、世界议程、官职月报、经历摘要、旁证计数和本地草稿状态，不把议程、月报、经历摘要、互证或候复状态改写成考成、任免、关系、交易、定罪、资源、钱粮或时间推进事实。
+- 最近完整运行态验证来自 S91.16：`npm run typecheck:client`、`npm run typecheck:server`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js --test-name-pattern "S91.16 archive agenda reader|S91.9 archive draft reader"`（实际完整 117 tests 通过）、S91.16 focused archive Vitest（2 passed / 75 skipped）、完整 App Vitest（77 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-16-archive-agenda-reader-smoke`、`npm run check:docs-governance`、`git diff --check`（仅既有未触碰归档/素材 CRLF warning）和 `npm test`（1231 tests）已通过；提交前只读复审代理 `019e69e1-f179-75a3-9098-77945ffd0138` 两轮复审均未发现阻塞问题。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.15：
+最新运行态完整验证锚点来自 S91.16：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js --test-name-pattern "S91.15 domain consequence reader"`（实际完整 116 tests 通过）
+- `node --test test/reactClientScaffold.test.js --test-name-pattern "S91.16 archive agenda reader|S91.9 archive draft reader"`（实际完整 117 tests 通过）
 - `npm run typecheck:client`
 - `npm run typecheck:server`
-- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx -t "magistrate panel"`（1 passed / 76 skipped）
-- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 77 tests；首次因新增 reader 复述公开上限行导致旧 `getByText` 命中两处失败，已改成 `getAllByText` 后复跑通过）
+- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx -t "archive route"`（2 passed / 75 skipped）
+- `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 77 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
-- `npm run budget:client`
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-15-domain-consequence-reader-smoke`（首次首页 `networkidle` 超时未进入 S91.15 断言，同命令复跑通过）
+- `npm run budget:client`（JS 715.3 KiB / CSS 179.2 KiB / fonts 26288.4 KiB / client-assets 27182.9 KiB）
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-16-archive-agenda-reader-smoke`
 - `npm run check:docs-governance`
 - `git diff --check`（仅既有未触碰归档/素材 CRLF warning）
-- `npm test`（1230 tests）
+- `npm test`（1231 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-28：S91.16 史册议程月报互证校阅 polish 完成
+
+- 范围：史册页新增 `data-polish-archive-agenda-reader="s91-16-archive-agenda-reader"` 的“议程月报互证”，四格显示议程、月报、互证与候复；读法只从当前案卷公开 `worldThreadView.activeThreads` / `threads` / `recentResolved`、`playerMonthlyBriefingView.latest` / `recentReports`、`sessionSummaryView.recentMonthlySummaries`、史册旁证计数和本地 `archive-view` 草稿状态派生。
+- 体验修正：史册页现在能把长期世界议程、官职月报、经历摘要、领域后果、实体余波和来函证据放在同一互证区扫读；写稿后只显示“主卷待呈 / 本地史册札记已入底部奏折，仍候主卷回音”，不读取或回显草稿正文。新 reader 过滤“服务器/后端/模型”和 `server`/`backend`/`model` 等工程口径、provider/raw/prompt/path/key/hidden/schema/manifest、本地路径和 token 形态，移动端单列。
+- 边界：本步只改 React 史册页读法、史册/舆图 route CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema、AI 权限、provider/prompt 能力、依赖、素材、存档字段或服务器裁决。浏览器仍只消费现有安全 view、route 状态和本地草稿标记；议程、月报、经历摘要、互证或候复状态不得被改写成考成、任免、关系、交易、定罪、资源、钱粮或时间推进事实。
+- 子代理审计：只读审计代理 `019e6e30-b9f6-7e11-ac26-f76088a44256` 已阅读指定治理与交接文档，确认未编辑文件、未运行 Git 命令、未跑测试；其候选清单首推 S91.15 过滤 cap 残余，另列 World Threads、月报、朝议和专题层文案候选。主代理本步选择收束史册 World Threads/月报互证空白，S91.15 cap 残余继续作为下一候选风险记录。
+- 验证：已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js --test-name-pattern "S91.16 archive agenda reader|S91.9 archive draft reader"`（实际完整 117 tests）、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx -t "archive route"`（2 passed / 75 skipped）、完整 App Vitest（77 tests）、`npm run build:client`、`npm run budget:client`、`npm run typecheck:server`、`npm run qa:runtime-manifest`、`node scripts/clientSmoke.js --screenshots artifacts/s91-16-archive-agenda-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1231 tests）。首次 S91.16 source canary 因移动端 CSS selector 合并影响旧 S91.9 正则失败，已拆分规则后通过；首次 browser smoke 因新 agenda written 断言要求“已入主卷”过严失败，同时暴露公开 world thread 摘要中的“模型”字样被带入新 reader，已收紧 smoke 断言并把“服务器/后端/模型”加入史册清洗后复跑通过；采纳复审建议补入英文 `server`/`backend`/`model` 过滤后重新通过 focused checks、build、budget、runtime manifest QA、browser smoke 和 `npm test`；browser smoke 曾以 300 秒外层超时无断言失败，900 秒复跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
+- 子代理复审：提交前只读复审代理 `019e69e1-f179-75a3-9098-77945ffd0138` 两轮复审均未发现阻塞问题；非阻塞提醒为英文 `server`/`backend`/`model` 使用 substring 清洗偏保守，当前中文史册玩家表面可接受。主代理已采纳英文工程词 hardening，复审确认无新增阻塞；代理未编辑文件、未运行任何 Git 命令、未创建 PR。
+- 提交：S91.16 实现提交待完成后补记。
 
 ### 2026-05-28：S91.15 领域后果追踪校阅与候复状态 polish 完成
 
