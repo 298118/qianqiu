@@ -2838,6 +2838,7 @@ async function assertEmperorPanel(page, sessionId, screenshotsDir) {
   await page.getByRole("heading", { name: "御案朝仪" }).waitFor({ timeout: 10000 });
   const panelSnapshot = await page.evaluate((id) => {
     const panel = document.querySelector(".emperorPanel");
+    const edictReader = panel?.querySelector("[data-polish-emperor-edict-reader='s91-12-emperor-edict-reader']");
     const text = panel?.textContent || "";
     const courtLink = [...document.querySelectorAll(".emperorPanel a")].find((link) => (link.textContent || "").includes("入朝议页"));
     const archiveLink = [...document.querySelectorAll(".emperorPanel a")].find((link) => (link.textContent || "").includes("查史册"));
@@ -2858,6 +2859,10 @@ async function assertEmperorPanel(page, sessionId, screenshotsDir) {
       hasAppointments: text.includes("任免候选"),
       hasRewards: text.includes("赏罚预留"),
       hasDomainConsequence: text.includes("天下余波"),
+      edictReaderMarker: edictReader?.getAttribute("data-polish-emperor-edict-reader") || "",
+      edictReaderState: edictReader?.getAttribute("data-emperor-edict-state") || "",
+      edictReaderRows: edictReader?.querySelectorAll("dl > div").length || 0,
+      edictReaderText: edictReader?.textContent || "",
       hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险") && text.includes("可查入口") && text.includes("证据："),
       hasBoundary: text.includes("任免、赏罚、处分、朱批成案、圣旨生效和时间推进都须候案卷回批"),
       buttons,
@@ -2881,6 +2886,15 @@ async function assertEmperorPanel(page, sessionId, screenshotsDir) {
   if (!panelSnapshot.hasAppointments) failures.push("missing appointment candidate block");
   if (!panelSnapshot.hasRewards) failures.push("missing reward punishment block");
   if (!panelSnapshot.hasDomainConsequence) failures.push("missing domain consequence tracking block");
+  if (panelSnapshot.edictReaderMarker !== "s91-12-emperor-edict-reader" || panelSnapshot.edictReaderRows !== 4) {
+    failures.push(`S91.12 emperor edict reader missing: ${JSON.stringify({ marker: panelSnapshot.edictReaderMarker, state: panelSnapshot.edictReaderState, rows: panelSnapshot.edictReaderRows, text: panelSnapshot.edictReaderText.slice(0, 180) })}`);
+  }
+  if (!panelSnapshot.edictReaderText.includes("御案朱批校阅") || !panelSnapshot.edictReaderText.includes("御案") || !panelSnapshot.edictReaderText.includes("章奏") || !panelSnapshot.edictReaderText.includes("朝议") || !panelSnapshot.edictReaderText.includes("候复") || !panelSnapshot.edictReaderText.includes("不回显正文") || !panelSnapshot.edictReaderText.includes("不把朱批、拟旨或赏罚写成已生效事实")) {
+    failures.push(`S91.12 emperor edict reader copy incomplete: ${panelSnapshot.edictReaderText.slice(0, 220)}`);
+  }
+  if (panelSnapshot.edictReaderText.includes("草拟一道明发谕旨")) {
+    failures.push("S91.12 emperor edict reader leaked draft text before draft check");
+  }
   if (!panelSnapshot.hasRoleCycle) failures.push("missing role cycle block");
   if (!panelSnapshot.hasBoundary) failures.push("missing emperor server boundary");
   if (panelSnapshot.metricCount < 4) failures.push(`expected emperor metrics, saw ${panelSnapshot.metricCount}`);
@@ -2914,6 +2928,18 @@ async function assertEmperorPanel(page, sessionId, screenshotsDir) {
   page.off("request", onRequest);
   if (turnRequests.length) {
     throw new Error(`S76.6 emperor draft button submitted a turn instead of writing a draft: ${turnRequests.join(", ")}`);
+  }
+
+  const edictWrittenSnapshot = await page.evaluate(() => {
+    const edictReader = document.querySelector("[data-polish-emperor-edict-reader='s91-12-emperor-edict-reader']");
+    return {
+      marker: edictReader?.getAttribute("data-polish-emperor-edict-reader") || "",
+      state: edictReader?.getAttribute("data-emperor-edict-state") || "",
+      text: edictReader?.textContent || ""
+    };
+  });
+  if (edictWrittenSnapshot.marker !== "s91-12-emperor-edict-reader" || edictWrittenSnapshot.state !== "written" || !edictWrittenSnapshot.text.includes("御案草稿已入底部奏折") || edictWrittenSnapshot.text.includes("草拟一道明发谕旨")) {
+    throw new Error(`S91.12 emperor edict reader written state failed: ${JSON.stringify({ marker: edictWrittenSnapshot.marker, state: edictWrittenSnapshot.state, text: edictWrittenSnapshot.text.slice(0, 220) })}`);
   }
 
   const draft = await page.getByLabel("本回合行动").inputValue();

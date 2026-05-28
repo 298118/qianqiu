@@ -1257,6 +1257,83 @@
   font-weight: 800;
 }
 
+.emperorEdictReader {
+  grid-column: 1 / -1;
+  border-color: rgb(135 47 40 / .32);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .82), rgb(231 216 176 / .48)),
+    var(--qq-material-xuan) center / 520px repeat;
+}
+
+.emperorEdictReaderHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.emperorEdictReaderHeader .eyebrow,
+.emperorEdictReaderHeader h3 {
+  margin: 0;
+}
+
+.emperorEdictReaderHeader strong {
+  color: #872f28;
+  font-size: .84rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.emperorEdictReader dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.emperorEdictReader dl div {
+  min-width: 0;
+  border: 1px solid rgb(135 47 40 / .18);
+  background: rgb(255 252 238 / .58);
+  padding: 9px;
+}
+
+.emperorEdictReader dt {
+  color: #72563c;
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+.emperorEdictReader dd {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.emperorEdictReader strong,
+.emperorEdictReader span,
+.emperorEdictReader p {
+  overflow-wrap: anywhere;
+}
+
+.emperorEdictReader dd strong {
+  color: #5f2723;
+  font-size: .84rem;
+  line-height: 1.45;
+}
+
+.emperorEdictReader dd span,
+.emperorEdictReader p {
+  color: #5f523f;
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.emperorEdictReader p {
+  margin: 0;
+}
+
 .emperorPanelBoundary .scholarPanelBoundary {
   display: grid;
   gap: 7px;
@@ -2280,6 +2357,16 @@
   }
 
   .officialMonthlyReaderHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .emperorEdictReader,
+  .emperorEdictReader dl {
+    grid-template-columns: 1fr;
+  }
+
+  .emperorEdictReaderHeader {
     align-items: flex-start;
     flex-direction: column;
   }

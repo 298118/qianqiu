@@ -2386,6 +2386,17 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}`);
 
     await screen.findByRole("heading", { name: "御案朝仪" });
+    const edictReader = document.querySelector<HTMLElement>("[data-polish-emperor-edict-reader='s91-12-emperor-edict-reader']");
+    expect(edictReader).toBeTruthy();
+    expect(edictReader?.getAttribute("data-emperor-edict-state")).toBe("ready");
+    expect(edictReader?.querySelectorAll("dl > div")).toHaveLength(4);
+    expect(within(edictReader as HTMLElement).getByText("御案朱批校阅")).toBeTruthy();
+    expect(within(edictReader as HTMLElement).getByText("御案")).toBeTruthy();
+    expect(within(edictReader as HTMLElement).getByText("章奏")).toBeTruthy();
+    expect(within(edictReader as HTMLElement).getByText("候复")).toBeTruthy();
+    expect(within(edictReader as HTMLElement).getByText(/件章奏/)).toBeTruthy();
+    expect(within(edictReader as HTMLElement).getByText(/1 条奏议可候朱批/)).toBeTruthy();
+    expect(within(edictReader as HTMLElement).getByText(/只认当前案卷本页的本地草稿/)).toBeTruthy();
     expect(screen.getByText("奏折队列")).toBeTruthy();
     expect(screen.getByText("奏议回应")).toBeTruthy();
     expect(screen.getAllByText("部院覆奏：河工清册").length).toBeGreaterThan(0);
@@ -2409,6 +2420,11 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: "草拟一道明发谕旨，请内阁先核证据、适用官制与可行后果；此稿未生效。"
     });
+    const writtenEdictReader = document.querySelector<HTMLElement>("[data-polish-emperor-edict-reader='s91-12-emperor-edict-reader']");
+    expect(writtenEdictReader?.getAttribute("data-emperor-edict-state")).toBe("written");
+    expect(within(writtenEdictReader as HTMLElement).getByText("主卷待呈")).toBeTruthy();
+    expect(within(writtenEdictReader as HTMLElement).getByText(/御案草稿已入底部奏折/)).toBeTruthy();
+    expect(writtenEdictReader?.textContent || "").not.toContain("草拟一道明发谕旨");
     fireEvent.click(screen.getByRole("button", { name: "朱批留览" }));
     expect(useUiStateStore.getState().actionDraft).toMatchObject({
       source: "role-surface",

@@ -2389,6 +2389,64 @@ test("S91.11 official monthly reader stays existing-monthly-view-only and fronte
   );
 });
 
+test("S91.12 emperor edict reader stays existing-court-view-only and frontend-only", () => {
+  const emperorPanelSource = readText("client/src/components/EmperorPanel.tsx");
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const gameStyleSource = readClientStyleModule("routes/game.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = emperorPanelSource.indexOf('data-polish-emperor-edict-reader="s91-12-emperor-edict-reader"');
+  const readerEnd = emperorPanelSource.indexOf('<article className="scholarPanelCard paperMotionPanel rolePanel emperorPanelMemorials"', readerStart);
+  const readerMarkup = readerStart >= 0 && readerEnd > readerStart
+    ? emperorPanelSource.slice(readerStart, readerEnd)
+    : "";
+  const readerDataStart = emperorPanelSource.indexOf("function buildEmperorEdictReaderRows");
+  const readerDataEnd = emperorPanelSource.indexOf("function draftButtonText", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? emperorPanelSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const emperorPanelWithoutGuard = stripSafeGuardPatterns(
+    emperorPanelSource.replace(/const unsafeEmperorFragments[\s\S]*?\] as const;\r?\n/, "")
+  );
+  const runtimeCombined = `${emperorPanelWithoutGuard}\n${gamePageSource}\n${gameStyleSource}`;
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.match(emperorPanelSource, /type EmperorEdictReaderRow/);
+  assert.match(emperorPanelSource, /function buildEmperorEdictReaderRows/);
+  assert.match(emperorPanelSource, /readonly localRoleSurfaceDraftWritten\?: boolean/);
+  assert.match(gamePageSource, /localRoleSurfaceDraftWritten=\{activeActionDraft\?\.source === "role-surface" && activeActionDraft\.targetPage === "game"\}/);
+  assert.match(gamePageSource, /const activeActionDraft = routeSessionSupported && actionDraft\?\.sessionId === sessionId \? actionDraft : null/);
+  assert.match(readerDataBlock, /responseAgenda\.items/);
+  assert.match(readerDataBlock, /consequenceAgenda\.items/);
+  assert.match(readerDataBlock, /courtDebate\.length/);
+  assert.match(readerDataBlock, /courtMemorials/);
+  assert.match(readerDataBlock, /御案草稿已入底部奏折，仍候主卷回音/);
+  assert.match(readerDataBlock, /拟旨、朱批、朝议与赏罚只留本地状态，不回显正文/);
+  assert.match(emperorPanelSource, /const courtMemorials = getMemorialQueue\(eventArchive, worldThread, \{\}\)/);
+  assert.match(emperorPanelSource, /buildEmperorEdictReaderRows\([\s\S]*courtMemorials/);
+  assert.match(readerMarkup, /只读本案公开奏折、奏议回应、朝议与任免线索/);
+  assert.match(readerMarkup, /只认当前案卷本页的本地草稿/);
+  assert.match(readerMarkup, /不回显正文/);
+  assert.match(readerMarkup, /不把朱批、拟旨或赏罚写成已生效事实/);
+  assert.doesNotMatch(readerDataBlock, /actionDraft|submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|sourceRefs|relatedRefs|scopeRefs|worldState|payload|evidenceRefs|outcomeId/);
+  assert.doesNotMatch(readerMarkup, /actionDraft|submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|sourceRefs|relatedRefs|scopeRefs|worldState|payload|evidenceRefs|outcomeId|草拟一道明发谕旨|朱批近日奏折/);
+  assert.doesNotMatch(emperorPanelSource, /ActionDraft|actionDraft\.text/);
+
+  assert.match(gameStyleSource, /\.emperorEdictReader \{/);
+  assert.match(gameStyleSource, /\.emperorEdictReader \{[\s\S]*grid-column: 1 \/ -1/);
+  assert.match(gameStyleSource, /\.emperorEdictReader dl \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(gameStyleSource, /@media \(max-width: 760px\)[\s\S]*\.emperorEdictReader,[\s\S]*\.emperorEdictReader dl \{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(appTestSource, /s91-12-emperor-edict-reader/);
+  assert.match(appTestSource, /御案草稿已入底部奏折/);
+  assert.match(clientSmokeSource, /s91-12-emperor-edict-reader/);
+  assert.match(clientSmokeSource, /S91\.12 emperor edict reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.60 main and court desk keyframes use semantic names", () => {
   const keyframesSource = readText("client/src/styles/motion/keyframes.css");
   const gameStyleSource = readText("client/src/styles/routes/game.css");

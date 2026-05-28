@@ -19,6 +19,7 @@ type EmperorPanelProps = {
   readonly courtResponseView?: JsonObject | null;
   readonly domainConsequenceView?: JsonObject | null;
   readonly mapRuntimeView?: unknown;
+  readonly localRoleSurfaceDraftWritten?: boolean;
   readonly roleBackgroundPath?: string;
   readonly courtHref?: string;
   readonly archiveHref?: string;
@@ -39,6 +40,13 @@ type SafeDraftAction = {
   readonly id: string;
   readonly label: string;
   readonly text: string;
+};
+
+type EmperorEdictReaderRow = {
+  readonly id: string;
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
 };
 
 const unsafeEmperorFragments = [
@@ -300,6 +308,59 @@ function getRewardPunishmentItems(aiControlAudit: JsonObject, eventArchive: Json
   return listFromRows([...archiveRows, ...auditRows, ...threadRows], "reward", 4, "赏罚线索");
 }
 
+function buildEmperorEdictReaderRows(
+  desk: ReturnType<typeof getEmperorDesk>,
+  courtMemorials: readonly SafeListItem[],
+  responseAgenda: ReturnType<typeof getCourtResponseAgenda>,
+  consequenceAgenda: ReturnType<typeof getCourtConsequenceAgenda>,
+  courtDebate: readonly SafeListItem[],
+  candidates: readonly SafeListItem[],
+  rewardPunishments: readonly SafeListItem[],
+  localRoleSurfaceDraftWritten: boolean
+) {
+  const visibleMemorialCount = cleanCount(courtMemorials.filter((item) => item.id !== "memorial-empty").length, 0);
+  const responseCount = cleanCount(responseAgenda.items.length, 0);
+  const courtCount = cleanCount(courtDebate.length, 0);
+  const candidateCount = cleanCount(candidates.length, 0);
+  const rewardCount = cleanCount(rewardPunishments.length + consequenceAgenda.items.length, 0);
+  const hasPublicDocket = visibleMemorialCount + responseCount + courtCount + candidateCount + rewardCount > 0;
+  const rows: EmperorEdictReaderRow[] = [
+    {
+      id: "desk",
+      label: "御案",
+      value: desk.title,
+      detail: `${desk.date} · 只读公开朝廷卷宗与复核摘要。`
+    },
+    {
+      id: "memorial",
+      label: "章奏",
+      value: visibleMemorialCount ? `${visibleMemorialCount} 件章奏` : "章奏候载",
+      detail: responseCount
+        ? `${responseCount} 条奏议可候朱批；朱批只写成草稿。`
+        : "奏折队列只供组织问政顺序，不写成已定朝廷事实。"
+    },
+    {
+      id: "court",
+      label: "朝议",
+      value: courtCount ? `${courtCount} 条朝议` : "朝议候召",
+      detail: `任免候选 ${candidateCount} 条，赏罚线索 ${rewardCount} 条；均候主卷回音。`
+    },
+    {
+      id: "reply",
+      label: "候复",
+      value: localRoleSurfaceDraftWritten ? "主卷待呈" : "仍候主卷",
+      detail: localRoleSurfaceDraftWritten
+        ? "御案草稿已入底部奏折，仍候主卷回音。"
+        : "拟旨、朱批、朝议与赏罚只留本地状态，不回显正文。"
+    }
+  ];
+
+  return {
+    state: localRoleSurfaceDraftWritten ? "written" : hasPublicDocket ? "ready" : "empty",
+    rows
+  };
+}
+
 function draftButtonText(label: string, text: string, enabled: boolean, onDraft: (text: string) => void) {
   return (
     <button type="button" disabled={!enabled} onClick={() => onDraft(text)}>
@@ -321,6 +382,7 @@ export function EmperorPanel({
   courtResponseView,
   domainConsequenceView,
   mapRuntimeView,
+  localRoleSurfaceDraftWritten = false,
   roleBackgroundPath,
   courtHref,
   archiveHref,
@@ -340,11 +402,22 @@ export function EmperorPanel({
   const mapRuntime = asRecord(mapRuntimeView);
   const desk = getEmperorDesk(player, officialPostings, eventArchive);
   const memorials = getMemorialQueue(eventArchive, worldThread, mapRuntime);
+  const courtMemorials = getMemorialQueue(eventArchive, worldThread, {});
   const consequenceAgenda = getCourtConsequenceAgenda(courtConsequence);
   const responseAgenda = getCourtResponseAgenda(courtResponse);
   const courtDebate = getCourtDebate(actorMemory, worldThread, eventArchive);
   const candidates = getAppointmentCandidates(officialPostings, actorMemory, worldEntity);
   const rewardPunishments = getRewardPunishmentItems(aiControlAudit, eventArchive, worldThread);
+  const edictReader = buildEmperorEdictReaderRows(
+    desk,
+    courtMemorials,
+    responseAgenda,
+    consequenceAgenda,
+    courtDebate,
+    candidates,
+    rewardPunishments,
+    localRoleSurfaceDraftWritten
+  );
   const counts = asRecord(eventArchive.counts);
   const backgroundPath = safeAssetPath(roleBackgroundPath);
   const backgroundStyle = backgroundPath ? ({ "--scholar-panel-bg": `url(${backgroundPath})` } as CSSProperties) : undefined;
@@ -389,6 +462,32 @@ export function EmperorPanel({
           onOpenSurface={onOpenRoleCycleSurface}
           onDraft={onDraft}
         />
+        <article
+          className="scholarPanelCard paperMotionPanel rolePanel emperorEdictReader"
+          aria-labelledby="emperor-edict-reader-title"
+          data-polish-emperor-edict-reader="s91-12-emperor-edict-reader"
+          data-emperor-edict-state={edictReader.state}
+        >
+          <div className="emperorEdictReaderHeader">
+            <div>
+              <p className="eyebrow">御案校阅</p>
+              <h3 id="emperor-edict-reader-title">御案朱批校阅</h3>
+            </div>
+            <strong>{edictReader.state === "written" ? "草稿已入主卷" : "只读公开朝廷卷宗"}</strong>
+          </div>
+          <dl aria-label="御案朱批校阅读法">
+            {edictReader.rows.map((row) => (
+              <div key={row.id}>
+                <dt>{row.label}</dt>
+                <dd>
+                  <strong>{row.value}</strong>
+                  <span>{row.detail}</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p>只读本案公开奏折、奏议回应、朝议与任免线索；只认当前案卷本页的本地草稿，不回显正文，不把朱批、拟旨或赏罚写成已生效事实。</p>
+        </article>
         <article className="scholarPanelCard paperMotionPanel rolePanel emperorPanelMemorials" aria-labelledby="emperor-memorials-title">
           <h3 id="emperor-memorials-title">奏折队列</h3>
           <p>案头奏折来自公开卷宗，只能帮助组织询问顺序，不写成已经定夺的朝廷事实。</p>

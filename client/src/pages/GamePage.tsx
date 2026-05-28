@@ -643,6 +643,7 @@ export function GamePage() {
           courtResponseView={activeSession?.courtResponseView ?? null}
           domainConsequenceView={activeSession?.domainConsequenceView ?? null}
           mapRuntimeView={activeSession?.mapRuntimeView ?? null}
+          localRoleSurfaceDraftWritten={activeActionDraft?.source === "role-surface" && activeActionDraft.targetPage === "game"}
           roleBackgroundPath={roleBackgroundAsset?.path}
           courtHref={sessionHref(routeCatalog.find((entry) => entry.id === "court")?.href ?? "/game/s74-preview/court")}
           archiveHref={sessionHref(routeCatalog.find((entry) => entry.id === "archive")?.href ?? "/game/s74-preview/archive")}

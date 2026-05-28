@@ -128,32 +128,41 @@
 | S91.9 | DONE | 史册拟稿校阅与候复状态 polish | 已完成史册页“拟稿校阅”四读：只从现有公开史册/旁证计数、route 状态和当前案卷本地 `archive-view` 草稿状态派生归档、旁证、草稿与候复读法；写稿后只显示已入主卷候复，不回显草稿正文或史册条目标题，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.10 | DONE | 朝议专题草稿校阅与候复状态 polish | 已完成朝议页“专题校阅”四读：只从现有公开材料计数、route 状态和当前案卷本地 `role-surface` 专题草稿 `draftContext.surfaceId` 派生材料、官署、草稿与候复状态；写稿后只显示已入主卷候复，不读取或回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.11 | DONE | 入仕官职月报校阅与候复状态 polish | 已完成既有官员/大臣面板“官职月报校阅”四读：只从 `playerMonthlyBriefingView`、官职履历、公开任所/首月差事和当前案卷本地 `role-surface` 草稿写入状态派生本职、月报、差事与候复；不回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.12 | DONE | 皇帝御案朱批校阅与候复状态 polish | 已完成既有皇帝面板“御案朱批校阅”四读：只从 `eventArchiveView`、`worldThreadView`、`courtResponseView`、`courtConsequenceView`、公开朝议/任免/赏罚线索和当前案卷本地 `role-surface` 草稿写入状态派生御案、章奏、朝议与候复；不回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.11：入仕官职月报校阅与候复状态 polish 已完成。既有 `OfficialMinisterPanel` 新增 `s91-11-official-monthly-reader` 的“本职 / 月报 / 差事 / 候复”四读，把 `playerMonthlyBriefingView`、官职履历、公开任所/首月差事和当前案卷本地 `role-surface` 草稿写入状态集中成可扫读状态；写稿后只显示“已入主卷”候复，不读取或回显 `actionDraft.text`。
-- S91.11 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全月报/官职/公开差事 view、route 状态和本地草稿标记，不把月报改写成考成、任免、弹劾、财赋或官署终局事实。
-- 最近完整运行态验证来自 S91.11：`npm run typecheck:client`、`npm run typecheck:server`、`node --test test/reactClientScaffold.test.js`（112 tests）、`node --check scripts/clientSmoke.js`、S91.11 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-11-official-monthly-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1226 tests）已通过；首次 S91.11 App Vitest 使用 180 秒外层超时未出结果，长超时复跑通过；browser smoke 首次在首页 `networkidle` 超时、未进入 S91.11 断言，同命令重跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。提交前只读复审代理 `019e6cd5-420f-79e3-a467-913d096f8f7e` 未发现阻塞问题。
+- 最新实现步骤 S91.12：皇帝御案朱批校阅与候复状态 polish 已完成。既有 `EmperorPanel` 新增 `s91-12-emperor-edict-reader` 的“御案 / 章奏 / 朝议 / 候复”四读，把 `eventArchiveView`、`worldThreadView`、`courtResponseView`、`courtConsequenceView`、公开朝议/任免/赏罚线索和当前案卷本地 `role-surface` 草稿写入状态集中成可扫读状态；拟旨后只显示“主卷待呈”候复，不读取或回显 `actionDraft.text`。
+- S91.12 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全御案/奏折/朝议/任免/赏罚 view、route 状态和本地草稿标记，不把朱批、拟旨、朝议、任免候选、赏罚线索或本地草稿状态改写成已生效圣旨、任免、赏罚、处分、拨款、调兵或时间推进事实。
+- 最近完整运行态验证来自 S91.12：`npm run typecheck:client`、`npm run typecheck:server`、`node --test test/reactClientScaffold.test.js`（113 tests）、`node --check scripts/clientSmoke.js`、S91.12 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-12-emperor-edict-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1227 tests）已通过；首次 S91.12 source canary 因测试把 `EmperorPanel` 防泄漏护栏常量纳入运行时扫描误报，已剥离护栏常量后复跑通过；提交前复审后把 reader 章奏计数收紧为 `courtMemorials = getMemorialQueue(eventArchive, worldThread, {})`，收紧后重新通过 client typecheck、source canary、App Vitest、browser smoke、build/budget、runtime manifest QA 和 `npm test`；browser smoke 收紧后首次 420 秒外层超时未出断言失败输出，720 秒同命令重跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。提交前只读复审代理 `019e6d04-225d-7122-9155-b4d715b3f147` 未发现阻塞问题，补充复审确认数据源范围收紧后无新增问题。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.11：
+最新运行态完整验证锚点来自 S91.12：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（112 tests）
+- `node --test test/reactClientScaffold.test.js`（113 tests）
 - `npm run typecheck:client`
 - `npm run typecheck:server`
 - `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 76 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-11-official-monthly-reader-smoke`
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-12-emperor-edict-reader-smoke`
 - `npm run check:docs-governance`
 - `git diff --check`（仅既有 CRLF warning）
-- `npm test`（1226 tests）
+- `npm test`（1227 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-28：S91.12 皇帝御案朱批校阅与候复状态 polish 完成
+
+- 范围：既有 `EmperorPanel` 新增 `data-polish-emperor-edict-reader="s91-12-emperor-edict-reader"` 的“御案朱批校阅”，四格显示御案、章奏、朝议与候复状态；读法只从 `eventArchiveView`、公开章奏、`courtResponseView` 奏议回应、`worldThreadView` 朝议/任免线索、`courtConsequenceView` 赏罚/后果线索和当前案卷本地 `role-surface` 草稿写入状态派生。
+- 体验修正：有公开御案时显示 ready 状态、题名/日期、公开章奏数、可候朱批奏议数、朝议/任免/赏罚线索计数；reader 章奏计数使用 `courtMemorials = getMemorialQueue(eventArchive, worldThread, {})`，不把舆图 runtime event effects 纳入“章奏”计数；从皇帝面板点击“拟旨”后，“候复”只显示“主卷待呈”和“御案草稿已入底部奏折，仍候主卷回音”，不读取或回显 `actionDraft.text`、拟旨正文、朱批正文或污染测试句“草拟一道明发谕旨”。移动端同 `routes/game.css` 单列。
+- 边界：本步只改 React 前端读法、主卷 route CSS、客户端测试、browser smoke 和文档；不新增后端 route/API/schema、AI 权限、provider/prompt 能力、依赖、素材、存档字段或服务器裁决。浏览器仍只消费现有安全御案/奏折/朝议/任免/赏罚 view、route 状态和本地草稿标记；朱批、拟旨、朝议、任免候选、赏罚线索或本地草稿状态不得被改写成已生效圣旨、任免、赏罚、处分、拨款、调兵或时间推进事实。
+- 验证：已通过 `npm run typecheck:client`、`npm run typecheck:server`、`node --test test/reactClientScaffold.test.js`（113 tests）、`node --check scripts/clientSmoke.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-12-emperor-edict-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1227 tests）；首次 source canary 因测试把 `EmperorPanel` 的防泄漏护栏常量纳入运行时扫描误报，已剥离护栏常量后复跑通过；收紧 `courtMemorials` 后重新通过 client typecheck、source canary、App Vitest、browser smoke、build/budget、runtime manifest QA 和 `npm test`；browser smoke 收紧后首次 420 秒外层超时未出断言失败输出，720 秒同命令重跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
+- 子代理：提交前只读复审代理 `019e6d04-225d-7122-9155-b4d715b3f147` 已复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为文档待补状态、章奏计数可收紧、移动端单列主要由 source canary 覆盖。主代理已采纳章奏计数建议，把 reader 计数收紧到 `eventArchiveView` + `worldThreadView`，并请求同一代理补充复审；补充复审确认数据源范围问题已解决且无新增建议。代理确认未编辑文件、未运行任何 Git 命令。提交哈希将在本轮提交后补记。
 
 ### 2026-05-27：S91.11 入仕官职月报校阅与候复状态 polish 完成
 
