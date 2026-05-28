@@ -165,7 +165,7 @@
 - 边界：本步只改 React 前端读法、共享 overlay CSS、客户端测试、browser smoke 和文档；不新增后端 topic surface 类型、route/API/schema、AI 权限、provider/prompt 能力、依赖、素材、存档字段或服务器裁决。浏览器仍只消费现有安全 `topicSurfaceView`、`topicDraft` 回包、本地证据勾选、本地草稿和当前案卷 route 状态；证据勾选、专题草稿或写入状态不得被改写成资源、交易、任免、赏罚、罪名、战和、关系或时间推进事实。
 - 验证：已通过 `npm run typecheck:client`、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（115 tests）、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（77 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-14-topic-reply-reader-smoke`、`npm run check:docs-governance`、`npm run typecheck:server`、`git diff --check` 和 `npm test`（1229 tests）；首次 source canary 因 S91.14 新增测试把 `TopicSurfaceWorkbench` 切片终点设在函数之前失败，已改为切到文件末尾后复跑通过；首次 `git diff --check` 120 秒超时，仅输出未触碰归档/素材文件的既有 CRLF warning，300 秒重跑通过且仍仅既有 CRLF warning。
 - 子代理：提交前只读复审代理 `019e6dcb-301f-7600-bba1-0a5f9cc87074` 已复审最终 diff 与验证证据，未发现阻塞问题；非阻塞提醒为 `aria-live="polite"` 放在整个专题 reader `dl` 上，写入态切换时可能播报整组四读内容，当前范围可接受。代理确认未编辑文件、未运行任何 Git 命令；额外运行 `node --test test/reactClientScaffold.test.js --test-name-pattern "S91.14 topic surface reply reader"`，实际完整 115 tests 通过。
-- 提交：S91.14 实现提交待生成；本哈希将在低风险纯文档后续提交中补记。
+- 提交：S91.14 实现提交 `853df837`（`Polish topic surface reply reader`）；本哈希记录随低风险纯文档后续提交补入台账。
 
 ### 2026-05-28：S91.13 六身份循环候复校阅与本地草稿状态 polish 完成
 
