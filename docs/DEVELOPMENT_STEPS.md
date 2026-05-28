@@ -136,17 +136,42 @@
 | S91.17 | DONE | 领域后果范围上限口径 polish | 已收束 `DomainConsequenceSection` 在调用处传入 `sourceTypes` 时的顶部 summary/cap 文案：只按过滤后的公开后果说明当前页范围，不再用全局 `view.caps` 暗示本页可读不存在的领域后果；不新增 route/API/schema、AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.18 | DONE | 专题层候复播报与证据空态 polish | 已收束既有 `SurfaceHost` 专题层读法播报：把整组四读 live region 改为单行候复状态播报，并在公开证据为空时显示明确空态；browser smoke 旧案列表等待同步加固为等待当前案卷刷新完成；不新增 route/API/schema、AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S92.1 | DONE | AI 编排 v2 路线图与 baseline | 已新增 `docs/AI_ORCHESTRATION_V2_ROADMAP.md`、`docs/AI_V2_BASELINE_REPORT.md`、`scripts/aiBaselineSnapshot.js`、`npm run ai:baseline` 和 baseline/eval artifact 测试；只生成 hidden-safe 结构摘要与 ignored artifact，不改变运行时 AI 行为、provider facade、prompt、tool 权限、API/schema、存档、SQLite、浏览器 UI 或服务器裁决。 |
+| S92.2 | DONE | AI Task Runtime 骨架 | 已新增旁路 `src/ai/runtime/` 骨架、ProviderAdapter 合约、预算/trace/fallback 与 Mock-only 结构化任务单测；先覆盖 `opening`、`quick_action`、`topic_draft`，默认 provider facade、现有 route/API、prompt、存档、SQLite、浏览器 UI 和服务器裁决保持不接管。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 当前步骤 S92.1：AI 编排 v2 路线图与 baseline 已完成。`docs/AI_ORCHESTRATION_V2_ROADMAP.md` 固定 Ticket 0-8 的后续方向，`docs/AI_V2_BASELINE_REPORT.md` 记录基线摘要；`scripts/aiBaselineSnapshot.js` 与 `npm run ai:baseline` 输出 prompt pack、schema、model route、tool definitions 和 provider capability 的 hidden-safe JSON 到 ignored `artifacts/ai-baseline/latest.json`；`npm run eval:ai` 额外输出 ignored `artifacts/ai-eval/latest.json` 安全摘要。
+- 当前步骤 S92.2：AI Task Runtime 骨架已完成。新增旁路 `AiTaskRuntime`、ProviderAdapter 合约、runtime budget、public-safe trace 和 fallback policy；先覆盖 Mock-only/test-only 的 `opening`、`quick_action`、`topic_draft` 三类低风险结构化任务，默认 `getProvider` / route/API / provider facade 不切换。
+- S92.2 保持 no-tool / no-adjudication / no-state-write / no-server-resolver 边界；非 mock route 或 adapter 默认不会触达真实 provider，而是落入 schema-valid Mock fallback。public trace 只发布 task/route/provider/model/budget/validation/usage/tool/fallback 等 bounded metadata，不发布 raw prompt、provider payload、`worldState`、`statePatch`、key、base URL、本地路径或内部 `server.*` 引用。
+- S92.2 验证已通过 `node --check src/ai/providerSafety.js`、`node --check src/ai/providers/adapterContract.js`、`node --check src/ai/runtime/aiBudgetManager.js`、`node --check src/ai/runtime/aiFallbackPolicy.js`、`node --check src/ai/runtime/aiTaskTrace.js`、`node --check src/ai/runtime/aiTaskRuntime.js`、`node --test test/aiTaskRuntime.test.js test/aiTaskTrace.test.js test/aiFallbackPolicy.test.js`、`node --test test/streamingTurnRoute.test.js --test-name-pattern "S88.12 no-key real provider falls back"`、`npm run eval:ai`、`npm run typecheck:server`、`npm run check:docs-governance`、`git diff --check`，以及 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4`（合计 1252 tests）。单条 `npm test` 两次在全量并发下停于旧 `S88.12 no-key real provider falls back ...` 的 `fetch failed / ECONNRESET`，同一文件聚焦复跑和分片全量均通过。
+- S92.1：AI 编排 v2 路线图与 baseline 已完成。`docs/AI_ORCHESTRATION_V2_ROADMAP.md` 固定 Ticket 0-8 的后续方向，`docs/AI_V2_BASELINE_REPORT.md` 记录基线摘要；`scripts/aiBaselineSnapshot.js` 与 `npm run ai:baseline` 输出 prompt pack、schema、model route、tool definitions 和 provider capability 的 hidden-safe JSON 到 ignored `artifacts/ai-baseline/latest.json`；`npm run eval:ai` 额外输出 ignored `artifacts/ai-eval/latest.json` 安全摘要。
 - S92.1 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变运行时 AI 行为、provider facade、prompt 内容、tool 权限、后端 API/schema、AI 权限、SQLite schema、存档格式、runtime manifest、素材 manifest、浏览器 UI 或服务器裁决；baseline 和 eval artifact 不得包含 key、base URL、raw prompt、provider payload、本地路径、raw SQLite row、hidden notes、`worldState` 或内部 `server.*` resolver 名称。
 - S92.1 聚焦验证已通过 `node --check scripts/aiBaselineSnapshot.js`、`node --check scripts/aiEvaluationRunner.js`、`npm run ai:baseline`、`npm run eval:ai`、`npm run typecheck:server`、`npm run check:docs-governance`、`git diff --check`、`node --test test/aiBaselineSnapshot.test.js` 和 `node --test test/aiEvaluationRunner.test.js test/aiBaselineSnapshot.test.js`；全量 Node 测试已按 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4` 跑完，合计 1238 tests。单条 `npm test` 在 124s/304s 外层超时截断且无断言失败输出，等价分片全量已通过；提交前只读复审代理 `019e6f0d-53c6-7a61-8924-dd7706cdd2a6` 未发现阻塞问题，非阻塞建议已采纳，补充复审确认 follow-up 无新增风险。
 
 ## 6. 最近完整验证口径
 
-S92.1 当前验证锚点：
+S92.2 当前验证锚点：
+
+- `node --check src/ai/providers/adapterContract.js`
+- `node --check src/ai/providerSafety.js`
+- `node --check src/ai/runtime/aiBudgetManager.js`
+- `node --check src/ai/runtime/aiFallbackPolicy.js`
+- `node --check src/ai/runtime/aiTaskTrace.js`
+- `node --check src/ai/runtime/aiTaskRuntime.js`
+- `node --test test/aiTaskRuntime.test.js test/aiTaskTrace.test.js test/aiFallbackPolicy.test.js`
+- `npm run eval:ai`
+- `npm run typecheck:server`
+- `npm run check:docs-governance`
+- `git diff --check`
+- `node --test test/streamingTurnRoute.test.js --test-name-pattern "S88.12 no-key real provider falls back"`
+- `node --test --test-shard=1/4 test/*.test.js`（293 tests）
+- `node --test --test-shard=2/4 test/*.test.js`（332 tests）
+- `node --test --test-shard=3/4 test/*.test.js`（382 tests）
+- `node --test --test-shard=4/4 test/*.test.js`（245 tests）
+
+说明：单条 `npm test` 两次在全量并发下停于旧 `S88.12 no-key real provider falls back ...` 的 `fetch failed / ECONNRESET`；该用例文件聚焦复跑通过，等价全量分片合计 1252 tests 已全部通过。
+
+上一 AI v2 基线完整验证来自 S92.1：
 
 - `node --check scripts/aiBaselineSnapshot.js`
 - `node --check scripts/aiEvaluationRunner.js`
@@ -180,6 +205,17 @@ S91.18 运行态完整验证锚点：
 - `npm test`（1233 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-28：S92.2 AI Task Runtime 骨架完成
+
+- 范围：新增 `src/ai/runtime/aiTaskRuntime.js`、`aiTaskTrace.js`、`aiFallbackPolicy.js`、`aiBudgetManager.js` 与 `src/ai/providers/adapterContract.js`，形成旁路 `AiTaskRuntime`、ProviderAdapter 合约、预算收束、public-safe trace 与 fallback policy；`src/ai/index.js` 只新增导出，不改变默认 provider facade 行为。
+- 运行边界：`createAiTaskRuntime()` / `runAiTask()` 先覆盖 Mock-only/test-only 的 `opening`、`quick_action`、`topic_draft` 三类结构化任务；三类任务强制 `toolBudget=0`、不请求 adjudication、不写 state、不调用服务器 resolver。非 mock route 或 adapter 默认不会触达真实 provider，而是落入 schema-valid Mock fallback。
+- 安全 trace：public trace 只保留 task/route/provider/model/budget/validation/usage/tool/fallback 等 bounded metadata；raw prompt、provider payload、`worldState`、`statePatch`、key、base URL、本地路径和内部 `server.*` 引用会被丢弃、redact 或拒绝。fallback reason 只使用 `providerSafety` 的 redacted 摘要，且补通用 `prompt=...` / `key=...` / `token=...` 敏感赋值 canary。
+- 测试：新增 `test/aiTaskRuntime.test.js`、`test/aiTaskTrace.test.js`、`test/aiFallbackPolicy.test.js`，覆盖 mock opening / quick action / topic draft、旧 mock facade adapter 兼容、非 mock 不触达、schema-valid fallback、预算无工具和 public trace 红线。
+- 边界：本步不新增 route/API、prompt/schema/tool 权限、存档字段、SQLite schema、浏览器 UI、素材或服务器裁决能力；不新增 npm 依赖，不请求真实 provider，不改变默认本地可玩 Mock 模式。
+- 子代理：实施子代理 `019e6f1c-9b4e-7f93-a98f-89f8540449e6` 原计划处理 trace 模块和测试，但超时后由主代理关闭，未合入其改动、未运行 Git 命令、未提交、未推送、未创建 PR。提交前只读复审代理 `019e6f31-f067-7350-a4b3-c22044a3df11` 发现 `prompt=...` / `key=...` / `token=...` 字符串错误摘要泄漏风险和预算断言缺口；已补 `providerSafety` 红线、trace assertion、budget assertion 与 canary 测试。复审 follow-up 确认阻塞问题清零，未编辑文件、未运行 Git 命令、未创建 PR；额外复跑 S92.2 聚焦测试 14 pass。
+- 验证：已通过 `node --check src/ai/providerSafety.js`、`node --check src/ai/providers/adapterContract.js`、`node --check src/ai/runtime/aiBudgetManager.js`、`node --check src/ai/runtime/aiFallbackPolicy.js`、`node --check src/ai/runtime/aiTaskTrace.js`、`node --check src/ai/runtime/aiTaskRuntime.js`、`node --test test/aiTaskRuntime.test.js test/aiTaskTrace.test.js test/aiFallbackPolicy.test.js`、`node --test test/streamingTurnRoute.test.js --test-name-pattern "S88.12 no-key real provider falls back"`、`npm run eval:ai`、`npm run typecheck:server`、`npm run check:docs-governance`、`git diff --check`，以及 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4`（293 + 332 + 382 + 245 = 1252 tests）；单条 `npm test` 两次在全量并发下停于旧 S88.12 SSE no-key 用例的 `ECONNRESET`，聚焦复跑和分片全量通过。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-28：S92.1 AI 编排 v2 路线图与 baseline 完成
 

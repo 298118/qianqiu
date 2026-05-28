@@ -35,6 +35,8 @@ const TOKEN_PATTERN = /\b(?:sk|tp)-[A-Za-z0-9_-]{6,}\b/g;
 const LOCAL_PATH_PATTERN =
   /(?:data[\\/](?:sessions|audit)[^\s"'<>]*|[A-Za-z]:[\\/][^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+)/gi;
 const BASE_URL_ASSIGNMENT_PATTERN = /\bbase(?:URL|Url|_url)?\s*[:=]\s*[^\s"'<>]+/gi;
+const SENSITIVE_ASSIGNMENT_PATTERN =
+  /\b(?:rawProviderPayload|providerPayload|rawPrompt|fullPrompt|prompt|instructions|input|requestBody|responseBody|request|response|headers|apiKey|api[-_\s]?key|key|token|localPath|worldState|statePatch)\s*[:=]\s*[^;\n。；]*/gi;
 const PROVIDER_HTTP_BODY_PATTERN =
   /\b((?:MiMo|OpenAI|DeepSeek|Anthropic|Claude)\s+API\s+(?:request|stream)\s+failed\s+with\s+\d{3}\s*:\s*)[\s\S]*/gi;
 const PROVIDER_NON_JSON_BODY_PATTERN =
@@ -84,6 +86,7 @@ function redactAiProviderText(value, options = {}) {
     .replace(TOKEN_PATTERN, "[redacted-key]")
     .replace(LOCAL_PATH_PATTERN, "[redacted-path]")
     .replace(BASE_URL_ASSIGNMENT_PATTERN, "[redacted-url]")
+    .replace(SENSITIVE_ASSIGNMENT_PATTERN, "[redacted-sensitive-assignment]")
     .replace(PROVIDER_HTTP_BODY_PATTERN, "$1[redacted-provider-body]")
     .replace(PROVIDER_NON_JSON_BODY_PATTERN, "$1[redacted-provider-body]")
     .replace(RAW_PROVIDER_DETAIL_SEGMENT_PATTERN, "[redacted-provider-detail]")

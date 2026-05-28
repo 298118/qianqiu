@@ -114,12 +114,21 @@ git diff --check
 
 目标：新增 runtime 骨架，但旧 provider facade 和默认运行路径继续可用。
 
+本步已落地范围：
+
+- 新增 `src/ai/runtime/aiTaskRuntime.js`、`aiTaskTrace.js`、`aiFallbackPolicy.js`、`aiBudgetManager.js` 与 `src/ai/providers/adapterContract.js`，形成旁路 `AiTaskRuntime` 骨架。
+- `createAiTaskRuntime()` 与 `runAiTask()` 只在 Mock-only/test-only 边界内运行，先覆盖 `opening`、`quick_action`、`topic_draft` 三类低风险结构化任务；默认 `getProvider`、route/API 和旧 provider facade 不切换。
+- runtime 会从 model route 收束预算，但 S92.2 三类任务强制 `toolBudget=0`、不请求 adjudication、不写 state、不调用服务器 resolver。
+- ProviderAdapter 合约只接收/返回结构化 payload；旧 mock facade 可通过 `createProviderFacadeAdapter()` 包装为旁路 adapter。
+- trace 只发布 public-safe 摘要，保留 task/route/provider/model/budget/validation/usage/tool/fallback 等 bounded metadata；raw prompt、provider payload、`worldState`、`statePatch`、key、base URL、本地路径和内部 `server.*` 引用会被丢弃或拒绝。
+- fallback policy 为三类已支持任务生成 schema-valid Mock payload，并只记录 redacted fallback reason。
+
 建议范围：
 
 - 新增 `src/ai/runtime/aiTaskRuntime.js`、`aiTaskTrace.js`、`aiFallbackPolicy.js`、`aiBudgetManager.js`。
 - 新增 `src/ai/providers/adapterContract.js`。
 - 先实现 Mock-only 或测试-only 路径，覆盖 opening、quick_action、topic_draft 等低风险任务。
-- trace 只输出 redacted public summary。
+- trace 只输出 redacted public summary，并拒绝 raw prompt、provider payload、`worldState`、`statePatch`、key/path/base URL、`prompt=...` / `key=...` / `token=...` 敏感赋值和内部 `server.*` 引用。
 
 验收：
 
@@ -127,6 +136,8 @@ git diff --check
 node --test test/aiTaskRuntime.test.js test/aiTaskTrace.test.js test/aiFallbackPolicy.test.js
 npm run eval:ai
 npm run typecheck:server
+npm run check:docs-governance
+git diff --check
 ```
 
 ### Ticket 2：ProviderAdapter 与 strict structured output 渐进

@@ -12,6 +12,10 @@ const {
   normalizeProviderName,
   resolveModelForTask
 } = require("./modelRoutePolicy");
+const {
+  createAiTaskRuntime,
+  runAiTask
+} = require("./runtime/aiTaskRuntime");
 
 const PROVIDERS = {
   openai: createOpenAiProvider,
@@ -202,8 +206,10 @@ function getProvider(options = {}) {
 }
 
 module.exports = {
+  createAiTaskRuntime,
   createProviderByName,
   createRoutedProvider,
   getProvider,
-  getProviderForTask
+  getProviderForTask,
+  runAiTask
 };
