@@ -1822,8 +1822,21 @@ describe("S74.1 React client shell", () => {
             active: true,
             latest: {
               reportId: "PMB-1644-01-0009",
-              publicSummary: "首月差事已入本月官职月报。"
-            }
+              periodKey: "1644-01",
+              publicSummary: "首月差事已入本月官职月报。",
+              sections: [
+                { title: "本职差遣", publicSummary: "馆阁讲章校订入月报。" },
+                { title: "上官同僚", publicSummary: "堂官与同年只留公开意见。" }
+              ],
+              actionItems: [
+                { title: "补齐讲章出处" },
+                { title: "续记考成观察" }
+              ],
+              riskItems: [
+                { title: "台谏留察" }
+              ]
+            },
+            recentReports: [{ reportId: "PMB-1644-01-0008", publicSummary: "上月官职月报已归档。" }]
           },
           courtConsequenceView: {
             active: true,
@@ -1940,6 +1953,15 @@ describe("S74.1 React client shell", () => {
     renderRoute(`/game/${sessionId}`);
 
     await screen.findByRole("heading", { name: "部院官署" });
+    const monthlyReader = document.querySelector<HTMLElement>("[data-polish-official-monthly-reader='s91-11-official-monthly-reader']");
+    expect(monthlyReader).toBeTruthy();
+    expect(monthlyReader?.getAttribute("data-official-monthly-state")).toBe("ready");
+    expect(monthlyReader?.querySelectorAll("dl > div")).toHaveLength(4);
+    expect(within(monthlyReader as HTMLElement).getByText("官职月报校阅")).toBeTruthy();
+    expect(within(monthlyReader as HTMLElement).getByText("1644-01")).toBeTruthy();
+    expect(within(monthlyReader as HTMLElement).getByText(/首月差事已入本月官职月报/)).toBeTruthy();
+    expect(within(monthlyReader as HTMLElement).getByText(/2 段 \/ 2 项 \/ 1 风险/)).toBeTruthy();
+    expect(within(monthlyReader as HTMLElement).getByText(/只认当前案卷本页的本地草稿/)).toBeTruthy();
     expect(screen.getByText("官职履历")).toBeTruthy();
     expect(screen.getAllByText("部院公文").length).toBeGreaterThan(0);
     expect(screen.getByText("官署首月")).toBeTruthy();
@@ -1975,6 +1997,11 @@ describe("S74.1 React client shell", () => {
       targetPage: "game",
       text: "若有弹劾风声，先拟辨疏，说明事实、证据和请核事项，不自行成案。"
     });
+    const writtenMonthlyReader = document.querySelector<HTMLElement>("[data-polish-official-monthly-reader='s91-11-official-monthly-reader']");
+    expect(writtenMonthlyReader?.getAttribute("data-official-monthly-state")).toBe("written");
+    expect(within(writtenMonthlyReader as HTMLElement).getByText("主卷待呈")).toBeTruthy();
+    expect(within(writtenMonthlyReader as HTMLElement).getByText(/本页草稿已入底部奏折/)).toBeTruthy();
+    expect(writtenMonthlyReader?.textContent || "").not.toContain("若有弹劾风声");
     const receiptButtons = screen.getAllByRole("button", { name: "拟回堂官" });
     fireEvent.click(receiptButtons[receiptButtons.length - 1]);
     expect(useUiStateStore.getState().actionDraft?.text).toContain("馆阁讲章校订");

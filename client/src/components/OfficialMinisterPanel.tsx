@@ -20,6 +20,7 @@ type OfficialMinisterPanelProps = {
   readonly courtResponseView?: JsonObject | null;
   readonly economyTraceView?: EconomyTraceView | null;
   readonly domainConsequenceView?: JsonObject | null;
+  readonly localRoleSurfaceDraftWritten?: boolean;
   readonly roleBackgroundPath?: string;
   readonly onDraft: (text: string) => void;
   readonly resolveRoleCycleRouteHref?: (routeId: string) => string | null;
@@ -40,6 +41,13 @@ type SafeDraftAction = {
   readonly id: string;
   readonly label: string;
   readonly text: string;
+};
+
+type OfficialMonthlyReaderRow = {
+  readonly id: string;
+  readonly label: string;
+  readonly value: string;
+  readonly detail: string;
 };
 
 const unsafeOfficialMinisterFragments = [
@@ -375,6 +383,79 @@ function getFirstMonthExperience(officialCareer: JsonObject, monthlyBriefing: Js
   };
 }
 
+function buildOfficialMonthlyReaderRows(
+  monthlyBriefing: JsonObject,
+  bureau: ReturnType<typeof getBureauSummary>,
+  assignments: readonly SafeListItem[],
+  firstMonth: ReturnType<typeof getFirstMonthExperience>,
+  localRoleSurfaceDraftWritten: boolean
+) {
+  const latestMonthly = asRecord(monthlyBriefing.latest);
+  const monthlyActive = monthlyBriefing.active === true;
+  const monthlyReady = monthlyActive && Object.keys(latestMonthly).length > 0;
+  const sectionCount = cleanCount(asArray(latestMonthly.sections).length, 0);
+  const actionCount = cleanCount(asArray(latestMonthly.actionItems).length, 0);
+  const riskCount = cleanCount(asArray(latestMonthly.riskItems).length, 0);
+  const recentReportCount = cleanCount(asArray(monthlyBriefing.recentReports).length, 0);
+  const periodLabel = cleanOfficialMinisterText(latestMonthly.periodKey, "本月月报", 36);
+  const monthlySummary = cleanOfficialMinisterText(
+    latestMonthly.publicSummary,
+    monthlyReady ? "本月官职月报已成，只读公开摘要。" : "本月官职月报候载，仍以公开差事与回署材料为据。",
+    128
+  );
+  const dutyLabel = bureau.duties.length ? bureau.duties.slice(0, 2).join("、") : "部院职掌";
+  const assignmentLabel = assignments.length
+    ? `${assignments.length} 件公文`
+    : firstMonth.active
+      ? "首月差事"
+      : "差事候载";
+  const assignmentDetail = firstMonth.active
+    ? cleanOfficialMinisterText(firstMonth.monthlyHint || firstMonth.summary, "首月差事可随月报摘录，成败仍候主卷回批。", 118)
+    : `${activeMonthlyLabel(monthlyReady, recentReportCount)}；部院差遣只作读卷提示。`;
+
+  const rows: OfficialMonthlyReaderRow[] = [
+    {
+      id: "office",
+      label: "本职",
+      value: bureau.officeTitle,
+      detail: `${bureau.name} · ${dutyLabel}`
+    },
+    {
+      id: "monthly",
+      label: "月报",
+      value: monthlyReady ? periodLabel : "月报候载",
+      detail: monthlyReady
+        ? `${monthlySummary} ${sectionCount} 段 / ${actionCount} 项 / ${riskCount} 风险。`
+        : monthlySummary
+    },
+    {
+      id: "assignment",
+      label: "差事",
+      value: assignmentLabel,
+      detail: assignmentDetail
+    },
+    {
+      id: "reply",
+      label: "候复",
+      value: localRoleSurfaceDraftWritten ? "主卷待呈" : "仍候主卷",
+      detail: localRoleSurfaceDraftWritten
+        ? "本页草稿已入底部奏折，仍候主卷回音。"
+        : "可据月报摘录起草；写入底部奏折只留本地状态，不回显正文。"
+    }
+  ];
+
+  return {
+    state: localRoleSurfaceDraftWritten ? "written" : monthlyReady ? "ready" : firstMonth.active || assignments.length ? "empty" : "inactive",
+    rows
+  };
+}
+
+function activeMonthlyLabel(monthlyReady: boolean, recentReportCount: number) {
+  if (monthlyReady) return "本月月报已成";
+  if (recentReportCount > 0) return `近月 ${recentReportCount} 份月报可回看`;
+  return "公开月报暂候载";
+}
+
 function getCourtEntry(officialCareer: JsonObject) {
   const entry = asRecord(officialCareer.courtEntry);
   const memorial = asRecord(entry.memorialEntry);
@@ -526,6 +607,7 @@ export function OfficialMinisterPanel({
   courtResponseView,
   economyTraceView,
   domainConsequenceView,
+  localRoleSurfaceDraftWritten = false,
   roleBackgroundPath,
   onDraft,
   resolveRoleCycleRouteHref,
@@ -547,6 +629,13 @@ export function OfficialMinisterPanel({
   const careerLedger = getCareerLedger(officialCareer, appointmentTrack, posting);
   const assignments = getAssignmentItems(officialCareer);
   const firstMonth = getFirstMonthExperience(officialCareer, monthlyBriefing);
+  const monthlyReader = buildOfficialMonthlyReaderRows(
+    monthlyBriefing,
+    bureau,
+    assignments,
+    firstMonth,
+    localRoleSurfaceDraftWritten
+  );
   const courtEntry = getCourtEntry(officialCareer);
   const network = getOfficeNetwork(officialCareer, actorMemory, officialPostings);
   const factionRisk = getFactionRisk(officialCareer, actorMemory, aiAudit);
@@ -601,6 +690,32 @@ export function OfficialMinisterPanel({
           onOpenSurface={onOpenRoleCycleSurface}
           onDraft={onDraft}
         />
+        <article
+          className="scholarPanelCard paperMotionPanel rolePanel officialMonthlyReader"
+          aria-labelledby="official-monthly-reader-title"
+          data-polish-official-monthly-reader="s91-11-official-monthly-reader"
+          data-official-monthly-state={monthlyReader.state}
+        >
+          <div className="officialMonthlyReaderHeader">
+            <div>
+              <p className="eyebrow">月报校阅</p>
+              <h3 id="official-monthly-reader-title">官职月报校阅</h3>
+            </div>
+            <strong>{monthlyReader.state === "written" ? "草稿已入主卷" : "只读公开月报"}</strong>
+          </div>
+          <dl aria-label="官职月报校阅读法">
+            {monthlyReader.rows.map((row) => (
+              <div key={row.id}>
+                <dt>{row.label}</dt>
+                <dd>
+                  <strong>{row.value}</strong>
+                  <span>{row.detail}</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p>只读本案公开官职月报、首月回署与部院公文；只认当前案卷本页的本地草稿，不回显正文，不把月报改写成考成、任免或弹劾事实。</p>
+        </article>
         <article className="scholarPanelCard paperMotionPanel rolePanel officialMinisterPanelCareer" aria-labelledby="official-career-title">
           <h3 id="official-career-title">官职履历</h3>
           <dl className="scholarPanelCompactDl">

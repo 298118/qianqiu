@@ -2618,6 +2618,7 @@ async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir, opti
   await page.getByRole("heading", { name: "部院官署" }).waitFor({ timeout: 10000 });
   const panelSnapshot = await page.evaluate(({ id, expectedRoleLabel }) => {
     const panel = document.querySelector(".officialMinisterPanel");
+    const monthlyReader = panel?.querySelector("[data-polish-official-monthly-reader='s91-11-official-monthly-reader']");
     const text = panel?.textContent || "";
     const courtLink = [...document.querySelectorAll(".officialMinisterPanel a")].find((link) => (link.textContent || "").includes("入朝议页"));
     const buttons = [...document.querySelectorAll(".officialMinisterPanel button")].map((button) => ({
@@ -2637,6 +2638,10 @@ async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir, opti
       hasAssessment: text.includes("考成与弹劾"),
       hasMemorial: text.includes("奏折朝议入口"),
       hasDomainConsequence: text.includes("领域后果"),
+      monthlyReaderMarker: monthlyReader?.getAttribute("data-polish-official-monthly-reader") || "",
+      monthlyReaderState: monthlyReader?.getAttribute("data-official-monthly-state") || "",
+      monthlyReaderRows: monthlyReader?.querySelectorAll("dl > div").length || 0,
+      monthlyReaderText: monthlyReader?.textContent || "",
       hasExpectedRole: text.includes(expectedRoleLabel),
       hasRoleCycle: text.includes("本旬身份循环") && text.includes("本旬事务") && text.includes("风险") && text.includes("可查入口") && text.includes("证据："),
       hasBoundary: text.includes("不得在前端直接任免、奖惩、处分、弹劾成案或改写考成"),
@@ -2659,6 +2664,15 @@ async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir, opti
   if (!panelSnapshot.hasAssessment) failures.push("missing assessment block");
   if (!panelSnapshot.hasMemorial) failures.push("missing memorial block");
   if (!panelSnapshot.hasDomainConsequence) failures.push("missing domain consequence tracking block");
+  if (panelSnapshot.monthlyReaderMarker !== "s91-11-official-monthly-reader" || panelSnapshot.monthlyReaderRows !== 4) {
+    failures.push(`S91.11 official monthly reader missing: ${JSON.stringify({ marker: panelSnapshot.monthlyReaderMarker, state: panelSnapshot.monthlyReaderState, rows: panelSnapshot.monthlyReaderRows, text: panelSnapshot.monthlyReaderText.slice(0, 180) })}`);
+  }
+  if (!panelSnapshot.monthlyReaderText.includes("官职月报校阅") || !panelSnapshot.monthlyReaderText.includes("本职") || !panelSnapshot.monthlyReaderText.includes("月报") || !panelSnapshot.monthlyReaderText.includes("差事") || !panelSnapshot.monthlyReaderText.includes("候复") || !panelSnapshot.monthlyReaderText.includes("不回显正文") || !panelSnapshot.monthlyReaderText.includes("不把月报改写成考成、任免或弹劾事实")) {
+    failures.push(`S91.11 official monthly reader copy incomplete: ${panelSnapshot.monthlyReaderText.slice(0, 220)}`);
+  }
+  if (panelSnapshot.monthlyReaderText.includes("若有弹劾风声")) {
+    failures.push("S91.11 official monthly reader leaked draft text before draft check");
+  }
   if (!panelSnapshot.hasExpectedRole) failures.push(`missing role label ${roleLabel}`);
   if (!panelSnapshot.hasRoleCycle) failures.push("missing role cycle block");
   if (!panelSnapshot.hasBoundary) failures.push("missing server boundary");
@@ -2692,6 +2706,18 @@ async function assertOfficialMinisterPanel(page, sessionId, screenshotsDir, opti
   page.off("request", onRequest);
   if (turnRequests.length) {
     throw new Error(`S76.4 official minister draft button submitted a turn instead of writing a draft: ${turnRequests.join(", ")}`);
+  }
+
+  const monthlyWrittenSnapshot = await page.evaluate(() => {
+    const monthlyReader = document.querySelector("[data-polish-official-monthly-reader='s91-11-official-monthly-reader']");
+    return {
+      marker: monthlyReader?.getAttribute("data-polish-official-monthly-reader") || "",
+      state: monthlyReader?.getAttribute("data-official-monthly-state") || "",
+      text: monthlyReader?.textContent || ""
+    };
+  });
+  if (monthlyWrittenSnapshot.marker !== "s91-11-official-monthly-reader" || monthlyWrittenSnapshot.state !== "written" || !monthlyWrittenSnapshot.text.includes("本页草稿已入底部奏折") || monthlyWrittenSnapshot.text.includes("若有弹劾风声")) {
+    throw new Error(`S91.11 official monthly reader written state failed: ${JSON.stringify({ marker: monthlyWrittenSnapshot.marker, state: monthlyWrittenSnapshot.state, text: monthlyWrittenSnapshot.text.slice(0, 220) })}`);
   }
 
   const draft = await page.getByLabel("本回合行动").inputValue();

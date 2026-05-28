@@ -1109,6 +1109,83 @@
   font-weight: 800;
 }
 
+.officialMonthlyReader {
+  grid-column: 1 / -1;
+  border-color: rgb(61 72 104 / .3);
+  background:
+    linear-gradient(135deg, rgb(255 252 238 / .78), rgb(222 229 210 / .42)),
+    var(--qq-material-xuan) center / 520px repeat;
+}
+
+.officialMonthlyReaderHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.officialMonthlyReaderHeader .eyebrow,
+.officialMonthlyReaderHeader h3 {
+  margin: 0;
+}
+
+.officialMonthlyReaderHeader strong {
+  color: #3d4868;
+  font-size: .84rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.officialMonthlyReader dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 11px;
+  margin: 0;
+}
+
+.officialMonthlyReader dl div {
+  min-width: 0;
+  border: 1px solid rgb(61 72 104 / .18);
+  background: rgb(255 252 238 / .56);
+  padding: 9px;
+}
+
+.officialMonthlyReader dt {
+  color: #6a604c;
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+.officialMonthlyReader dd {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.officialMonthlyReader strong,
+.officialMonthlyReader span,
+.officialMonthlyReader p {
+  overflow-wrap: anywhere;
+}
+
+.officialMonthlyReader dd strong {
+  color: #2f3550;
+  font-size: .84rem;
+  line-height: 1.45;
+}
+
+.officialMonthlyReader dd span,
+.officialMonthlyReader p {
+  color: #5f523f;
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.officialMonthlyReader p {
+  margin: 0;
+}
+
 .officialMinisterPanelFirstMonth {
   border-color: rgb(94 70 35 / .28);
   background: rgb(255 252 239 / .74);
@@ -2195,5 +2272,15 @@
   .courtDraftReader,
   .courtDraftReader dl {
     grid-template-columns: 1fr;
+  }
+
+  .officialMonthlyReader,
+  .officialMonthlyReader dl {
+    grid-template-columns: 1fr;
+  }
+
+  .officialMonthlyReaderHeader {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

@@ -2335,6 +2335,60 @@ test("S91.10 court draft reader stays local-topic-draft-only and frontend-only",
   );
 });
 
+test("S91.11 official monthly reader stays existing-monthly-view-only and frontend-only", () => {
+  const officialPanelSource = readText("client/src/components/OfficialMinisterPanel.tsx");
+  const gamePageSource = readText("client/src/pages/GamePage.tsx");
+  const gameStyleSource = readClientStyleModule("routes/game.css");
+  const appTestSource = readText("client/src/__tests__/App.test.tsx");
+  const clientSmokeSource = readText("scripts/clientSmoke.js");
+  const readerStart = officialPanelSource.indexOf('data-polish-official-monthly-reader="s91-11-official-monthly-reader"');
+  const readerEnd = officialPanelSource.indexOf('<article className="scholarPanelCard paperMotionPanel rolePanel officialMinisterPanelCareer"', readerStart);
+  const readerMarkup = readerStart >= 0 && readerEnd > readerStart
+    ? officialPanelSource.slice(readerStart, readerEnd)
+    : "";
+  const readerDataStart = officialPanelSource.indexOf("function buildOfficialMonthlyReaderRows");
+  const readerDataEnd = officialPanelSource.indexOf("function activeMonthlyLabel", readerDataStart);
+  const readerDataBlock = readerDataStart >= 0 && readerDataEnd > readerDataStart
+    ? officialPanelSource.slice(readerDataStart, readerDataEnd)
+    : "";
+  const officialPanelWithoutGuard = stripSafeGuardPatterns(officialPanelSource);
+  const runtimeCombined = `${officialPanelWithoutGuard}\n${gamePageSource}\n${gameStyleSource}`;
+
+  assert.ok(readerStart >= 0 && readerEnd > readerStart);
+  assert.ok(readerDataStart >= 0 && readerDataEnd > readerDataStart);
+  assert.match(officialPanelSource, /type OfficialMonthlyReaderRow/);
+  assert.match(officialPanelSource, /function buildOfficialMonthlyReaderRows/);
+  assert.match(officialPanelSource, /readonly localRoleSurfaceDraftWritten\?: boolean/);
+  assert.match(gamePageSource, /localRoleSurfaceDraftWritten=\{activeActionDraft\?\.source === "role-surface" && activeActionDraft\.targetPage === "game"\}/);
+  assert.match(gamePageSource, /const activeActionDraft = routeSessionSupported && actionDraft\?\.sessionId === sessionId \? actionDraft : null/);
+  assert.match(readerDataBlock, /monthlyBriefing\.latest/);
+  assert.match(readerDataBlock, /latestMonthly\.sections/);
+  assert.match(readerDataBlock, /latestMonthly\.actionItems/);
+  assert.match(readerDataBlock, /latestMonthly\.riskItems/);
+  assert.match(readerDataBlock, /本页草稿已入底部奏折，仍候主卷回音/);
+  assert.match(readerDataBlock, /写入底部奏折只留本地状态，不回显正文/);
+  assert.match(readerMarkup, /只读本案公开官职月报、首月回署与部院公文/);
+  assert.match(readerMarkup, /只认当前案卷本页的本地草稿/);
+  assert.match(readerMarkup, /不回显正文/);
+  assert.match(readerMarkup, /不把月报改写成考成、任免或弹劾事实/);
+  assert.doesNotMatch(readerDataBlock, /actionDraft|submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|sourceRefs|relatedRefs|scopeRefs|worldState|payload|evidenceRefs|outcomeId/);
+  assert.doesNotMatch(readerMarkup, /actionDraft|submitTurn|\/api\/game\/turn|draftContext|schema|manifest|provider payload|raw audit|safe view|resolver|sourceRef|sourceRefs|relatedRefs|scopeRefs|worldState|payload|evidenceRefs|outcomeId|若有弹劾风声|馆阁讲章校订/);
+  assert.doesNotMatch(officialPanelSource, /ActionDraft|actionDraft\.text/);
+
+  assert.match(gameStyleSource, /\.officialMonthlyReader \{/);
+  assert.match(gameStyleSource, /\.officialMonthlyReader \{[\s\S]*grid-column: 1 \/ -1/);
+  assert.match(gameStyleSource, /\.officialMonthlyReader dl \{[\s\S]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(gameStyleSource, /@media \(max-width: 760px\)[\s\S]*\.officialMonthlyReader,[\s\S]*\.officialMonthlyReader dl \{[\s\S]*grid-template-columns: 1fr/);
+  assert.match(appTestSource, /s91-11-official-monthly-reader/);
+  assert.match(appTestSource, /本页草稿已入底部奏折/);
+  assert.match(clientSmokeSource, /s91-11-official-monthly-reader/);
+  assert.match(clientSmokeSource, /S91\.11 official monthly reader/);
+  assert.doesNotMatch(
+    runtimeCombined,
+    /qianqiuApi|\/api\/game\/state|\/api\/dev\/session-diagnostics|dangerouslySetInnerHTML|localStorage|sessionStorage|data\/sessions|provider payload|raw audit|hiddenNotes|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY|完整提示词|本地路径|密钥/
+  );
+});
+
 test("S89.60 main and court desk keyframes use semantic names", () => {
   const keyframesSource = readText("client/src/styles/motion/keyframes.css");
   const gameStyleSource = readText("client/src/styles/routes/game.css");

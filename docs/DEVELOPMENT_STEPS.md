@@ -127,31 +127,42 @@
 | S91.8 | DONE | 舆图图层校阅与草稿候复状态 polish | 已完成舆图“图层校阅”四读：只从现有 `mapRuntimeView` 安全投影、图层显示状态、公开计数、可见行动条数和本地草稿写入状态派生图层、卷宗、可见与草稿候复读法；不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.9 | DONE | 史册拟稿校阅与候复状态 polish | 已完成史册页“拟稿校阅”四读：只从现有公开史册/旁证计数、route 状态和当前案卷本地 `archive-view` 草稿状态派生归档、旁证、草稿与候复读法；写稿后只显示已入主卷候复，不回显草稿正文或史册条目标题，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 | S91.10 | DONE | 朝议专题草稿校阅与候复状态 polish | 已完成朝议页“专题校阅”四读：只从现有公开材料计数、route 状态和当前案卷本地 `role-surface` 专题草稿 `draftContext.surfaceId` 派生材料、官署、草稿与候复状态；写稿后只显示已入主卷候复，不读取或回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.11 | DONE | 入仕官职月报校阅与候复状态 polish | 已完成既有官员/大臣面板“官职月报校阅”四读：只从 `playerMonthlyBriefingView`、官职履历、公开任所/首月差事和当前案卷本地 `role-surface` 草稿写入状态派生本职、月报、差事与候复；不回显草稿正文，不新增 route/API/schema/AI 权限/依赖/素材、存档字段、prompt 能力或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
-- 最新实现步骤 S91.10：朝议专题草稿校阅与候复状态 polish 已完成。朝议页新增 `s91-10-court-draft-reader` 的“材料 / 官署 / 草稿 / 候复”四读，把公开章奏、史册、后果、议题、thread、月账计数、route 支持状态和当前案卷本地专题草稿写入状态集中成可扫读状态；写稿后只显示“已入主卷”候复，不读取或回显 `actionDraft.text`。
-- S91.10 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全朝议/史册/后果/thread/月账 view、route 状态和本地 `role-surface` 专题草稿标记，不把官署材料改写成裁决事实。
-- 最近完整运行态验证来自 S91.10：`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（111 tests）、`npm run typecheck:client`、S91.10 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-10-court-draft-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1225 tests）已通过；首次 S91.10 App Vitest 使用 120 秒外层超时未出结果，长超时复跑通过；接手前 source canary 因旧 S89.36/S89.17 片段过宽触发，已收窄到各自读法后通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
+- 最新实现步骤 S91.11：入仕官职月报校阅与候复状态 polish 已完成。既有 `OfficialMinisterPanel` 新增 `s91-11-official-monthly-reader` 的“本职 / 月报 / 差事 / 候复”四读，把 `playerMonthlyBriefingView`、官职履历、公开任所/首月差事和当前案卷本地 `role-surface` 草稿写入状态集中成可扫读状态；写稿后只显示“已入主卷”候复，不读取或回显 `actionDraft.text`。
+- S91.11 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变后端 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决；浏览器仍只消费现有安全月报/官职/公开差事 view、route 状态和本地草稿标记，不把月报改写成考成、任免、弹劾、财赋或官署终局事实。
+- 最近完整运行态验证来自 S91.11：`npm run typecheck:client`、`npm run typecheck:server`、`node --test test/reactClientScaffold.test.js`（112 tests）、`node --check scripts/clientSmoke.js`、S91.11 串行 Vitest（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-11-official-monthly-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1226 tests）已通过；首次 S91.11 App Vitest 使用 180 秒外层超时未出结果，长超时复跑通过；browser smoke 首次在首页 `networkidle` 超时、未进入 S91.11 断言，同命令重跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。提交前只读复审代理 `019e6cd5-420f-79e3-a467-913d096f8f7e` 未发现阻塞问题。
 
 ## 6. 最近完整验证口径
 
-最新运行态完整验证锚点来自 S91.10：
+最新运行态完整验证锚点来自 S91.11：
 
 - `node --check scripts/clientSmoke.js`
-- `node --test test/reactClientScaffold.test.js`（111 tests）
+- `node --test test/reactClientScaffold.test.js`（112 tests）
 - `npm run typecheck:client`
+- `npm run typecheck:server`
 - `npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（1 file / 76 tests）
 - `npm run qa:runtime-manifest`
 - `npm run build:client`
 - `npm run budget:client`
-- `node scripts/clientSmoke.js --screenshots artifacts/s91-10-court-draft-reader-smoke`
+- `node scripts/clientSmoke.js --screenshots artifacts/s91-11-official-monthly-reader-smoke`
 - `npm run check:docs-governance`
 - `git diff --check`（仅既有 CRLF warning）
-- `npm test`（1225 tests）
+- `npm test`（1226 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-27：S91.11 入仕官职月报校阅与候复状态 polish 完成
+
+- 范围：既有 `OfficialMinisterPanel` 新增 `data-polish-official-monthly-reader="s91-11-official-monthly-reader"` 的“官职月报校阅”，四格显示本职、月报、差事与候复状态；读法只从 `playerMonthlyBriefingView`、官职履历、公开任所/首月差事、现有 assignments 和当前案卷本地 `role-surface` 草稿写入状态派生。
+- 体验修正：有月报时显示期号、公开 section/action/risk 计数和本月本职标签；首月入仕时把公开回署/差事提示整理成“首月差事”读法；从官职面板写入底部奏折后，“候复”只显示“已入主卷”和主卷候复，不读取或回显 `actionDraft.text`，污染测试句“若有弹劾风声”不会进入读法。移动端同 `routes/game.css` 单列。
+- 边界：本步只改 React 前端读法、主卷 route CSS、客户端测试、browser smoke 和文档；不新增后端 route/API/schema、AI 权限、provider/prompt 能力、依赖、素材、存档字段或服务器裁决。浏览器仍只消费现有安全月报/官职/公开差事 view、route 状态和本地草稿标记；月报、首月差事、任所摘要或本地草稿状态不得被改写成考成、任免、弹劾、财赋或官署终局事实。
+- 验证：已通过 `npm run typecheck:client`、`npm run typecheck:server`、`node --test test/reactClientScaffold.test.js`（112 tests）、`node --check scripts/clientSmoke.js`、`npm run test:client -- --pool=vmThreads --fileParallelism=false --maxWorkers=1 client/src/__tests__/App.test.tsx`（76 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、`node scripts/clientSmoke.js --screenshots artifacts/s91-11-official-monthly-reader-smoke`、`npm run check:docs-governance`、`git diff --check` 和 `npm test`（1226 tests）；首次 App Vitest 使用 180 秒外层超时未出结果，长超时复跑通过；browser smoke 首次在首页 `networkidle` 超时、未进入 S91.11 断言，同命令重跑通过；`git diff --check` 仅输出未触碰归档/素材文件的既有 CRLF warning。
+- 子代理：提交前只读复审代理 `019e6cd5-420f-79e3-a467-913d096f8f7e` 已复审最终 diff 与验证证据，未发现阻塞问题；代理确认未编辑文件、未运行任何 Git 命令。非阻塞提醒为文档待补状态与 `localRoleSurfaceDraftWritten` 当前表示当前案卷主卷页任意 `role-surface` 草稿，前者已补记，后者符合本轮页面级本地草稿状态设计。
+- 提交：随本次 coherent change 统一提交，最终哈希待补。
 
 ### 2026-05-27：S91.10 朝议专题草稿校阅与候复状态 polish 完成
 
