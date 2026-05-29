@@ -220,6 +220,14 @@ npm run eval:ai
 
 目标：新增 scenario-based eval，不替代旧 `npm run eval:ai`。
 
+S92.5 已落地范围（2026-05-29）：
+
+- 新增 `src/ai/eval/aiScenarioRunner.js` 与 `src/ai/eval/aiMetrics.js`，支持 `runtime_task`、`mock_provider_task`、`tool_loop` 和 `static_payload` 四类 Mock-only 场景回放。
+- 新增 `testdata/aiScenarios/s92-5-core.json`，首批覆盖 opening runtime、普通 turn mock provider、topic draft pending 边界和 tool loop 预算边界；当前采用 JSON fixture，暂不新增 YAML 依赖。
+- 新增 `scripts/aiEvalV2.js` 与 `npm run eval:ai:v2`，输出 summary-only artifact 到 `artifacts/ai-eval-v2/latest.json`，artifact 只包含 schema version、场景数量、指标汇总和失败摘要，不保存 raw prompt、provider payload、`worldState`、`statePatch`、hidden notes、密钥、本地路径或内部 resolver。
+- 首批指标已落地：`schema_valid`、`hidden_leak`、`server_bypass`、`historical_anchor`、`tool_budget_ok`、`pending_not_fact`、`latency_ms`、`fallback_reason`。
+- 旧 `npm run eval:ai`、默认 provider facade、真实 provider、普通 turn 路径、runtime 输出、tool loop 输出和服务器裁决均未切换；S92.5 只新增本地回放与测试工具。
+
 建议范围：
 
 - 新增 scenario runner、metrics 和首批 YAML/JSON fixtures。

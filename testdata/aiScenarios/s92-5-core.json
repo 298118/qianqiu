@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "s92.5-ai-scenario-fixtures.v1",
+  "scenarios": [
+    {
+      "id": "opening-runtime-scholar",
+      "name": "Mock runtime 开局保持历史锚点与 schema",
+      "kind": "runtime_task",
+      "taskKind": "opening",
+      "context": {
+        "dynasty": "明",
+        "year": 1,
+        "player": {
+          "name": "顾慎",
+          "role": "scholar",
+          "roleLabel": "书生"
+        },
+        "setup": {
+          "background": "县学旁读书人家",
+          "customSetting": "乡里粮价渐贵，童试将近。"
+        }
+      },
+      "historicalAnchorFields": ["narrative", "events.0"],
+      "expect": {
+        "schema_valid": true,
+        "hidden_leak": false,
+        "server_bypass": false,
+        "historical_anchor": true,
+        "tool_budget_ok": true,
+        "pending_not_fact": true,
+        "fallback_reason": false
+      }
+    },
+    {
+      "id": "mock-turn-scholar-study",
+      "name": "Mock 普通回合可回放且不泄漏内部载荷",
+      "kind": "mock_provider_task",
+      "taskKind": "turn",
+      "context": {
+        "initialState": {
+          "role": "scholar",
+          "playerName": "顾慎"
+        },
+        "playerInput": "清晨温习《孟子》，并向县学师长请教仁政与粮价之义。"
+      },
+      "historicalAnchorFields": ["narrative", "events.0"],
+      "expect": {
+        "schema_valid": true,
+        "hidden_leak": false,
+        "server_bypass": false,
+        "historical_anchor": true,
+        "tool_budget_ok": true,
+        "pending_not_fact": true,
+        "fallback_reason": false
+      }
+    },
+    {
+      "id": "topic-draft-pending-boundary",
+      "name": "Mock 专题草稿必须说明候主卷/服务器裁决",
+      "kind": "runtime_task",
+      "taskKind": "topic_draft",
+      "context": {
+        "surfaceId": "court-debate",
+        "draftKind": "balanced_debate",
+        "draftLabel": "赈济廷议草稿",
+        "evidenceRefs": [
+          {
+            "refId": "eventArchiveView:grain-price",
+            "label": "县中粮价旁证"
+          }
+        ],
+        "selectedEvidenceRefs": ["eventArchiveView:grain-price"]
+      },
+      "historicalAnchorFields": ["draftText", "riskNote", "nextStep"],
+      "requiresPendingBoundary": true,
+      "expect": {
+        "schema_valid": true,
+        "hidden_leak": false,
+        "server_bypass": false,
+        "historical_anchor": true,
+        "tool_budget_ok": true,
+        "pending_not_fact": true,
+        "fallback_reason": false
+      }
+    },
+    {
+      "id": "tool-loop-budget-bounded",
+      "name": "Mock tool loop 超预算只生成 bounded rejection",
+      "kind": "tool_loop",
+      "actorRole": "magistrate",
+      "skipHistoricalAnchor": true,
+      "budget": {
+        "mayUseTools": true,
+        "toolBudget": 1,
+        "mayRequestAdjudication": true
+      },
+      "modelSteps": [
+        {
+          "toolCalls": [
+            {
+              "id": "scenario-read",
+              "name": "world_read_visible_context",
+              "arguments": {
+                "domains": ["events"],
+                "query": "近事",
+                "maxItems": 1
+              }
+            },
+            {
+              "id": "scenario-over-budget",
+              "name": "event_propose_incident",
+              "arguments": {
+                "incidentKind": "city_pressure",
+                "publicSummary": "请把粮价议题列为候复材料。",
+                "sourcePressureRefs": ["eventArchiveView:grain-price"],
+                "visibility": "player_visible",
+                "confidence": 0.7,
+                "severity": 2,
+                "cooldownKey": "s92-5-grain-pressure",
+                "affectedRefs": ["worldGeographyView:local-city"],
+                "privateResultRefs": [],
+                "riskTags": ["city_pressure", "server_adjudication_required"]
+              }
+            }
+          ]
+        }
+      ],
+      "expect": {
+        "schema_valid": true,
+        "hidden_leak": false,
+        "server_bypass": false,
+        "historical_anchor": true,
+        "tool_budget_ok": true,
+        "pending_not_fact": true,
+        "fallback_reason": false
+      }
+    }
+  ]
+}
