@@ -201,6 +201,14 @@ npm run smoke:provider:tools
 
 目标：给 prompt pack 加版本、元数据、fixtures 和 doctor 检查，不破坏旧 prompt API。
 
+S92.6 已落地范围（2026-05-29）：
+
+- 新增 `src/ai/prompts/registry.js`、`src/ai/prompts/fragments/qualityRubrics.js`、`src/ai/prompts/fragments/forbiddenBoundaries.js`、`src/ai/prompts/packs/worldTurn.js` 与 `src/ai/prompts/packs/topicDraft.js`，先登记 `world_turn` 和 `topic_draft` 两个 pack 的 v2 元数据。
+- Registry 通过 `legacyPackName` 包装旧 `src/ai/promptPacks.js`，`buildRegistryPromptInstructions()` 仍返回旧 `buildPromptInstructions()` 输出；S92.6 不搬动旧 prompt 文案，不改变 stable prefix，不切默认普通回合、topic draft、provider facade、route/API、schema、存档、SQLite、浏览器 UI 或服务器裁决。
+- 已登记字段包括 `promptId`、`promptVersion`、`sceneType`、`actorTypes`、`taskType`、`schemaName`、summary-only `fixtures`、`supportsTools`、`qualityRubrics` 与 `forbiddenFields`。当前默认 runtime 尚未接管 tool loop，因此两项首批登记的 `supportsTools=false`。
+- 新增 `scripts/aiPromptPackDoctor.js` 与 `npm run ai:prompt-doctor`，doctor 检查必填字段、legacy pack/schema/taskType 对齐、promptId 唯一性、rubric 权重、fixture summary 安全扫描和 forbidden boundary，并只输出 summary metadata，不打印 raw prompt、provider payload、fixture raw text、`worldState`、`statePatch`、key、base URL、本地路径或内部 resolver。
+- 新增 `test/aiPromptRegistry.test.js`，验证 registry metadata、doctor summary safety、unsafe fixture canary 拦截，以及 `world_turn` / `topic_draft` registry instructions 与旧 `buildPromptInstructions()` 字节兼容。
+
 建议范围：
 
 - 新增 `src/ai/prompts/registry.js` 和少量 fragments/packs。

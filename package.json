@@ -45,6 +45,7 @@
     "eval:ai": "node scripts/aiEvaluationRunner.js && node --test test/aiEvalFixtures.test.js",
     "eval:ai:v2": "node scripts/aiEvalV2.js && node --test test/aiScenarioRunner.test.js",
     "ai:baseline": "node scripts/aiBaselineSnapshot.js --out artifacts/ai-baseline/latest.json",
+    "ai:prompt-doctor": "node scripts/aiPromptPackDoctor.js",
     "budget:client": "node scripts/clientBuildBudget.js",
     "smoke:browser": "npm run qa:runtime-manifest && npm run build:client && npm run budget:client && node scripts/clientSmoke.js",
     "smoke:browser:visual": "npm run smoke:browser -- --screenshots artifacts/browser-visual-matrix",

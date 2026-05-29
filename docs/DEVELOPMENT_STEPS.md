@@ -140,10 +140,13 @@
 | S92.3 | DONE | OpenAI ProviderAdapter strict structured output 兼容层 | 已新增旁路 OpenAI adapter 与 provider response normalizer：支持 route opt-in `allowStrictSchema` 的 strict JSON schema 请求、strict 不支持时降级重试、Responses/Chat 输出归一化、usage 摘要、fake client 测试和 Ajv/runtime fallback 兜底；不替换旧 `createOpenAiProvider` / `getProvider` 路径，不新增默认真实 provider 触发面或服务器裁决权。 |
 | S92.4 | DONE | Mock-first Agentic Tool Loop v2 | 已新增旁路 `src/ai/tools/` 工具循环、tool call normalizer、guardrails 与 provider-visible result projector；先在 Mock/test-only 路径跑通 read/proposal/request_adjudication、预算、顺序、public result projection、provider-visible tool list 和红线，不接管默认普通回合、真实 provider、route/API、存档、SQLite、浏览器 UI 或服务器裁决。 |
 | S92.5 | DONE | AI Eval v2 场景回放 | 已新增 Mock-only scenario runner、metrics、`npm run eval:ai:v2` 和首批 JSON 场景 fixture；覆盖 runtime task、Mock provider turn、tool loop、summary-only artifact、hidden leak/server bypass、historical anchor、tool budget、pending-not-fact、latency 与 fallback 指标，不替代旧 `npm run eval:ai`。 |
+| S92.6 | DONE | Prompt Registry v2 | 已新增旁路 prompt registry、world_turn/topic_draft 元数据、quality rubric/forbidden boundary fragments、`npm run ai:prompt-doctor` 和聚焦测试；registry 包装旧 prompt pack 并保持 `buildPromptInstructions()` 字节兼容，不切默认 prompt 构建、provider、普通 turn、route/API、存档、SQLite、浏览器 UI 或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
+- 当前步骤 S92.6：Prompt Registry v2 已完成。新增 `src/ai/prompts/registry.js`、`src/ai/prompts/fragments/qualityRubrics.js`、`src/ai/prompts/fragments/forbiddenBoundaries.js`、`src/ai/prompts/packs/worldTurn.js`、`src/ai/prompts/packs/topicDraft.js`、`scripts/aiPromptPackDoctor.js` 与 `test/aiPromptRegistry.test.js`，并增加 `npm run ai:prompt-doctor`；先登记 `world_turn` 与 `topic_draft` 的 `promptId`、`promptVersion`、`sceneType`、`actorTypes`、`taskType`、`schemaName`、summary-only fixtures、`supportsTools`、quality rubrics 和 forbidden fields。
+- S92.6 保持旧 prompt API 兼容：registry 通过 `legacyPackName` 包装 `src/ai/promptPacks.js`，`buildRegistryPromptInstructions()` 与旧 `buildPromptInstructions()` 字节一致；当前登记的 `supportsTools=false`，避免暗示默认 provider tool loop 已接管。Doctor 只输出 summary metadata，检查必填字段、schema/taskType/legacy pack 对齐、promptId 唯一性、rubric 权重和 fixture 安全扫描，不打印 raw prompt、provider payload、fixture raw text、`worldState`、`statePatch`、key、base URL、本地路径或内部 `server.*`。
 - 当前步骤 S92.5：AI Eval v2 场景回放已完成。新增 `src/ai/eval/aiMetrics.js`、`src/ai/eval/aiScenarioRunner.js`、`scripts/aiEvalV2.js`、`testdata/aiScenarios/s92-5-core.json` 与 `test/aiScenarioRunner.test.js`，并增加 `npm run eval:ai:v2`；默认只读取 JSON fixture、只跑 Mock/runtime/tool-loop 旁路，不调用真实 provider，不接管旧 `eval:ai`、普通 turn、route/API、prompt、存档、SQLite、浏览器 UI 或服务器裁决。
 - S92.5 支持 `runtime_task`、`mock_provider_task`、`tool_loop`、`static_payload` 四类场景，首批 fixture 覆盖开局、书生普通回合、专题草稿候裁决边界和 tool loop 预算上限。输出指标为 `schema_valid`、`hidden_leak`、`server_bypass`、`historical_anchor`、`tool_budget_ok`、`pending_not_fact`、`latency_ms`、`fallback_reason`；artifact 只写 summary/totals/failures，不保存 raw prompt、provider payload、完整 payload、`worldState`、`statePatch`、key、base URL、本地路径、raw SQLite row 或内部 `server.*`。
 - 当前步骤 S92.4：Mock-first Agentic Tool Loop v2 已完成。新增旁路 `src/ai/tools/gameToolLoop.js`、`toolCallNormalizer.js`、`toolGuardrails.js` 与 `toolResultProjector.js`，并从 `src/ai/index.js` 导出 `runGameToolLoop()` / `listProviderVisibleToolsForActor()`；它复用既有 `gameAiToolRunner` 的 schema/权限/冷却/resolver/audit 边界，只在本地 Mock/test-only 工具循环中回填 provider-visible public result，不接管旧 provider facade、普通 turn、streaming、route/API、prompt、存档、SQLite、浏览器 UI 或服务器裁决。
@@ -158,6 +161,22 @@
 - S92.1 聚焦验证已通过 `node --check scripts/aiBaselineSnapshot.js`、`node --check scripts/aiEvaluationRunner.js`、`npm run ai:baseline`、`npm run eval:ai`、`npm run typecheck:server`、`npm run check:docs-governance`、`git diff --check`、`node --test test/aiBaselineSnapshot.test.js` 和 `node --test test/aiEvaluationRunner.test.js test/aiBaselineSnapshot.test.js`；全量 Node 测试已按 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4` 跑完，合计 1238 tests。单条 `npm test` 在 124s/304s 外层超时截断且无断言失败输出，等价分片全量已通过；提交前只读复审代理 `019e6f0d-53c6-7a61-8924-dd7706cdd2a6` 未发现阻塞问题，非阻塞建议已采纳，补充复审确认 follow-up 无新增风险。
 
 ## 6. 最近完整验证口径
+
+S92.6 当前验证锚点：
+
+- `node --check src/ai/prompts/registry.js`
+- `node --check src/ai/prompts/packs/worldTurn.js`
+- `node --check src/ai/prompts/packs/topicDraft.js`
+- `node --check scripts/aiPromptPackDoctor.js`
+- `node --check test/aiPromptRegistry.test.js`
+- `npm run ai:prompt-doctor`
+- `node --test test/aiPromptRegistry.test.js`（6 tests）
+- `node --test test/prompts.test.js`（22 tests）
+- `npm run eval:ai:v2`（4 scenarios + 4 tests）
+- `npm run eval:ai`（12 tests）
+- `npm run typecheck:server`
+- `npm run check:docs-governance`
+- `git diff --check`
 
 S92.5 当前验证锚点：
 
@@ -269,6 +288,16 @@ S91.18 运行态完整验证锚点：
 - `npm test`（1233 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-29：S92.6 Prompt Registry v2 完成
+
+- 范围：新增 `src/ai/prompts/registry.js`、`src/ai/prompts/fragments/qualityRubrics.js`、`src/ai/prompts/fragments/forbiddenBoundaries.js`、`src/ai/prompts/packs/worldTurn.js`、`src/ai/prompts/packs/topicDraft.js`、`scripts/aiPromptPackDoctor.js` 与 `test/aiPromptRegistry.test.js`；`package.json` 增加 `ai:prompt-doctor`。
+- Registry：先登记 `world_turn` 与 `topic_draft` 两个低风险 pack，固定 `promptId`、`promptVersion`、`sceneType`、`actorTypes`、`taskType`、`schemaName`、summary-only fixtures、`supportsTools`、quality rubrics 和 forbidden fields。当前首批 `supportsTools=false`，只描述现有默认路径，不暗示普通回合或 topic draft 已切到 provider tool loop。
+- 兼容与安全：registry 通过 `legacyPackName` 包装旧 `src/ai/promptPacks.js`，`buildRegistryPromptInstructions()` 直接复用旧 `buildPromptInstructions()` 输出，保持 stable prefix 与旧 prompt 文案字节兼容。Doctor 检查必填字段、legacy pack/schema/taskType 对齐、promptId 唯一性、rubric 权重和 fixture summary 安全扫描，只输出 pack summary，不打印 raw prompt、provider payload、fixture raw text、完整 payload、`worldState`、`statePatch`、key、base URL、本地路径、raw SQLite row、hidden notes 或内部 `server.*`。
+- 旧路径：本步不调用真实 provider，不新增依赖，不接管默认 provider facade、普通 `/api/game/turn`、topic draft route、route/API、schema/tool 权限、存档、SQLite、浏览器 UI、素材或服务器裁决；旧 `src/ai/prompts.js` 与 `src/ai/promptPacks.js` 默认构建路径保持不变。
+- 子代理：只读探查代理 `019e71d4-7cd5-7f91-8ccb-f146a7379f44` 建议采用旁路 registry 包装旧 pack、不搬 prompt 文案、`supportsTools=false`、doctor summary-only 输出，并提醒 doctor 应核对 schema/taskType 与 promptId 唯一性；已采纳 schema/taskType/promptId 检查。提交前只读复审无阻塞；非阻塞建议中“过窄 forbiddenFields 应拒绝”已采纳并补 canary，残余建议为后续 fixture 规模变大时可迁到 `testdata/aiPromptFixtures/`，以及 doctor result 直接导出可再补 summary/string 敏感扫描。代理确认未编辑文件、未运行 Git 命令、未创建 PR。
+- 验证：已通过新增 registry/pack/script/test 的 `node --check`、`npm run ai:prompt-doctor`、`node --test test/aiPromptRegistry.test.js`（6 tests）、`node --test test/prompts.test.js`（22 tests）、`npm run eval:ai:v2`（4 scenarios + 4 tests）、`npm run eval:ai`（12 tests）、`npm run typecheck:server`、`npm run check:docs-governance` 和 `git diff --check`。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-29：S92.5 AI Eval v2 场景回放完成
 

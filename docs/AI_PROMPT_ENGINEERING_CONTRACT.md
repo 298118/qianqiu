@@ -19,7 +19,7 @@ S70.1 起，新增或重写重要 prompt 时必须登记这些元数据：
 | `outputSchemaVersion` | 指向 `src/ai/schemas.js` 或 `src/ai/toolSchemas.js` 中的 schema。 |
 | `fixtures` | 普通成功、越权、hidden-token、低可信传闻、schema 失败和 provider 抖动样例。 |
 
-现有 `src/ai/promptPacks.js` 仍是运行时入口；S70.1 先用本契约约束后续扩展，S70.8 再补完整 prompt fixture runner。
+现有 `src/ai/promptPacks.js` 仍是运行时入口；S70.1 先用本契约约束后续扩展，S70.8 再补完整 prompt fixture runner。S92.6 起新增旁路 `src/ai/prompts/registry.js` 和 `scripts/aiPromptPackDoctor.js`，先登记 `world_turn` 与 `topic_draft` 的 v2 元数据并保持旧 `buildPromptInstructions()` 字节兼容；registry 只做元数据、summary-only fixtures、quality rubrics 与 forbidden boundary 检查，不替换默认 prompt 构建，不保存或输出 raw prompt/provider payload、`worldState`、`statePatch`、密钥、本地路径或内部 resolver。
 
 ## 2. Prompt Pack 分层
 
