@@ -41,7 +41,9 @@
 | S87 | route/API response shape 首轮覆盖，固定 game/exam/AI/inventory/NPC/trade/delegation public response，并以局部 helper 守住 raw ledger 剥离。 | [TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md](TYPESCRIPT_ROUTE_RESPONSE_COVERAGE_ARCHIVE.md) |
 | S88 | 全面系统打磨阶段性归档：书生主线、六身份循环、官场/领域后果、NPC/关系、经济解释、React 状态、PixiJS 舆图、视觉立绘和 provider 验收首轮。 | [QIANQIU_POLISHING_ARCHIVE.md](QIANQIU_POLISHING_ARCHIVE.md) |
 | S89.1-S89.68 | React 产品 polish、玩家可见术语清洗、route 空态/读法深化、材质动效、CSS 预算、CSS token/surface/keyframe 语义化和首页 token 收敛。 | [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)、本文件“S89 压缩归档”、`docs/DEVELOPMENT_STEPS.md` 归档前 Git history、实现提交至 `948f59a0` |
-| S90.1-S90.4 | React 产品级前端 polish 续轮：CSS 启动预算恢复、route 样式拆分、跨页读法深化、囊箧/史册/朝议深层读卷和专题层材料/证据/草稿读法。 | [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)、`docs/DEVELOPMENT_STEPS.md` 近期记录、提交 `5d96bb4f`、`fd0c8be7` |
+| S90.1-S90.4 | React 产品级前端 polish 续轮：CSS 启动预算恢复、route 样式拆分、跨页读法深化、囊箧/史册/朝议深层读卷和专题层材料/证据/草稿读法。 | [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)、本文件“S90 压缩归档”、提交 `5d96bb4f`、`fd0c8be7` |
+| S91.1-S91.18 | 前端全局“读法 / 校阅 / 候复”收束：设置、首页、主卷、人物、囊箧、科举、皇榜、舆图、史册、朝议、身份循环、专题层、领域后果与证据空态。 | 本文件“S91 压缩归档”、迁出前 `docs/DEVELOPMENT_STEPS.md` Git history、实现提交 `38463a07` 至 `bd588f33` |
+| S92.1-S92.10 | AI 编排 v2 基础：baseline、旁路 runtime、ProviderAdapter strict、Mock-first tool loop、eval v2、Prompt Registry、EvidenceRef、安全 trace/provider health、前端 public trace debug 与 SQLite prompt retrieval parity 修复。 | [AI_ORCHESTRATION_V2_ROADMAP.md](AI_ORCHESTRATION_V2_ROADMAP.md)、[AI_V2_BASELINE_REPORT.md](AI_V2_BASELINE_REPORT.md)、本文件“S92 压缩归档”、迁出前 `docs/DEVELOPMENT_STEPS.md` Git history |
 
 ## S73-S78 历史台账压缩
 
@@ -71,13 +73,49 @@
 
 S89 最新完整验证锚点来自 S89.68：focused scaffold、组合 CSS canary、`node --check scripts/clientSmoke.js`、`node --test test/reactClientScaffold.test.js`（99 tests）、`npm run typecheck:client`、串行 Vitest（6 files / 134 tests）、`npm run qa:runtime-manifest`、`npm run build:client`、`npm run budget:client`、直接 `node scripts/clientSmoke.js` 和 `npm test`（1213 tests）均通过。
 
+## S90 压缩归档
+
+2026-05-29 按用户要求将 S90 完成流水从活动台账迁出。S90 仍可通过 [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md) 追溯专题全貌；本节只保留接手需要的范围和边界。
+
+| 范围 | 完成内容 | 关键边界 |
+| --- | --- | --- |
+| S90.1-S90.2 | 首页、主卷、舆图/史册、人物/囊箧、科举/皇榜和移动端样式迁到页面级 import；`global.css` 收束为 token/base/shell/controls/overlay/motion 启动样式图；跨页读法、错误空态、设置/印匣、专题层、舆图/人物/科举/皇榜体验完成产品级 polish。 | 不新增依赖或素材，不请求完整 manifest，不硬编码本地路径，不改变 API/schema、AI 权限、prompt、provider、SQLite schema、存档格式、runtime manifest、素材 manifest 或服务器裁决。 |
+| S90.3 | 新增 [FRONTEND_PRODUCT_POLISH_ARCHIVE.md](FRONTEND_PRODUCT_POLISH_ARCHIVE.md)，把 S89.1-S89.68 与 S90.1/S90.2/S90.4 整理为专题归档。 | 纯文档归档，低风险跳过提交前子代理复审。 |
+| S90.4 | 囊箧“四读”账解索引、史册“由史册成题”、朝议“材料入席”和 `SurfaceHost` 材料/证据/草稿读法完成。 | 浏览器仍只消费安全 view、本地草稿和页面/专题状态，不裁决资源、交易、任免、赏罚、定罪、战和、关系或 hidden 信息。 |
+
+S90 主要验证锚点：client typecheck、React scaffold canary、App Vitest、client build/budget、browser smoke、docs governance、`git diff --check` 和 `npm test`（S90.4 记录为 1215 tests）。实施/复审子代理均未提交、未推送、未创建 PR。
+
+## S91 压缩归档
+
+2026-05-29 按用户要求将 S91 完成流水从活动台账迁出。S91 的共同目标是把前端各页面的“读法 / 校阅 / 候复”变成玩家可扫读的安全状态说明：所有读法只从现有安全 view、route 状态和本地草稿/选择派生，不回显正文，不新增浏览器裁决权。
+
+| 范围 | 完成内容 | 关键边界 |
+| --- | --- | --- |
+| S91.1-S91.7 | 设置/AI 来源、首页开卷、主卷行止、人物往来、囊箧移置、科举落墨和皇榜题名读法完成；移动端溢出、旧案串扰、交卷后读法和榜名选择安全守门同步补齐。 | 只改 React 前端读法、CSS、客户端测试、browser smoke 和文档；不新增 route/API/schema、AI 权限、依赖、素材、存档字段、prompt 能力或服务器裁决。 |
+| S91.8-S91.14 | 舆图图层、史册拟稿、朝议专题草稿、入仕月报、皇帝御案、六身份循环和 `SurfaceHost` 专题层候复校阅完成。 | 浏览器只消费安全 projection、本地草稿和专题状态；草稿写入只表示“候主卷回批”，不推进时间、不裁决资源、官职、关系、交易、定罪或 hidden 信息。 |
+| S91.15-S91.18 | 领域后果追踪校阅、史册议程/月报互证、领域后果范围上限口径、专题层单行 live status 和证据空态完成；旧案列表等待加固，避免 smoke 自动刷新误判。 | 后果、凭据、互证、证据勾选和候复播报都不得变成真实任务队列、资源结算器、任免/赏罚/定罪/战和/关系裁决器。 |
+
+S91 主要验证锚点：每步均有 client typecheck、React scaffold source canary、聚焦或完整 App Vitest、client build/budget、browser smoke、docs governance、`git diff --check` 和逐步增长的 `npm test`；S91.18 最新记录为 `npm test` 1233 tests。提交前只读复审按代码改动执行；纯文档补记哈希时按低风险规则跳过额外复审并记录。
+
+## S92 压缩归档
+
+2026-05-29 按用户要求将 S92.1-S92.10 完成流水从活动台账迁出。S92 的共同目标是建立 AI 编排 v2 的安全旁路地基，不直接接管默认普通回合、真实 provider、route/API、存档、SQLite schema、浏览器 UI 或服务器裁决。
+
+| 范围 | 完成内容 | 关键边界 |
+| --- | --- | --- |
+| S92.1-S92.3 | 新增 AI 编排 v2 路线图与 baseline；建立旁路 `AiTaskRuntime`、ProviderAdapter 合约、预算、trace、fallback；新增 OpenAI ProviderAdapter strict structured output 兼容层和 response normalizer。 | 默认 provider facade、`/api/game/turn`、prompt、tool 权限、存档、SQLite、浏览器 UI 和服务器裁决不切换；真实 provider 仍需 strict opt-in 与 schema validation。 |
+| S92.4-S92.6 | 新增 Mock-first agentic tool loop、provider-visible tool list/result projector、AI Eval v2 场景回放、Prompt Registry v2、prompt doctor 和 world_turn/topic_draft pack metadata。 | Tool call 只能得到 read/proposal/request_adjudication 的 bounded public result；proposal/request_adjudication 不写 canonical state、SQLite、事件档案、官职、榜单、判决、军令、赏罚或审计成案结果。 |
+| S92.7-S92.10 | EvidenceRef resolver/ranker 和 prompt retrieval safety gate 完成；public trace/provider health 固定字段与 failure taxonomy 完成；前端“推演回声” public trace/反馈入口完成；SQLite prompt retrieval 将已裁定可见的 `role_visible` / `office_visible` 情报传闻归一为 `actor_visible`，修复 JSON/SQLite visible route and prompt payload parity。 | EvidenceRef 只从最终安全 rows 生成 `public` / `player_visible` / `actor_visible` 引用；public trace/feedback 不暴露 raw prompt、provider payload、`worldState`、`statePatch`、key、base URL、本地路径、raw SQLite row、hidden/private refs 或内部 `server.*`。 |
+
+S92 最新完整验证锚点来自 S92.10：`node --check src/storage/sqlitePromptRetrievalTables.js`、`node --test test/sqlitePromptRetrieval.test.js`（10 tests）、`node --test test/dualModeAcceptanceScript.test.js`（8 tests）、`npm run eval:ai`、`npm run eval:ai:v2`、`npm run typecheck:server`、`npm run check:docs-governance` 和 `npm test`（1294 tests）均通过。若继续推进 S92 后续，优先新开小步做 `/api/game/turn` 的 `AI_RUNTIME_V2=shadow` 旁路记录设计，或把 EvidenceRef 接入 topic/tool proposal allowlist；不得直接把默认普通回合切到 v2。
+
 ## 验证锚点
 
 已完成台账迁出时保留的主要验证锚点：
 
 - S77.8 前端水墨重构总验证：`npm test`、`npm run typecheck:client`、`npm run test:client`、`npm run build:client`、`npm run smoke:browser -- --screenshots artifacts/s77-frontend-ink`、`npm run smoke:exam-s69`、`npm run smoke:dual-mode -- --storage-only`、docs governance、documentation governance 和 `git diff --check`。
 - S78 官署专题：focused topic surface / topic draft / AI settings / prompt schema tests、client typecheck/Vitest/build、React browser smoke、完整 `npm test`、docs governance、documentation governance 和 diff check。
-- S79-S80 验证锚点仍在 `docs/DEVELOPMENT_STEPS.md` 近期记录中；S81-S85 验证锚点见 [NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md) 与当前活动台账最新状态。
+- S79-S80 验证锚点仍在 `docs/DEVELOPMENT_STEPS.md` 归档前 Git history 中；S81-S85 验证锚点见 [NPC_INVENTORY_SYSTEM_ARCHIVE.md](NPC_INVENTORY_SYSTEM_ARCHIVE.md)，S90-S92 验证锚点见本文件对应压缩归档。
 
 ## 稳定边界摘要
 
