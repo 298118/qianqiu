@@ -6,15 +6,62 @@ const {
   redactAiProviderText
 } = require("../providerSafety");
 
-const AI_TASK_TRACE_SCHEMA_VERSION = "s92.2-ai-task-trace.v1";
+const AI_TASK_TRACE_SCHEMA_VERSION = "s92.8-ai-task-trace-public-summary.v1";
 const MAX_TRACE_EVENTS = 16;
+
+const PUBLIC_TRACE_TOP_LEVEL_KEYS = Object.freeze([
+  "schemaVersion",
+  "traceId",
+  "taskKind",
+  "taskType",
+  "promptPackId",
+  "promptVersion",
+  "provider",
+  "model",
+  "latencyMs",
+  "status",
+  "fallbackReason",
+  "retrievalCounts",
+  "toolCounts",
+  "validationFlags"
+]);
+
+const RETRIEVAL_COUNT_KEYS = Object.freeze([
+  "selectedRows",
+  "droppedRows",
+  "evidenceRefs",
+  "domains"
+]);
+
+const TOOL_COUNT_KEYS = Object.freeze([
+  "allowed",
+  "callCount",
+  "accepted",
+  "pending",
+  "rejected",
+  "attempted",
+  "used"
+]);
+
+const VALIDATION_FLAG_KEYS = Object.freeze([
+  "schemaOk",
+  "guardrailOk",
+  "redactionOk"
+]);
+
 const PUBLIC_DETAIL_ALLOWLIST = Object.freeze([
+  "accepted",
   "allowed",
   "attempt",
+  "attempted",
   "budget",
+  "callCount",
+  "droppedRows",
   "estimated",
+  "evidenceRefs",
   "fallbackProvider",
   "fallbackReason",
+  "guardrailOk",
   "inputTokens",
   "latencyMs",
   "maxOutputTokens",
@@ -23,9 +70,15 @@ const PUBLIC_DETAIL_ALLOWLIST = Object.freeze([
   "model",
   "ok",
   "outputTokens",
+  "pending",
+  "promptVersion",
   "provider",
   "reason",
+  "redactionOk",
+  "rejected",
   "schemaName",
+  "schemaOk",
+  "selectedRows",
   "status",
   "temperature",
   "timeoutMs",
@@ -33,6 +86,14 @@ const PUBLIC_DETAIL_ALLOWLIST = Object.freeze([
   "totalTokens",
   "used"
 ]);
+
+const FORBIDDEN_PUBLIC_TEXT_PATTERN =
+  /\b(rawPrompt|providerPayload|rawProviderPayload|rawPayload|fullPrompt|worldState|statePatch|rawSql|sqlite|world_sessions|safe_search_index|apiKey|baseUrl|baseURL|base_url|localPath|hiddenNotes|privateResultRefs|OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY)\b/i;
+const SENSITIVE_ASSIGNMENT_PATTERN =
+  /\b(?:prompt|instructions|input|request|response|headers|apiKey|api[-_\s]?key|key|token|baseURL|baseUrl|base_url|localPath|worldState|statePatch)\s*[:=]/i;
+const INTERNAL_REF_PATTERN = /\bserver\.[A-Za-z0-9_.-]+/;
+const UNSAFE_DOMAIN_PATTERN = /\b(?:hidden|private|raw|payload|sqlite|world_sessions|safe_search_index|server)\b/i;
+const PUBLIC_STATUS_VALUES = Object.freeze(["running", "ok", "fallback", "failed", "rejected"]);
 
 function isPlainObject(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -42,13 +103,33 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function compactWhitespace(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function containsUnsafePublicText(value) {
+  const text = compactWhitespace(value);
+  return Boolean(
+    text &&
+    (
+      FORBIDDEN_PUBLIC_TEXT_PATTERN.test(text) ||
+      SENSITIVE_ASSIGNMENT_PATTERN.test(text) ||
+      INTERNAL_REF_PATTERN.test(text)
+    )
+  );
+}
+
 function cleanPublicString(value, fallback = "", maxLength = 120) {
   const redacted = redactAiProviderText(value, { maxLength });
   if (!redacted) return fallback;
-  if (/^server\./i.test(redacted) || /\bserver\.[A-Za-z0-9_.-]+/.test(redacted)) {
-    return "[redacted-internal-ref]";
-  }
+  if (containsUnsafePublicText(redacted)) return fallback || "[redacted]";
   return redacted;
+}
+
+function cleanPublicReason(value, fallback = "") {
+  const reason = cleanPublicString(value, fallback, 180);
+  if (!reason) return "";
+  return reason;
 }
 
 function cleanPublicNumber(value, fallback = 0) {
@@ -56,8 +137,17 @@ function cleanPublicNumber(value, fallback = 0) {
   return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : fallback;
 }
 
-function cleanPublicBoolean(value) {
-  return Boolean(value);
+function cleanPublicBoolean(value, fallback = false) {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function readFirstNumber(source, keys, fallback = 0) {
+  for (const key of keys) {
+    if (source && source[key] !== undefined) {
+      return cleanPublicNumber(source[key], fallback);
+    }
+  }
+  return fallback;
 }
 
 function pickAllowedDetails(details = {}) {
@@ -93,31 +183,72 @@ function summarizeBudget(budget = {}) {
       ? Math.max(0, Math.min(1, Number(budget.temperature)))
       : 0,
     toolBudget: cleanPublicNumber(budget.toolBudget, 0),
-    mayUseTools: cleanPublicBoolean(budget.mayUseTools),
-    mayRequestAdjudication: cleanPublicBoolean(budget.mayRequestAdjudication)
+    mayUseTools: Boolean(budget.mayUseTools),
+    mayRequestAdjudication: Boolean(budget.mayRequestAdjudication)
   };
 }
 
-function summarizeUsage(usage = {}) {
-  return {
-    inputTokens: cleanPublicNumber(usage.inputTokens, 0),
-    outputTokens: cleanPublicNumber(usage.outputTokens, 0),
-    totalTokens: cleanPublicNumber(usage.totalTokens, 0),
-    estimated: cleanPublicBoolean(usage.estimated)
-  };
+function cleanRetrievalDomain(value) {
+  const raw = cleanPublicString(value, "other", 64)
+    .replace(/[^A-Za-z0-9_.:-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 64);
+  if (!raw || UNSAFE_DOMAIN_PATTERN.test(raw) || INTERNAL_REF_PATTERN.test(raw)) {
+    return "other";
+  }
+  return raw;
 }
 
-function summarizeValidation(validation = {}) {
+function addDomainCount(domains, key, value) {
+  const domain = cleanRetrievalDomain(key);
+  const count = cleanPublicNumber(value, 0);
+  if (!count) return;
+  domains[domain] = cleanPublicNumber((domains[domain] || 0) + count, 0);
+}
+
+function summarizeRetrievalCounts(retrievalCounts = {}) {
+  const source = isPlainObject(retrievalCounts) ? retrievalCounts : {};
+  const domains = {};
+  const domainSource = isPlainObject(source.domains) ? source.domains : {};
+  for (const [key, value] of Object.entries(domainSource)) {
+    addDomainCount(domains, key, value);
+  }
+
   return {
-    ok: cleanPublicBoolean(validation.ok),
-    schemaName: cleanPublicString(validation.schemaName, "", 64)
+    selectedRows: readFirstNumber(source, ["selectedRows", "selected", "includedRows", "usedRows"], 0),
+    droppedRows: readFirstNumber(source, ["droppedRows", "dropped", "rejectedRows"], 0),
+    evidenceRefs: readFirstNumber(source, ["evidenceRefs", "evidenceRefCount", "refs"], 0),
+    domains
   };
 }
 
 function summarizeToolCounts(toolCounts = {}) {
+  const source = isPlainObject(toolCounts) ? toolCounts : {};
+  const accepted = readFirstNumber(source, ["accepted"], 0);
+  const pending = readFirstNumber(source, ["pending"], 0);
+  const used = readFirstNumber(source, ["used"], accepted + pending);
+  const rejected = readFirstNumber(source, ["rejected"], 0);
+  const attempted = readFirstNumber(source, ["attempted"], used + rejected);
+  const callCount = readFirstNumber(source, ["callCount"], attempted);
+
   return {
-    allowed: cleanPublicNumber(toolCounts.allowed, 0),
-    used: cleanPublicNumber(toolCounts.used, 0)
+    allowed: readFirstNumber(source, ["allowed", "toolBudget"], 0),
+    callCount,
+    accepted,
+    pending,
+    rejected,
+    attempted,
+    used
+  };
+}
+
+function summarizeValidationFlags(validation = {}) {
+  const source = isPlainObject(validation) ? validation : {};
+  const schemaOk = cleanPublicBoolean(source.schemaOk, cleanPublicBoolean(source.schemaValid, cleanPublicBoolean(source.ok, false)));
+  return {
+    schemaOk,
+    guardrailOk: cleanPublicBoolean(source.guardrailOk, true),
+    redactionOk: cleanPublicBoolean(source.redactionOk, true)
   };
 }
 
@@ -128,16 +259,18 @@ function createAiTaskTrace(envelope = {}, options = {}) {
 
   return {
     schemaVersion: AI_TASK_TRACE_SCHEMA_VERSION,
-    traceId: cleanPublicString(options.traceId || `${envelope.taskId || envelope.taskKind || "task"}:${Date.now().toString(36)}`, "trace", 120),
+    traceId: cleanPublicString(options.traceId || envelope.traceId || `${envelope.taskId || envelope.taskKind || "task"}:${Date.now().toString(36)}`, "trace", 120),
     taskId: cleanPublicString(envelope.taskId, "task", 120),
     taskKind: cleanPublicString(envelope.taskKind, "unknown", 64),
     taskType: cleanPublicString(envelope.taskType || routeSummary.taskType, routeSummary.taskType, 64),
     schemaName: cleanPublicString(envelope.schemaName, "", 64),
     promptPackId: cleanPublicString(envelope.promptPackId, "", 64),
+    promptVersion: cleanPublicString(envelope.promptVersion || options.promptVersion, "legacy", 64),
     provider: cleanPublicString(adapterProvider, "mock", 64),
     model: cleanPublicString(adapterModel, "mock", 96),
     route: routeSummary,
     budget: summarizeBudget(options.budget || {}),
+    retrievalCounts: summarizeRetrievalCounts(options.retrievalCounts || envelope.retrievalCounts || {}),
     startedAt: nowIso(),
     status: "running",
     events: []
@@ -159,35 +292,27 @@ function recordAiTaskTraceEvent(trace, eventType, details = {}) {
   return trace;
 }
 
+function cleanStatus(status) {
+  const cleaned = cleanPublicString(status, "failed", 32);
+  return PUBLIC_STATUS_VALUES.includes(cleaned) ? cleaned : "failed";
+}
+
 function summarizeAiTaskTrace(trace = {}) {
   const summary = {
     schemaVersion: AI_TASK_TRACE_SCHEMA_VERSION,
     traceId: cleanPublicString(trace.traceId, "trace", 120),
-    taskId: cleanPublicString(trace.taskId, "task", 120),
     taskKind: cleanPublicString(trace.taskKind, "unknown", 64),
     taskType: cleanPublicString(trace.taskType, "narrator", 64),
-    schemaName: cleanPublicString(trace.schemaName, "", 64),
     promptPackId: cleanPublicString(trace.promptPackId, "", 64),
+    promptVersion: cleanPublicString(trace.promptVersion, "legacy", 64),
     provider: cleanPublicString(trace.provider, "mock", 64),
     model: cleanPublicString(trace.model, "mock", 96),
-    status: cleanPublicString(trace.status, "running", 32),
-    startedAt: cleanPublicString(trace.startedAt, "", 40),
-    finishedAt: cleanPublicString(trace.finishedAt, "", 40),
     latencyMs: cleanPublicNumber(trace.latencyMs, 0),
-    route: summarizeRoute(trace.route || {}),
-    budget: summarizeBudget(trace.budget || {}),
-    validation: summarizeValidation(trace.validation || {}),
-    toolCounts: summarizeToolCounts(trace.toolCounts || {}),
-    usage: summarizeUsage(trace.usage || {}),
-    fallbackProvider: cleanPublicString(trace.fallbackProvider, "", 64),
-    fallbackReason: cleanPublicString(trace.fallbackReason, "", 180),
-    events: Array.isArray(trace.events)
-      ? trace.events.slice(0, MAX_TRACE_EVENTS).map((event) => ({
-        at: cleanPublicString(event.at, "", 40),
-        type: cleanPublicString(event.type, "event", 64),
-        details: pickAllowedDetails(event.details)
-      }))
-      : []
+    status: cleanStatus(trace.status || "running"),
+    fallbackReason: cleanPublicReason(trace.fallbackReason, ""),
+    retrievalCounts: summarizeRetrievalCounts(trace.retrievalCounts || trace.retrieval || {}),
+    toolCounts: summarizeToolCounts(trace.toolCounts || trace.tool || {}),
+    validationFlags: summarizeValidationFlags(trace.validationFlags || trace.validation || {})
   };
   assertPublicAiTaskTrace(summary);
   return summary;
@@ -197,14 +322,17 @@ function finishAiTaskTrace(trace, status, details = {}) {
   if (!isPlainObject(trace)) {
     throw new Error("AI task trace must be an object.");
   }
-  trace.status = cleanPublicString(status, "failed", 32);
+  trace.status = cleanStatus(status);
   trace.finishedAt = nowIso();
   trace.latencyMs = cleanPublicNumber(details.latencyMs, 0);
-  trace.validation = summarizeValidation(details.validation || {});
+  trace.validationFlags = summarizeValidationFlags(details.validationFlags || details.validation || {});
   trace.toolCounts = summarizeToolCounts(details.toolCounts || {});
-  trace.usage = summarizeUsage(details.usage || {});
+  trace.retrievalCounts = summarizeRetrievalCounts(details.retrievalCounts || trace.retrievalCounts || {});
   trace.fallbackProvider = cleanPublicString(details.fallbackProvider, "", 64);
-  trace.fallbackReason = cleanPublicString(details.fallbackReason, "", 180);
+  trace.fallbackReason = cleanPublicReason(
+    details.fallbackReason || (details.error ? describeAiProviderError(details.error) : ""),
+    ""
+  );
 
   if (details.error) {
     recordAiTaskTraceEvent(trace, "error", {
@@ -215,16 +343,38 @@ function finishAiTaskTrace(trace, status, details = {}) {
   return summarizeAiTaskTrace(trace);
 }
 
+function assertAllowedObjectKeys(value, allowedKeys, label) {
+  if (!isPlainObject(value)) {
+    throw new Error(`Public AI task trace ${label} must be an object.`);
+  }
+  for (const key of Object.keys(value)) {
+    if (!allowedKeys.includes(key)) {
+      throw new Error(`Public AI task trace contains forbidden ${label} field: ${key}`);
+    }
+  }
+}
+
 function assertPublicAiTaskTrace(summary) {
   assertPublicAiProviderEnvelope(summary);
+  assertAllowedObjectKeys(summary, PUBLIC_TRACE_TOP_LEVEL_KEYS, "top-level");
+  assertAllowedObjectKeys(summary.retrievalCounts, RETRIEVAL_COUNT_KEYS, "retrievalCounts");
+  assertAllowedObjectKeys(summary.toolCounts, TOOL_COUNT_KEYS, "toolCounts");
+  assertAllowedObjectKeys(summary.validationFlags, VALIDATION_FLAG_KEYS, "validationFlags");
+
+  for (const [domain, count] of Object.entries(summary.retrievalCounts.domains || {})) {
+    if (cleanRetrievalDomain(domain) !== domain || !Number.isFinite(Number(count)) || Number(count) < 0) {
+      throw new Error("Public AI task trace contains unsafe retrieval domain counts.");
+    }
+  }
+
   const serialized = JSON.stringify(summary);
-  if (/\b(rawPrompt|providerPayload|rawProviderPayload|worldState|statePatch|apiKey|baseUrl|baseURL|localPath)\b/i.test(serialized)) {
+  if (FORBIDDEN_PUBLIC_TEXT_PATTERN.test(serialized)) {
     throw new Error("Public AI task trace contains forbidden raw diagnostic content.");
   }
-  if (/\b(?:prompt|input|instructions|request|response|headers|apiKey|api[-_\s]?key|key|token|baseURL|baseUrl|localPath|worldState|statePatch)\s*[:=]/i.test(serialized)) {
+  if (SENSITIVE_ASSIGNMENT_PATTERN.test(serialized)) {
     throw new Error("Public AI task trace contains forbidden sensitive assignment.");
   }
-  if (/\bserver\.[A-Za-z0-9_.-]+/.test(serialized)) {
+  if (INTERNAL_REF_PATTERN.test(serialized)) {
     throw new Error("Public AI task trace contains forbidden server internal reference.");
   }
   return summary;
@@ -236,5 +386,8 @@ module.exports = {
   createAiTaskTrace,
   finishAiTaskTrace,
   recordAiTaskTraceEvent,
-  summarizeAiTaskTrace
+  summarizeAiTaskTrace,
+  summarizeRetrievalCounts,
+  summarizeToolCounts,
+  summarizeValidationFlags
 };

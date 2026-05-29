@@ -34,7 +34,7 @@ test("S92.2 AI task runtime runs mock opening through structured adapter", async
   assert.equal(validatePayload("opening", result.payload), result.payload);
   assert.equal(result.trace.taskKind, "opening");
   assert.equal(result.trace.provider, "mock");
-  assert.equal(result.trace.validation.ok, true);
+  assert.equal(result.trace.validationFlags.schemaOk, true);
 });
 
 test("S92.2 AI task runtime supports mock quick_action and topic_draft schemas", async () => {
@@ -56,8 +56,8 @@ test("S92.2 AI task runtime supports mock quick_action and topic_draft schemas",
 
   assert.equal(validatePayload("quickAction", quick.payload), quick.payload);
   assert.equal(validatePayload("topicDraft", topic.payload), topic.payload);
-  assert.equal(quick.trace.budget.toolBudget, 0);
-  assert.equal(topic.trace.budget.mayUseTools, false);
+  assert.equal(quick.trace.toolCounts.allowed, 0);
+  assert.equal(topic.trace.toolCounts.allowed, 0);
 });
 
 test("S92.2 AI task runtime falls back to schema-valid mock payload on adapter failure", async () => {
@@ -112,7 +112,7 @@ test("S92.2 AI task runtime refuses non-mock route and non-mock adapter by defau
   assert.equal(result.status, "fallback");
   assert.equal(adapterTouched, false);
   assert.equal(validatePayload("opening", result.payload), result.payload);
-  assert.match(result.fallbackReason, /mock routes|openai/i);
+  assert.equal(result.fallbackReason, "safety_reject");
 });
 
 test("S92.2 provider facade adapter keeps old mock facade compatible without replacing getProvider", async () => {

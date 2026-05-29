@@ -26,17 +26,23 @@ const PUBLIC_AI_FORBIDDEN_KEYS = Object.freeze([
   "token",
   "baseURL",
   "baseUrl",
+  "base_url",
   "localPath",
   "statePatch",
   "worldState"
 ]);
 
 const TOKEN_PATTERN = /\b(?:sk|tp)-[A-Za-z0-9_-]{6,}\b/g;
+const SECRET_ENV_NAME_PATTERN = /\b(?:OPENAI|DEEPSEEK|MIMO|ANTHROPIC)_API_KEY\b/g;
+const AUTHORIZATION_HEADER_PATTERN =
+  /\b(?:authorization|x-api-key|api-key)\s*[:=]\s*(?:Bearer\s+)?[A-Za-z0-9._~+/=-]{8,}/gi;
+const BEARER_TOKEN_PATTERN = /\bBearer\s+[A-Za-z0-9._~+/=-]{8,}/gi;
 const LOCAL_PATH_PATTERN =
   /(?:data[\\/](?:sessions|audit)[^\s"'<>]*|[A-Za-z]:[\\/][^\s"'<>]+|(?:file:\/\/)?(?:\/Users|\/home|\/tmp|\/var|\/mnt|\/opt|\/workspace)\/[^\s"'<>]+)/gi;
-const BASE_URL_ASSIGNMENT_PATTERN = /\bbase(?:URL|Url|_url)?\s*[:=]\s*[^\s"'<>]+/gi;
+const BASE_URL_ASSIGNMENT_PATTERN =
+  /\bbase(?:URL|Url|_url)?\s*[:=]\s*(?:"[^"\n<>]*"|'[^'\n<>]*'|[^\s"'<>;，。；]+)/gi;
 const SENSITIVE_ASSIGNMENT_PATTERN =
-  /\b(?:rawProviderPayload|providerPayload|rawPrompt|fullPrompt|prompt|instructions|input|requestBody|responseBody|request|response|headers|apiKey|api[-_\s]?key|key|token|localPath|worldState|statePatch)\s*[:=]\s*[^;\n。；]*/gi;
+  /\b(?:rawProviderPayload|providerPayload|rawPrompt|fullPrompt|prompt|instructions|input|requestBody|responseBody|request|response|headers|apiKey|api[-_\s]?key|key|token|baseURL|baseUrl|base_url|localPath|worldState|statePatch)\s*[:=]\s*[^;\n。；]*/gi;
 const PROVIDER_HTTP_BODY_PATTERN =
   /\b((?:MiMo|OpenAI|DeepSeek|Anthropic|Claude)\s+API\s+(?:request|stream)\s+failed\s+with\s+\d{3}\s*:\s*)[\s\S]*/gi;
 const PROVIDER_NON_JSON_BODY_PATTERN =
@@ -83,6 +89,9 @@ function redactAiProviderText(value, options = {}) {
     : value;
   let message = redactConfiguredSecrets(String(source || ""));
   message = message
+    .replace(SECRET_ENV_NAME_PATTERN, "[redacted-env]")
+    .replace(AUTHORIZATION_HEADER_PATTERN, "[redacted-auth-header]")
+    .replace(BEARER_TOKEN_PATTERN, "Bearer [redacted-key]")
     .replace(TOKEN_PATTERN, "[redacted-key]")
     .replace(LOCAL_PATH_PATTERN, "[redacted-path]")
     .replace(BASE_URL_ASSIGNMENT_PATTERN, "[redacted-url]")

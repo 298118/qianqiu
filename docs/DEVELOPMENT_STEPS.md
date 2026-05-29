@@ -142,10 +142,13 @@
 | S92.5 | DONE | AI Eval v2 场景回放 | 已新增 Mock-only scenario runner、metrics、`npm run eval:ai:v2` 和首批 JSON 场景 fixture；覆盖 runtime task、Mock provider turn、tool loop、summary-only artifact、hidden leak/server bypass、historical anchor、tool budget、pending-not-fact、latency 与 fallback 指标，不替代旧 `npm run eval:ai`。 |
 | S92.6 | DONE | Prompt Registry v2 | 已新增旁路 prompt registry、world_turn/topic_draft 元数据、quality rubric/forbidden boundary fragments、`npm run ai:prompt-doctor` 和聚焦测试；registry 包装旧 prompt pack 并保持 `buildPromptInstructions()` 字节兼容，不切默认 prompt 构建、provider、普通 turn、route/API、存档、SQLite、浏览器 UI 或服务器裁决。 |
 | S92.7 | DONE | EvidenceRef 与安全检索升级 | 已新增 stable EvidenceRef resolver/ranker，并把 `retrievalContext.evidenceRefs` 渐进接入 prompt context；只从最终安全 rows 生成 public/player_visible/actor_visible 引用，拒绝未知 sourceView、private/hidden projection 和 raw/provider/prompt/path/key/hidden/SQLite/server.* 污染，不切默认 provider/runtime/tool loop 或服务器裁决。 |
+| S92.8 | DONE | Trace 与 provider health | 已收束 `aiTaskTrace` public summary 固定字段，新增 `providerHealthManager` 统一 provider 失败分类、bounded health snapshot、连续失败和本地 circuit breaker 状态；runtime fallbackReason 对外改用分类值，不切默认 provider/runtime/tool loop、route/API、存档、SQLite、浏览器 UI 或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
+- 当前步骤 S92.8：Trace 与 provider health 已完成。`src/ai/runtime/aiTaskTrace.js` 的 public summary 固定为 `traceId`、`taskKind`、`taskType`、`promptPackId`、`promptVersion`、`provider`、`model`、`latencyMs`、`status`、`fallbackReason`、`retrievalCounts`、`toolCounts` 与 `validationFlags`；断言层拒绝额外 public 字段和 raw/provider/prompt/worldState/statePatch/key/base URL/path/SQLite/server.* 污染。内部 `route`、`budget`、`usage`、`events`、`taskId`、`schemaName` 可供 runtime 内部收尾，但不进入 public summary。
+- S92.8 新增 `src/ai/runtime/providerHealthManager.js`：provider 失败分类统一为 `missing_key`、`timeout`、`schema_invalid`、`rate_limit`、`network_error`、`tool_shape_mismatch`、`safety_reject` 与 `unknown`；health snapshot 只输出 provider/model、状态、失败计数、连续失败、分类计数、最近安全消息和本地 circuit breaker 状态。`runAiTask()` 对外 fallbackReason 改用分类值，`providerSafety` 加固 Authorization/Bearer、provider env name 和敏感赋值 redaction。本步不新增 route/API、存档字段、SQLite schema、浏览器 UI、真实 provider 默认接管、tool loop 接管或服务器裁决能力。
 - 当前步骤 S92.7：EvidenceRef 与安全检索升级已完成。新增 `src/ai/retrieval/evidenceRefResolver.js`、`src/ai/retrieval/retrievalRanker.js` 与 `test/evidenceRefResolver.test.js`；`buildRankedRetrievalContext()` 在既有 ranked rows 完成并套用 prompt budget 后生成 `retrievalContext.evidenceRefs`，`strategy` 记录 `evidenceRefSchemaVersion`、`evidenceRefCount` 与最终 `serializedChars`。EvidenceRef 使用稳定 `eref:` id、allowlisted `sourceView`、domain/collection、stableId、visibility、label、summary、priority、generatedAtTurn 与 rank；summary 只来自 bounded safe text，不复制 raw row、raw SQLite、raw audit、provider payload、完整 prompt、本地路径、key、hidden notes 或内部 `server.*`。
 - S92.7 同步加固 explicit `promptRetrievalSource`：只有缺省可见性或 `public` / `player_visible` / `actor_visible` rows 可入候选，`private` / `hidden` / 未允许 visibility 直接丢弃；污染扫描补 `providerPayload`、`rawPrompt`、`statePatch`、`worldState`、`rawSql`、base URL、header/Bearer、普通 key/token 赋值、POSIX/Windows 路径、`safe_search_index`、`world_sessions`、`tp-` token 和 `server.*`。本步不新增依赖，不改 SQLite schema，不接管普通 `/api/game/turn`、真实 provider、tool loop、topic draft route、route/API、存档、浏览器 UI、素材或服务器裁决；EvidenceRef 只是 prompt/tool proposal 的只读引用锚点，不写 canonical state 或审计成案。
 - 当前步骤 S92.6：Prompt Registry v2 已完成。新增 `src/ai/prompts/registry.js`、`src/ai/prompts/fragments/qualityRubrics.js`、`src/ai/prompts/fragments/forbiddenBoundaries.js`、`src/ai/prompts/packs/worldTurn.js`、`src/ai/prompts/packs/topicDraft.js`、`scripts/aiPromptPackDoctor.js` 与 `test/aiPromptRegistry.test.js`，并增加 `npm run ai:prompt-doctor`；先登记 `world_turn` 与 `topic_draft` 的 `promptId`、`promptVersion`、`sceneType`、`actorTypes`、`taskType`、`schemaName`、summary-only fixtures、`supportsTools`、quality rubrics 和 forbidden fields。
@@ -164,6 +167,27 @@
 - S92.1 聚焦验证已通过 `node --check scripts/aiBaselineSnapshot.js`、`node --check scripts/aiEvaluationRunner.js`、`npm run ai:baseline`、`npm run eval:ai`、`npm run typecheck:server`、`npm run check:docs-governance`、`git diff --check`、`node --test test/aiBaselineSnapshot.test.js` 和 `node --test test/aiEvaluationRunner.test.js test/aiBaselineSnapshot.test.js`；全量 Node 测试已按 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4` 跑完，合计 1238 tests。单条 `npm test` 在 124s/304s 外层超时截断且无断言失败输出，等价分片全量已通过；提交前只读复审代理 `019e6f0d-53c6-7a61-8924-dd7706cdd2a6` 未发现阻塞问题，非阻塞建议已采纳，补充复审确认 follow-up 无新增风险。
 
 ## 6. 最近完整验证口径
+
+S92.8 当前验证锚点：
+
+- `node --check src/ai/runtime/aiTaskTrace.js`
+- `node --check src/ai/runtime/providerHealthManager.js`
+- `node --check src/ai/runtime/aiTaskRuntime.js`
+- `node --check src/ai/providerSafety.js`
+- `node --check src/ai/index.js`
+- `node --check test/aiTaskTrace.test.js`
+- `node --check test/aiTaskTraceRedaction.test.js`
+- `node --check test/providerHealthManager.test.js`
+- `node --check test/aiTaskRuntime.test.js`
+- `node --check test/aiDiagnostics.test.js`
+- `node --test test/aiDiagnostics.test.js test/providerHealthManager.test.js test/aiTaskTraceRedaction.test.js`（16 tests）
+- `node --test test/aiTaskTrace.test.js test/aiTaskRuntime.test.js test/aiFallbackPolicy.test.js`（14 tests）
+- `npm run eval:ai`
+- `npm run eval:ai:v2`
+- `npm run smoke:provider:route`
+- `npm run typecheck:server`
+- `npm run check:docs-governance`
+- `git diff --check`
 
 S92.7 当前验证锚点：
 
@@ -305,6 +329,16 @@ S91.18 运行态完整验证锚点：
 - `npm test`（1233 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-29：S92.8 Trace 与 provider health 完成
+
+- 范围：重写 `src/ai/runtime/aiTaskTrace.js` 的 public summary 输出，固定 `s92.8-ai-task-trace-public-summary.v1` 字段集；新增 `src/ai/runtime/providerHealthManager.js`，并从 `src/ai/index.js` 导出 `classifyProviderFailure()` / `createProviderHealthManager()`。`src/ai/runtime/aiTaskRuntime.js` 的 fallback 对外 `fallbackReason` 改用 provider 失败分类；`src/ai/providerSafety.js` 加固 Authorization/Bearer、带引号 `baseURL` / `base_url`、provider env name 和敏感赋值 redaction。
+- Trace：公开摘要只含 trace/task/promptPack/promptVersion/provider/model/latency/status/fallbackReason、retrieval counts、tool counts 与 validation flags；内部 route、budget、usage、events、taskId、schemaName 不再进入 public summary。断言层拒绝额外 public 字段、unsafe retrieval domain、raw prompt、provider payload、`worldState`、`statePatch`、key、base URL、本地路径、raw SQLite row、hidden/private refs 和 `server.*`。
+- Provider health：失败分类覆盖 `missing_key`、`timeout`、`schema_invalid`、`rate_limit`、`network_error`、`tool_shape_mismatch`、`safety_reject` 与 `unknown`；health snapshot 只保存 bounded provider/model 状态、最近成功/失败计数、连续失败、分类计数、最近安全消息与本地 circuit breaker 开闭状态，不保存原始 provider 请求/响应、prompt、payload、路径、key 或 SQLite raw row。
+- 边界：本步不新增 npm 依赖，不新增 route/API、存档字段、SQLite schema、浏览器 UI、真实 provider 默认接管、tool loop 接管、prompt/schema/tool 权限或服务器裁决能力；Mock/no-key 默认可玩语义保持，真实 provider route health 仍由既有 smoke 控制。
+- 子代理：提交前只读复审代理 `019e726c-91c5-79f3-8435-5b1a1aaccd65` 首次发现带引号 baseURL redaction、403 safety 分类和 provider health 固定字段断言缺口；已补 quoted `baseURL` / `base_url` canary、403 policy/safety 优先分类、health snapshot allowlist 和通用 `base_url` forbidden key。复审 follow-up 确认 P1/P2 已解决且无阻塞；代理确认未编辑文件、未运行任何 Git 命令、未创建 PR。
+- 验证：已通过新增/修改文件的 `node --check`、`node --test test/aiDiagnostics.test.js test/providerHealthManager.test.js test/aiTaskTraceRedaction.test.js`（16 tests）、`node --test test/aiTaskTrace.test.js test/aiTaskRuntime.test.js test/aiFallbackPolicy.test.js`（14 tests）、`npm run eval:ai`、`npm run eval:ai:v2`、`npm run smoke:provider:route`、`npm run typecheck:server`、`npm run check:docs-governance` 和 `git diff --check`。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-29：S92.7 EvidenceRef 与安全检索升级完成
 

@@ -280,6 +280,13 @@ npm run typecheck:server
 
 目标：统一 AI public trace summary 与 provider 失败分类。
 
+S92.8 已落地范围（2026-05-29）：
+
+- `aiTaskTrace` 的对外 summary 收束为 `s92.8-ai-task-trace-public-summary.v1`：只发布 `traceId`、`taskKind`、`taskType`、`promptPackId`、`promptVersion`、`provider`、`model`、`latencyMs`、`status`、`fallbackReason`、`retrievalCounts`、`toolCounts` 与 `validationFlags`；内部 `route`、`budget`、`usage`、`events`、`taskId`、`schemaName` 不再进入 public summary。
+- 新增 `src/ai/runtime/providerHealthManager.js`，统一分类 `missing_key`、`timeout`、`schema_invalid`、`rate_limit`、`network_error`、`tool_shape_mismatch`、`safety_reject`，并提供 bounded provider health snapshot、连续失败计数和本地 circuit breaker 状态。
+- `AiTaskRuntime` fallback 的公开 `fallbackReason` 改用 provider health 分类；`providerSafety` 继续加固 Authorization/Bearer、provider env name、key/path/prompt/provider payload redaction。
+- 本步不新增 route/API、存档字段、SQLite schema、浏览器 UI、真实 provider 默认接管、tool loop 接管或服务器裁决能力；provider health 只保存 public-safe 计数与状态，不保存 raw prompt、raw provider payload、`worldState`、本地路径、key、base URL、raw SQLite row 或 hidden/private refs。
+
 建议范围：
 
 - 扩展 `aiTaskTrace`，新增 provider health manager。

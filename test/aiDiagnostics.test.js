@@ -67,12 +67,12 @@ test("AI diagnostics redacts long secret fragments from errors", () => {
 
 test("AI diagnostics redacts generic provider payload, prompt, path, URL, and token shapes", () => {
   const redacted = redactSecrets(
-    "raw provider payload: {\"hidden\":\"SEALED_PROVIDER_FACT\",\"prompt\":\"完整密札\"}; request body baseURL=https://api.example.test/v1 data/sessions/private.json /mnt/e/secret sk-live-secret-token 完整提示词"
+    "raw provider payload: {\"hidden\":\"SEALED_PROVIDER_FACT\",\"prompt\":\"完整密札\"}; request body baseURL=https://api.example.test/v1 baseURL: \"https://quoted.example.test/v1\" base_url: 'https://snake.example.test/v1' baseUrl = \"https://camel.example.test/v1\" data/sessions/private.json /mnt/e/secret sk-live-secret-token 完整提示词"
   );
 
   assert.doesNotMatch(
     redacted,
-    /raw provider payload|request body|baseURL=https|data\/sessions|\/mnt\/e|sk-live-secret|完整提示词|SEALED_PROVIDER_FACT|完整密札/i
+    /raw provider payload|request body|baseURL|base_url|api\.example|quoted\.example|snake\.example|camel\.example|data\/sessions|\/mnt\/e|sk-live-secret|完整提示词|SEALED_PROVIDER_FACT|完整密札/i
   );
   assert.match(redacted, /\[redacted/);
 });

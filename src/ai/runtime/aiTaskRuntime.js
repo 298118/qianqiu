@@ -16,6 +16,7 @@ const {
 } = require("../providers/adapterContract");
 const { buildAiTaskBudget, summarizeAiTaskBudget } = require("./aiBudgetManager");
 const { buildAiFallbackPayload, summarizeFallbackDecision } = require("./aiFallbackPolicy");
+const { classifyProviderFailure } = require("./providerHealthManager");
 const {
   assertPublicAiTaskTrace,
   createAiTaskTrace,
@@ -142,15 +143,19 @@ async function runAiTask(envelope, options = {}) {
 
     const fallbackPayload = buildAiFallbackPayload(envelope, error);
     const fallbackDecision = summarizeFallbackDecision(envelope, error);
+    const providerFailure = classifyProviderFailure(error);
     const fallbackTrace = trace || createAiTaskTrace(envelope, {
       route,
       adapter: adapterMetadata || { providerName: "mock", model: "mock" },
       budget: summarizeAiTaskBudget(budget)
     });
-    recordAiTaskTraceEvent(fallbackTrace, "fallback", fallbackDecision);
+    recordAiTaskTraceEvent(fallbackTrace, "fallback", {
+      fallbackProvider: fallbackDecision.fallbackProvider,
+      fallbackReason: providerFailure.reason
+    });
     const summary = finishAiTaskTrace(fallbackTrace, "fallback", {
       latencyMs: Date.now() - startedAt,
-      fallbackReason: fallbackDecision.fallbackReason,
+      fallbackReason: providerFailure.reason,
       fallbackProvider: fallbackDecision.fallbackProvider,
       validation: { ok: true, schemaName: config.schemaName },
       toolCounts: { allowed: budget.toolBudget, used: 0 }
@@ -162,7 +167,7 @@ async function runAiTask(envelope, options = {}) {
       payload: fallbackPayload,
       trace: summary,
       fallback: true,
-      fallbackReason: fallbackDecision.fallbackReason
+      fallbackReason: providerFailure.reason
     };
   }
 }

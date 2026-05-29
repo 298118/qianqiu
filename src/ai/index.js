@@ -17,6 +17,10 @@ const {
   runAiTask
 } = require("./runtime/aiTaskRuntime");
 const {
+  classifyProviderFailure,
+  createProviderHealthManager
+} = require("./runtime/providerHealthManager");
+const {
   listProviderVisibleToolsForActor,
   runGameToolLoop
 } = require("./tools/gameToolLoop");
@@ -212,9 +216,11 @@ function getProvider(options = {}) {
 module.exports = {
   createAiTaskRuntime,
   createProviderByName,
+  createProviderHealthManager,
   createRoutedProvider,
   getProvider,
   getProviderForTask,
+  classifyProviderFailure,
   listProviderVisibleToolsForActor,
   runGameToolLoop,
   runAiTask
