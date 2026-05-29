@@ -94,6 +94,8 @@
 
   .aiSettingsToolbar,
   .aiTaskRouteHeader,
+  .aiTracePanelHeader,
+  .aiTraceRowHeader,
   .aiSettingsActions,
   .aiSettingsSummary,
   .mapCommandDeck,
@@ -111,6 +113,15 @@
 
   .aiSettingsSummary label {
     width: 100%;
+  }
+
+  .aiTraceMeta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aiTraceFeedback {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .drawerScrim {

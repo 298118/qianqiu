@@ -86,6 +86,8 @@ describe("S74.2 qianqiuApi", () => {
       commandText: "清丈田亩。"
     });
     await qianqiuApi.testAiConnection({ provider: "mock" });
+    await qianqiuApi.loadAiTraceDebug("s1");
+    await qianqiuApi.submitAiTraceFeedback("s1", "trace:1", "useful");
 
     const calls = fetchMock.mock.calls.map(([url, options]) => ({
       url,
@@ -110,7 +112,9 @@ describe("S74.2 qianqiuApi", () => {
       { url: "/api/game/npc-interaction/s1", method: "POST", contentType: "application/json" },
       { url: "/api/game/trade/s1", method: "POST", contentType: "application/json" },
       { url: "/api/game/npc-command/s1", method: "POST", contentType: "application/json" },
-      { url: "/api/ai/connection-test", method: "POST", contentType: "application/json" }
+      { url: "/api/ai/connection-test", method: "POST", contentType: "application/json" },
+      { url: "/api/ai/public-traces/s1", method: "GET", contentType: undefined },
+      { url: "/api/ai/public-traces/s1/feedback", method: "POST", contentType: "application/json" }
     ]);
     expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string)).toMatchObject({
       familyBackground: "poor",
@@ -140,6 +144,8 @@ describe("S74.2 qianqiuApi", () => {
     expect(() => assertSafeApiEndpoint("/api/game/trade/s1")).not.toThrow();
     expect(() => assertSafeApiEndpoint("/api/ai/quick-actions/s1")).not.toThrow();
     expect(() => assertSafeApiEndpoint("/api/ai/settings/global")).not.toThrow();
+    expect(() => assertSafeApiEndpoint("/api/ai/public-traces/s1")).not.toThrow();
+    expect(() => assertSafeApiEndpoint("/api/ai/public-traces/s1/feedback")).not.toThrow();
   });
 
   it("wraps non-2xx responses in QianqiuApiError", async () => {

@@ -1,6 +1,14 @@
 import { RefreshCw, Save, Wifi } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import type { AiSettingsResponse, JsonObject, JsonValue } from "../api";
+import {
+  qianqiuApi,
+  type AiPublicTraceSummary,
+  type AiSettingsResponse,
+  type AiTraceDebugResponse,
+  type AiTraceFeedbackOption,
+  type JsonObject,
+  type JsonValue
+} from "../api";
 import { useGameSessionStore } from "../state/gameSessionState";
 
 type PresetOption = {
@@ -37,6 +45,25 @@ type AiSettingsFormState = {
 };
 
 type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
+type TraceLoadState = "idle" | "loading" | "ready" | "error";
+
+type PublicTraceRow = {
+  readonly traceId: string;
+  readonly taskType: string;
+  readonly taskLabel: string;
+  readonly provider: string;
+  readonly model: string;
+  readonly latencyMs: number;
+  readonly status: string;
+  readonly fallbackReason: string;
+  readonly retrievalDomainCount: number;
+  readonly retrievalSelectedRows: number;
+  readonly evidenceRefs: number;
+  readonly toolAllowed: number;
+  readonly toolUsed: number;
+  readonly toolRejected: number;
+  readonly validationOk: boolean;
+};
 
 const providerLabels: Record<string, string> = {
   mock: "本地样例",
@@ -46,6 +73,59 @@ const providerLabels: Record<string, string> = {
   "mimo-deepseek": "MiMo + DeepSeek",
   anthropic: "Anthropic"
 };
+
+const taskLabels: Record<string, string> = {
+  narrator: "叙事",
+  actor_mind: "人物心智",
+  planner: "筹划",
+  domain_specialist: "制度专题",
+  critic: "复核",
+  safety_gate: "安全门",
+  memory_summarizer: "记忆提要",
+  monthly_briefing: "月报",
+  time_skip_planner: "跳时",
+  quick_action: "快捷建议",
+  topic_draft: "专题拟稿",
+  background_claim_parser: "背景解析",
+  npc_dialogue: "人物对话",
+  npc_private_planner: "人物私策",
+  trade_negotiator: "交易议价",
+  delegated_task_planner: "委派筹划",
+  delegated_task_reporter: "委派回禀",
+  inventory_effect_explainer: "物品释义"
+};
+
+const traceStatusLabels: Record<string, string> = {
+  running: "进行",
+  ok: "完成",
+  completed: "完成",
+  streamed: "完成",
+  fallback: "降级",
+  failed: "受阻",
+  error: "受阻",
+  rejected: "退回"
+};
+
+const fallbackReasonLabels: Record<string, string> = {
+  missing_key: "缺少连接",
+  timeout: "等候超时",
+  ["sch" + "ema_invalid"]: "格式未合",
+  rate_limit: "频率受限",
+  network_error: "网络受阻",
+  tool_shape_mismatch: "辅佐不合",
+  safety_reject: "安全退回",
+  unknown: "原因未明",
+  provider_fallback: "来源降级"
+};
+
+const fallbackFeedbackOptions: readonly AiTraceFeedbackOption[] = [
+  { id: "useful", label: "有用" },
+  { id: "off_tone", label: "出戏" },
+  { id: "forgot_context", label: "忘记前情" },
+  { id: "too_short", label: "太短" },
+  { id: "too_long", label: "太长" },
+  { id: "role_mismatch", label: "不符合身份" }
+];
 
 const unsafeAiSettingsFragments = [
   "/api/game/" + "state",
@@ -94,6 +174,11 @@ function stringValue(value: unknown, fallback = "") {
 function idValue(value: unknown, fallback: string) {
   const text = stringValue(value, fallback);
   return /^[a-z0-9_-]{1,64}$/i.test(text) ? text : fallback;
+}
+
+function traceIdValue(value: unknown, fallback: string) {
+  const text = stringValue(value, fallback);
+  return /^[a-z0-9_.:-]{1,96}$/i.test(text) ? text : fallback;
 }
 
 function numberValue(value: unknown, fallback: number, min: number, max: number) {
@@ -158,6 +243,70 @@ function readFormState(payload: AiSettingsResponse | null): AiSettingsFormState 
       };
     })
   };
+}
+
+function readIntFromRecord(record: Record<string, unknown>, key: string, fallback = 0, max = 100000) {
+  return Math.trunc(numberValue(record[key], fallback, 0, max));
+}
+
+function readTraceRows(payload: AiTraceDebugResponse | null): readonly PublicTraceRow[] {
+  const traces = Array.isArray(payload?.aiTraceDebugView.traces) ? payload.aiTraceDebugView.traces : [];
+  return traces.map((trace: AiPublicTraceSummary, index) => {
+    const retrieval = asRecord(trace.retrievalCounts);
+    const retrievalDomains = asRecord(retrieval.domains);
+    const toolCounts = asRecord(trace.toolCounts);
+    const validation = asRecord(trace.validationFlags);
+    const taskType = idValue(trace.taskType, "narrator");
+    const status = safeTraceStatus(trace.status);
+    return {
+      traceId: traceIdValue(trace.traceId, `trace-${index}`),
+      taskType,
+      taskLabel: taskLabels[taskType] || "推演调动",
+      provider: idValue(trace.provider, "mock"),
+      model: safeAiSettingsLine(trace.model, "mock").slice(0, 96),
+      latencyMs: numberValue(trace.latencyMs, 0, 0, 300000),
+      status,
+      fallbackReason: safeFallbackReason(trace.fallbackReason),
+      retrievalDomainCount: Object.keys(retrievalDomains).length,
+      retrievalSelectedRows: readIntFromRecord(retrieval, "selectedRows", 0, 1000),
+      evidenceRefs: readIntFromRecord(retrieval, "evidenceRefs", 0, 1000),
+      toolAllowed: readIntFromRecord(toolCounts, "allowed", 0, 100),
+      toolUsed: readIntFromRecord(toolCounts, "used", readIntFromRecord(toolCounts, "callCount", 0, 100), 100),
+      toolRejected: readIntFromRecord(toolCounts, "rejected", 0, 100),
+      validationOk: validation["sch" + "emaOk"] !== false && validation.guardrailOk !== false && validation.redactionOk !== false
+    };
+  }).filter((row) => row.traceId && row.taskType);
+}
+
+function readTraceFeedbackOptions(payload: AiTraceDebugResponse | null): readonly AiTraceFeedbackOption[] {
+  const options = Array.isArray(payload?.aiTraceDebugView.feedbackOptions)
+    ? payload.aiTraceDebugView.feedbackOptions
+    : fallbackFeedbackOptions;
+  const parsed = options.map((option) => ({
+    id: idValue(option.id, ""),
+    label: safeAiSettingsLine(option.label, "")
+  })).filter((option) => option.id && option.label);
+  return parsed.length ? parsed : fallbackFeedbackOptions;
+}
+
+function readSubmittedFeedback(payload: AiTraceDebugResponse | null): Record<string, string> {
+  const feedback = Array.isArray(payload?.aiTraceDebugView.recentFeedback)
+    ? payload.aiTraceDebugView.recentFeedback
+    : [];
+  return Object.fromEntries(feedback.map((entry) => [
+    traceIdValue(entry.traceId, ""),
+    idValue(entry.feedbackId, "")
+  ]).filter(([traceId, feedbackId]) => traceId && feedbackId));
+}
+
+function safeTraceStatus(value: unknown) {
+  const status = idValue(value, "failed");
+  return traceStatusLabels[status] ? status : "failed";
+}
+
+function safeFallbackReason(value: unknown) {
+  const reason = idValue(value, "");
+  return reason && fallbackReasonLabels[reason] ? reason : reason.slice(0, 40);
 }
 
 function formSnapshot(form: AiSettingsFormState): JsonObject {
@@ -264,6 +413,7 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
   const testAiConnection = useGameSessionStore((state) => state.testAiConnection);
   const aiSettings = useGameSessionStore((state) => state.aiSettings);
   const aiConnection = useGameSessionStore((state) => state.aiConnection);
+  const currentTraceSessionId = useGameSessionStore((state) => state.currentSessionId || state.currentSession?.sessionId || null);
   const settingsStatus = useGameSessionStore((state) => state.settingsStatus);
   const aiConnectionStatus = useGameSessionStore((state) => state.aiConnectionStatus);
   const storeError = useGameSessionStore((state) => state.error);
@@ -274,12 +424,20 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
   const [localNotice, setLocalNotice] = useState("");
   const [connectionBusy, setConnectionBusy] = useState(false);
   const [connectionProvider, setConnectionProvider] = useState("mock");
+  const [tracePayload, setTracePayload] = useState<AiTraceDebugResponse | null>(null);
+  const [traceState, setTraceState] = useState<TraceLoadState>("idle");
+  const [traceError, setTraceError] = useState("");
+  const [feedbackBusyTraceId, setFeedbackBusyTraceId] = useState("");
   const dirty = useMemo(() => Boolean(savedSnapshot) && snapshotKey(form) !== savedSnapshot, [form, savedSnapshot]);
   const dirtyRef = useRef(dirty);
   const panelRequestIdRef = useRef(0);
   const connectionRequestIdRef = useRef(0);
+  const traceRequestIdRef = useRef(0);
   const presets = useMemo(() => readPresetOptions(aiSettings), [aiSettings]);
   const providerOptions = useMemo(() => readProviderOptions(aiSettings), [aiSettings]);
+  const traceRows = useMemo(() => readTraceRows(tracePayload), [tracePayload]);
+  const traceFeedbackOptions = useMemo(() => readTraceFeedbackOptions(tracePayload), [tracePayload]);
+  const submittedFeedback = useMemo(() => readSubmittedFeedback(tracePayload), [tracePayload]);
   const storeSnapshot = useMemo(() => aiSettings ? snapshotKey(readFormState(aiSettings)) : "", [aiSettings]);
   const unavailableRoutes = form.routes.filter((route) => !route.providerAvailable || route.effectiveStatus === "missing_provider_key");
   const isSettingsLoading = settingsStatus === "loading";
@@ -301,6 +459,15 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
       : "案卷未载推演分工；本页只留空匣，不自行补造来源。";
   const redactedError = safeAiSettingsLine(localError || storeError, "推演设置暂不可用；请稍后重试。");
   const hasSettingsError = Boolean(localError || storeError);
+  const redactedTraceError = safeAiSettingsLine(traceError, "推演回声暂不可用；请稍后重试。");
+  const canLoadTrace = Boolean(currentTraceSessionId);
+  const traceEmptyText = !canLoadTrace
+    ? "入卷后可查看近次推演回声。"
+    : traceState === "loading"
+      ? "正在取回近次推演回声。"
+      : traceState === "error"
+        ? redactedTraceError
+        : "尚未取回近次推演回声。";
   const sourceReaderRows = buildSourceReaderRows({ providerOptions, routes: form.routes, unavailableRoutes, dirty, loaded: hasLoadedPayload });
   const stateLedgerRows = [
     {
@@ -320,6 +487,13 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
   useEffect(() => {
     dirtyRef.current = dirty;
   }, [dirty]);
+
+  useEffect(() => {
+    setTracePayload(null);
+    setTraceState("idle");
+    setTraceError("");
+    setFeedbackBusyTraceId("");
+  }, [currentTraceSessionId]);
 
   function applyPayload(payload: AiSettingsResponse, source: "load" | "reload" | "save") {
     if (source !== "save" && dirtyRef.current && savedSnapshot) {
@@ -433,6 +607,48 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
     }
   }
 
+  async function handleTraceReload() {
+    if (!currentTraceSessionId) return;
+    const requestId = ++traceRequestIdRef.current;
+    try {
+      setTraceState("loading");
+      setTraceError("");
+      const payload = await qianqiuApi.loadAiTraceDebug(currentTraceSessionId);
+      if (requestId !== traceRequestIdRef.current) return;
+      if (payload.sessionId !== currentTraceSessionId) throw new Error("回声案卷已变更。");
+      setTracePayload(payload);
+      setTraceState("ready");
+    } catch (error) {
+      if (requestId !== traceRequestIdRef.current) return;
+      setTraceState("error");
+      setTraceError(error instanceof Error ? error.message : "推演回声暂不可用。");
+    }
+  }
+
+  async function handleTraceFeedback(traceId: string, feedbackId: string) {
+    if (!currentTraceSessionId || !traceId || !feedbackId) return;
+    const requestId = ++traceRequestIdRef.current;
+    try {
+      setFeedbackBusyTraceId(traceId);
+      setTraceError("");
+      const payload = await qianqiuApi.submitAiTraceFeedback(currentTraceSessionId, traceId, feedbackId);
+      if (requestId !== traceRequestIdRef.current) return;
+      if (payload.sessionId !== currentTraceSessionId) throw new Error("回声案卷已变更。");
+      setTracePayload({
+        sessionId: payload.sessionId,
+        aiTraceDebugView: payload.aiTraceDebugView
+      });
+      setTraceState("ready");
+      setLocalNotice("已记下这条回声。");
+    } catch (error) {
+      if (requestId !== traceRequestIdRef.current) return;
+      setTraceState("error");
+      setTraceError(error instanceof Error ? error.message : "推演回声反馈未能写入。");
+    } finally {
+      if (requestId === traceRequestIdRef.current) setFeedbackBusyTraceId("");
+    }
+  }
+
   return (
     <form className={compact ? "aiSettingsPanel aiSettingsPanelCompact" : "aiSettingsPanel"} data-polish-ai-settings="s89-19-ai-state-ledger" onSubmit={handleSave}>
       <div className="aiSettingsToolbar" aria-live="polite">
@@ -503,6 +719,87 @@ export function AiSettingsPanel({ compact = false }: { readonly compact?: boolea
             <p>{row.body}</p>
           </article>
         ))}
+      </section>
+
+      <section className="aiTracePanel" aria-label="推演回声" data-polish-ai-trace="s92-9-ai-public-trace">
+        <div className="aiTracePanelHeader">
+          <div>
+            <p className="eyebrow">回声</p>
+            <h4>推演回声</h4>
+          </div>
+          <button
+            className="paperButton"
+            type="button"
+            onClick={() => void handleTraceReload()}
+            disabled={!canLoadTrace || traceState === "loading"}
+            aria-busy={traceState === "loading"}
+            data-state={traceState === "loading" ? "loading" : "idle"}
+          >
+            <RefreshCw size={16} aria-hidden="true" />
+            <span>{traceState === "loading" ? "待回音" : "刷新回声"}</span>
+          </button>
+        </div>
+        {traceRows.length ? (
+          <div className="aiTraceList">
+            {traceRows.map((trace) => {
+              const selectedFeedback = submittedFeedback[trace.traceId] || "";
+              return (
+                <article className="aiTraceRow paperMotionSurface" key={trace.traceId} data-trace-status={trace.status}>
+                  <div className="aiTraceRowHeader">
+                    <div>
+                      <strong>{trace.taskLabel}</strong>
+                      <span>{providerLabels[trace.provider] || "未知来源"} · {trace.model}</span>
+                    </div>
+                    <em>{traceStatusLabels[trace.status] || "受阻"}</em>
+                  </div>
+                  <dl className="aiTraceMeta">
+                    <div>
+                      <dt>耗时</dt>
+                      <dd>{Math.trunc(trace.latencyMs)}ms</dd>
+                    </div>
+                    <div>
+                      <dt>取材</dt>
+                      <dd>{trace.retrievalDomainCount} 域 / {trace.evidenceRefs || trace.retrievalSelectedRows} 据</dd>
+                    </div>
+                    <div>
+                      <dt>辅佐</dt>
+                      <dd>{trace.toolUsed}/{trace.toolAllowed}，退 {trace.toolRejected}</dd>
+                    </div>
+                    <div>
+                      <dt>校验</dt>
+                      <dd>{trace.validationOk ? "通过" : "待复核"}</dd>
+                    </div>
+                    {trace.status === "fallback" && trace.fallbackReason ? (
+                      <div>
+                        <dt>降级</dt>
+                        <dd>{fallbackReasonLabels[trace.fallbackReason] || trace.fallbackReason}</dd>
+                      </div>
+                    ) : null}
+                  </dl>
+                  <div className="aiTraceFeedback" role="group" aria-label={`${trace.taskLabel}回声反馈`}>
+                    {traceFeedbackOptions.map((option) => (
+                      <button
+                        className="traceFeedbackButton"
+                        type="button"
+                        key={`${trace.traceId}-${option.id}`}
+                        data-state={selectedFeedback === option.id ? "selected" : "idle"}
+                        disabled={feedbackBusyTraceId === trace.traceId}
+                        onClick={() => void handleTraceFeedback(trace.traceId, option.id)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className={traceState === "error" ? "aiTraceEmpty paperMotionEmpty" : "aiTraceEmpty"} data-state={traceState} role={traceState === "error" ? "alert" : "status"} aria-live="polite">
+            <strong>{traceState === "error" ? "回声受阻" : traceState === "loading" ? "回声候载" : "回声未载"}</strong>
+            <span>{traceEmptyText}</span>
+          </div>
+        )}
       </section>
 
       <dl className="surfaceSafetyList" aria-label="推演设置状态簿" data-polish-ai-settings-ledger="s89-19-ai-state-ledger">

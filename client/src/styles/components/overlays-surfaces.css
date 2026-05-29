@@ -461,6 +461,163 @@
   overflow-wrap: anywhere;
 }
 
+.aiTracePanel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .2);
+  background: rgb(255 248 230 / .48);
+  padding: 12px;
+}
+
+.aiTracePanelHeader,
+.aiTraceRowHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.aiTracePanelHeader h4,
+.aiTracePanelHeader p {
+  margin: 0;
+}
+
+.aiTracePanelHeader h4 {
+  color: #2d251d;
+  font-size: 1rem;
+}
+
+.aiTraceList {
+  display: grid;
+  gap: 10px;
+}
+
+.aiTraceRow {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .2);
+  background: rgb(255 252 238 / .64);
+  padding: 11px;
+}
+
+.aiTraceRowHeader div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.aiTraceRowHeader strong,
+.aiTraceRowHeader span {
+  overflow-wrap: anywhere;
+}
+
+.aiTraceRowHeader strong {
+  color: #2d251d;
+}
+
+.aiTraceRowHeader span {
+  color: #6d5844;
+  font-size: 0.84rem;
+}
+
+.aiTraceRowHeader em {
+  align-self: start;
+  min-width: 54px;
+  border: 1px solid rgb(123 36 31 / .26);
+  padding: 3px 7px;
+  color: #7b241f;
+  font-style: normal;
+  font-weight: 800;
+  text-align: center;
+}
+
+.aiTraceMeta {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.aiTraceMeta div {
+  min-width: 0;
+  border: 1px solid rgb(84 60 43 / .16);
+  background: rgb(255 248 230 / .5);
+  padding: 7px 8px;
+}
+
+.aiTraceMeta dt {
+  color: #7a624a;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.aiTraceMeta dd {
+  margin: 2px 0 0;
+  color: #2d251d;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.aiTraceFeedback {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.traceFeedbackButton {
+  min-height: 32px;
+  border: 1px solid rgb(123 36 31 / .24);
+  background: rgb(255 248 230 / .72);
+  color: #4a3325;
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.traceFeedbackButton:hover,
+.traceFeedbackButton:focus-visible,
+.traceFeedbackButton[data-state="selected"] {
+  border-color: rgb(142 47 39 / .48);
+  background: rgb(255 236 211 / .78);
+  color: #7b241f;
+}
+
+.traceFeedbackButton:disabled {
+  cursor: wait;
+  opacity: .68;
+}
+
+.aiTraceEmpty {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  border: 1px dashed rgb(84 60 43 / .28);
+  background: rgb(255 252 238 / .68);
+  padding: 12px;
+  color: #5f4f3d;
+  line-height: 1.65;
+}
+
+.aiTraceEmpty strong {
+  color: #7b241f;
+}
+
+.aiTraceEmpty span {
+  overflow-wrap: anywhere;
+}
+
+.aiTraceEmpty[data-state="error"] {
+  border-color: rgb(142 47 39 / .4);
+  background: rgb(248 229 213 / .68);
+  color: #6f352b;
+}
+
 .aiTaskMatrix {
   display: grid;
   gap: 12px;

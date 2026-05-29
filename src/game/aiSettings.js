@@ -179,6 +179,22 @@ function normalizeInvocationLog(entries = []) {
   }));
 }
 
+function normalizeTraceFeedbackLog(entries = []) {
+  if (!Array.isArray(entries)) return [];
+  return entries.slice(-24).map((entry = {}) => ({
+    schemaVersion: cleanVisibleText(entry.schemaVersion, "s92.9-ai-trace-feedback.v1", 64),
+    feedbackRecordId: cleanVisibleText(entry.feedbackRecordId || entry.id, `ai-feedback:${Date.now()}`, 120),
+    traceId: cleanVisibleText(entry.traceId, "ai-trace", 120),
+    taskType: cleanVisibleText(entry.taskType, "narrator", 40),
+    taskLabel: cleanVisibleText(entry.taskLabel, AI_TASK_LABELS[entry.taskType] || "AI 调动", 40),
+    feedbackId: cleanVisibleText(entry.feedbackId || entry.feedback, "useful", 64),
+    label: cleanVisibleText(entry.label, "有用", 40),
+    recordedTurn: clampInt(entry.recordedTurn, 0, 0, Number.MAX_SAFE_INTEGER),
+    createdAt: cleanVisibleText(entry.createdAt, new Date().toISOString(), 64),
+    changesGameState: false
+  }));
+}
+
 function normalizeRoutePatch(taskType, patch = {}) {
   if (!MODEL_TASK_TYPES.includes(taskType)) {
     throw new Error(`未知 AI 任务类型：${taskType}`);
@@ -260,6 +276,9 @@ function buildDefaultAiSettings(patch = {}, options = {}) {
     observability: {
       recentInvocations: options.allowObservabilityPatch
         ? normalizeInvocationLog(patch.observability?.recentInvocations)
+        : [],
+      traceFeedback: options.allowObservabilityPatch
+        ? normalizeTraceFeedbackLog(patch.observability?.traceFeedback)
         : []
     }
   };
@@ -316,7 +335,10 @@ function mergeAiSettings(base, patch = {}, options = {}) {
     observability: {
       recentInvocations: options.allowObservabilityPatch && Array.isArray(normalizedPatch.observability?.recentInvocations)
         ? normalizeInvocationLog(normalizedPatch.observability.recentInvocations)
-        : normalizeInvocationLog(base.observability?.recentInvocations)
+        : normalizeInvocationLog(base.observability?.recentInvocations),
+      traceFeedback: options.allowObservabilityPatch && Array.isArray(normalizedPatch.observability?.traceFeedback)
+        ? normalizeTraceFeedbackLog(normalizedPatch.observability.traceFeedback)
+        : normalizeTraceFeedbackLog(base.observability?.traceFeedback)
     }
   };
 }

@@ -2987,6 +2987,155 @@ describe("S74.1 React client shell", () => {
     expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|raw prompt|data\/sessions|base URL/i);
   });
 
+  it("renders S92.9 public trace echo and records bounded feedback", async () => {
+    const sessionId = "96969696-9696-4969-8969-969696969696";
+    const aiPayload = {
+      sessionId: "global",
+      scope: "global",
+      updatedAt: "2026-05-29T12:00:00.000Z",
+      aiSettingsView: {
+        preset: "balanced",
+        presets: [{ id: "balanced", label: "均衡" }],
+        providerOptions: [{ provider: "mock", available: true, requiresKey: false }],
+        taskRoutes: [
+          {
+            taskType: "narrator",
+            label: "叙事",
+            purpose: "普通叙事。",
+            provider: "mock",
+            providerAvailable: true,
+            requiresKey: false,
+            effectiveStatus: "active",
+            model: "mock",
+            maxOutputTokens: 900,
+            toolBudget: 2,
+            temperature: 0.35,
+            reviewerOnly: false,
+            mayUseTools: true,
+            mayRequestAdjudication: false
+          }
+        ]
+      },
+      aiInvocationSummaryView: { safe: true }
+    };
+    const traceView = (recentFeedback: unknown[] = []) => ({
+      sessionId,
+      aiTraceDebugView: {
+        schemaVersion: "s92.9-ai-trace-debug-view.v1",
+        sessionId,
+        generatedAtTurn: 3,
+        traceCount: 1,
+        traces: [
+          {
+            schemaVersion: "s92.8-ai-task-trace-public-summary.v1",
+            traceId: "trace:public:1",
+            taskKind: "narrator",
+            taskType: "narrator",
+            promptPackId: "world_turn",
+            promptVersion: "v1",
+            provider: "mock",
+            model: "mock",
+            latencyMs: 32,
+            status: "fallback",
+            fallbackReason: "timeout",
+            retrievalCounts: { selectedRows: 2, droppedRows: 0, evidenceRefs: 1, domains: { archive: 1 } },
+            toolCounts: { allowed: 2, callCount: 1, accepted: 1, pending: 0, rejected: 0, attempted: 1, used: 1 },
+            validationFlags: { schemaOk: true, guardrailOk: true, redactionOk: true }
+          }
+        ],
+        feedbackOptions: [
+          { id: "useful", label: "有用" },
+          { id: "off_tone", label: "出戏" },
+          { id: "forgot_context", label: "忘记前情" },
+          { id: "too_short", label: "太短" },
+          { id: "too_long", label: "太长" },
+          { id: "role_mismatch", label: "不符合身份" }
+        ],
+        recentFeedback,
+        safety: { publicSummaryOnly: true }
+      }
+    });
+    const fetchMock = vi.fn((url: string, options?: RequestInit) => {
+      if (url === "/api/ai/settings/global") {
+        return Promise.resolve(new Response(JSON.stringify(aiPayload), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }));
+      }
+      if (url === `/api/ai/public-traces/${sessionId}`) {
+        return Promise.resolve(new Response(JSON.stringify(traceView()), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }));
+      }
+      if (url === `/api/ai/public-traces/${sessionId}/feedback`) {
+        expect(JSON.parse(String(options?.body))).toEqual({
+          traceId: "trace:public:1",
+          feedbackId: "useful"
+        });
+        return Promise.resolve(new Response(JSON.stringify({
+          ...traceView([
+            {
+              schemaVersion: "s92.9-ai-trace-feedback.v1",
+              feedbackRecordId: "feedback:1",
+              traceId: "trace:public:1",
+              taskType: "narrator",
+              taskLabel: "叙事",
+              feedbackId: "useful",
+              label: "有用",
+              recordedTurn: 3,
+              createdAt: "2026-05-29T12:01:00.000Z",
+              changesGameState: false
+            }
+          ]),
+          accepted: true,
+          feedback: {
+            traceId: "trace:public:1",
+            feedbackId: "useful",
+            label: "有用"
+          }
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({
+        source: "server_player_visible_state_projection",
+        sessionId,
+        worldState: { player: { name: "许慎", role: "scholar" } }
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderRoute(`/game/${sessionId}/settings`);
+
+    const routePanel = await screen.findByRole("article", { name: "案头工具" });
+    fireEvent.click(within(routePanel).getByRole("button", { name: "打开推演设置" }));
+    await screen.findByDisplayValue("900");
+    const tracePanel = document.querySelector("[data-polish-ai-trace='s92-9-ai-public-trace']") as HTMLElement;
+    expect(tracePanel).toBeTruthy();
+    fireEvent.click(within(tracePanel).getByRole("button", { name: "刷新回声" }));
+
+    await within(tracePanel).findByText("本地样例 · mock");
+    expect(within(tracePanel).getByText("32ms")).toBeTruthy();
+    expect(within(tracePanel).getByText("1 域 / 1 据")).toBeTruthy();
+    expect(within(tracePanel).getByText("1/2，退 0")).toBeTruthy();
+    expect(within(tracePanel).getByText("通过")).toBeTruthy();
+    expect(within(tracePanel).getByText("等候超时")).toBeTruthy();
+
+    const feedbackGroup = within(tracePanel).getByRole("group", { name: "叙事回声反馈" });
+    fireEvent.click(within(feedbackGroup).getByRole("button", { name: "有用" }));
+
+    await screen.findByText("已记下这条回声。");
+    await waitFor(() => expect(within(feedbackGroup).getByRole("button", { name: "有用" }).getAttribute("data-state")).toBe("selected"));
+    expect(fetchMock.mock.calls.some(([url]) => url === `/api/ai/public-traces/${sessionId}`)).toBe(true);
+    expect(fetchMock.mock.calls.some(([url]) => url === `/api/ai/public-traces/${sessionId}/feedback`)).toBe(true);
+    expect(document.body.textContent || "").not.toMatch(/OPENAI_API_KEY|provider payload|raw prompt|data\/sessions|base URL|debug|placeholder/i);
+  });
+
   it("renders S91.1 AI source fallback and no-key state without changing settings scope", async () => {
     const sessionId = "93939393-9393-4939-8939-939393939393";
     const fetchMock = vi.fn((url: string) => {

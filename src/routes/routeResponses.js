@@ -8,6 +8,8 @@
  */
 
 const { assertPublicAiProviderEnvelope } = require("../ai/providerSafety");
+const { assertPublicAiTaskTrace } = require("../ai/runtime/aiTaskTrace");
+const { assertPublicAiTraceDebugView } = require("../game/aiTraceDebug");
 const { isForbiddenClientWorldStateKey } = require("../game/clientWorldState");
 
 const RAW_LEDGER_KEYS = Object.freeze([
@@ -239,6 +241,34 @@ function defineAiSettingsRouteResponse(payload) {
 }
 
 /**
+ * @param {import("../contracts/serverContracts").AiTraceDebugResponse} payload
+ * @returns {import("../contracts/serverContracts").AiTraceDebugResponse}
+ */
+function defineAiTraceDebugResponse(payload) {
+  assertPublicAiProviderEnvelope(payload);
+  assertPublicAiTraceDebugView(payload.aiTraceDebugView);
+  const traces = Array.isArray(payload.aiTraceDebugView?.traces) ? payload.aiTraceDebugView.traces : [];
+  for (const trace of traces) {
+    assertPublicAiTaskTrace(trace);
+  }
+  return payload;
+}
+
+/**
+ * @param {import("../contracts/serverContracts").AiTraceFeedbackResponse} payload
+ * @returns {import("../contracts/serverContracts").AiTraceFeedbackResponse}
+ */
+function defineAiTraceFeedbackResponse(payload) {
+  assertPublicAiProviderEnvelope(payload);
+  assertPublicAiTraceDebugView(payload.aiTraceDebugView);
+  const traces = Array.isArray(payload.aiTraceDebugView?.traces) ? payload.aiTraceDebugView.traces : [];
+  for (const trace of traces) {
+    assertPublicAiTaskTrace(trace);
+  }
+  return payload;
+}
+
+/**
  * @param {import("../contracts/serverContracts").QuickActionResponse} payload
  * @returns {import("../contracts/serverContracts").QuickActionResponse}
  */
@@ -258,6 +288,8 @@ module.exports = {
   RAW_LEDGER_KEYS,
   defineAiConnectionTestResponse,
   defineAiSettingsRouteResponse,
+  defineAiTraceDebugResponse,
+  defineAiTraceFeedbackResponse,
   defineCommonTurnViews,
   defineExamProgressResponse,
   defineExamQuestionResponse,

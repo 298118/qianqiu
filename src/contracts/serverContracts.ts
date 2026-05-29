@@ -667,6 +667,62 @@ export type AiSettingsRouteResponse = RouteEnvelope & {
   readonly aiControlAuditView?: JsonObject;
 };
 
+export type AiPublicTraceSummary = AiPublicForbiddenFields & {
+  readonly schemaVersion: string;
+  readonly traceId: string;
+  readonly taskKind: string;
+  readonly taskType: string;
+  readonly promptPackId: string;
+  readonly promptVersion: string;
+  readonly provider: string;
+  readonly model: string;
+  readonly latencyMs: number;
+  readonly status: "running" | "ok" | "fallback" | "failed" | "rejected" | string;
+  readonly fallbackReason: string;
+  readonly retrievalCounts: JsonObject;
+  readonly toolCounts: JsonObject;
+  readonly validationFlags: JsonObject;
+};
+
+export type AiTraceFeedbackOption = {
+  readonly id: "useful" | "off_tone" | "forgot_context" | "too_short" | "too_long" | "role_mismatch" | string;
+  readonly label: string;
+};
+
+export type AiTraceFeedbackEntry = AiPublicForbiddenFields & {
+  readonly schemaVersion: string;
+  readonly feedbackRecordId: string;
+  readonly traceId: string;
+  readonly taskType: string;
+  readonly taskLabel: string;
+  readonly feedbackId: string;
+  readonly label: string;
+  readonly recordedTurn: number;
+  readonly createdAt: string;
+  readonly changesGameState: false;
+};
+
+export type AiTraceDebugView = AiPublicForbiddenFields & {
+  readonly schemaVersion: string;
+  readonly sessionId: string;
+  readonly generatedAtTurn: number;
+  readonly traceCount: number;
+  readonly traces: readonly AiPublicTraceSummary[];
+  readonly feedbackOptions: readonly AiTraceFeedbackOption[];
+  readonly recentFeedback: readonly AiTraceFeedbackEntry[];
+  readonly safety: JsonObject;
+};
+
+export type AiTraceDebugResponse = RouteEnvelope & {
+  readonly aiTraceDebugView: AiTraceDebugView;
+};
+
+export type AiTraceFeedbackResponse = RouteEnvelope & {
+  readonly accepted: boolean;
+  readonly feedback: AiTraceFeedbackEntry;
+  readonly aiTraceDebugView: AiTraceDebugView;
+};
+
 export type AiConnectionTestResponse = AiPublicForbiddenFields & {
   readonly ok: boolean;
   readonly provider: string;

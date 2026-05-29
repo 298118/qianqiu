@@ -8,6 +8,10 @@ const {
 } = require("../game/aiSettings");
 const { buildAiControlAuditView } = require("../game/aiControlAudit");
 const {
+  appendAiTraceFeedback,
+  buildAiTraceDebugView
+} = require("../game/aiTraceDebug");
+const {
   buildLocalQuickActionResponse,
   buildQuickActionContext,
   buildQuickActionResponse,
@@ -20,9 +24,12 @@ const {
   normalizeTopicDraftRequest
 } = require("../game/topicDrafts");
 const { readSession } = require("../storage/sessionStore");
+const { mutateSession } = require("../storage/sessionStore");
 const {
   defineAiConnectionTestResponse,
   defineAiSettingsRouteResponse,
+  defineAiTraceDebugResponse,
+  defineAiTraceFeedbackResponse,
   defineQuickActionResponse,
   defineTopicDraftResponse
 } = require("./routeResponses");
@@ -66,6 +73,38 @@ router.post("/settings/global", async (req, res, next) => {
     res.json(defineAiSettingsRouteResponse(payload));
   } catch (error) {
     if (!error.statusCode && /AI 设置|AI 路由|不支持字段|禁止|hidden|raw|server|provider|model|任务|服务器维护|缺少 key/.test(error.message || "")) {
+      error.statusCode = 400;
+    }
+    next(error);
+  }
+});
+
+router.get("/public-traces/:sessionId", async (req, res, next) => {
+  try {
+    const worldState = await readSession(req.params.sessionId);
+    res.json(defineAiTraceDebugResponse({
+      sessionId: worldState.sessionId,
+      aiTraceDebugView: buildAiTraceDebugView(worldState)
+    }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/public-traces/:sessionId/feedback", async (req, res, next) => {
+  try {
+    const payload = await mutateSession(req.params.sessionId, (worldState) => {
+      const { entry, view } = appendAiTraceFeedback(worldState, req.body);
+      return defineAiTraceFeedbackResponse({
+        sessionId: worldState.sessionId,
+        accepted: true,
+        feedback: entry,
+        aiTraceDebugView: view
+      });
+    });
+    res.json(payload);
+  } catch (error) {
+    if (!error.statusCode && /AI 回声/.test(error.message || "")) {
       error.statusCode = 400;
     }
     next(error);

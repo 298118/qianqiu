@@ -2,6 +2,8 @@ import type {
   AiConnectionTestRequest,
   AiConnectionTestResponse,
   AiSettingsResponse,
+  AiTraceDebugResponse,
+  AiTraceFeedbackResponse,
   InventoryResponse,
   InventoryTransferRequest,
   InventoryTransferResponse,
@@ -68,6 +70,8 @@ const allowedSafeEndpointPatterns = Object.freeze([
   /^\/api\/ai\/connection-test$/,
   /^\/api\/ai\/settings\/global$/,
   /^\/api\/ai\/settings\/[^/?#]+$/,
+  /^\/api\/ai\/public-traces\/[^/?#]+$/,
+  /^\/api\/ai\/public-traces\/[^/?#]+\/feedback$/,
   /^\/api\/ai\/quick-actions\/[^/?#]+$/,
   /^\/api\/ai\/topic-draft\/[^/?#]+$/
 ]);
@@ -308,6 +312,18 @@ export const qianqiuApi = {
     return requestJson<AiConnectionTestResponse>("/api/ai/connection-test", {
       method: "POST",
       body: input as unknown as JsonObject,
+      signal
+    });
+  },
+
+  loadAiTraceDebug(sessionId: string, signal?: AbortSignal) {
+    return requestJson<AiTraceDebugResponse>(`/api/ai/public-traces/${encodePathSegment(sessionId)}`, { signal });
+  },
+
+  submitAiTraceFeedback(sessionId: string, traceId: string, feedbackId: string, signal?: AbortSignal) {
+    return requestJson<AiTraceFeedbackResponse>(`/api/ai/public-traces/${encodePathSegment(sessionId)}/feedback`, {
+      method: "POST",
+      body: { traceId, feedbackId },
       signal
     });
   }

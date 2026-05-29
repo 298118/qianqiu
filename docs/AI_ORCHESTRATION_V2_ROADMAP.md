@@ -305,6 +305,13 @@ npm run smoke:provider:route
 
 目标：只展示 public trace summary 和玩家反馈，不暴露内部 prompt/tool/provider 细节。
 
+S92.9 已落地范围（2026-05-29）：
+
+- 新增 `src/game/aiTraceDebug.js`、`GET /api/ai/public-traces/:sessionId` 与 `POST /api/ai/public-traces/:sessionId/feedback`，响应版本为 `s92.9-ai-trace-debug-view.v1` / `s92.9-ai-trace-feedback.v1`，并通过 route response helper 与 `src/contracts/serverContracts.ts` 对齐。
+- trace 列表只消费并返回 S92.8 public summary：任务、prompt pack/version、provider/model、latency、status、fallbackReason、retrieval counts、tool counts 与 validation flags；不存在 runtime trace 时仅从既有 safe invocation summary 合成 bounded fallback 摘要。
+- 玩家反馈固定为有用、出戏、忘记前情、太短、太长、不符合身份六类，写入 session `aiSettings.observability.traceFeedback` 的 bounded 日志；反馈不改变 canonical world state、AI 路由、provider 默认、tool loop、SQLite schema 或服务器裁决。
+- React “推演回声”入口嵌入右上角印匣的推演设置面板，玩家主动刷新后才加载 public trace，并只显示玩家口径的来源/卷式、耗时、状态、取材、辅佐、校验与降级原因；源码和测试继续禁止 raw prompt、provider payload、key、base URL、本地路径、raw SQLite row、hidden/private refs、debug/诊断术语和内部工程口径进入玩家界面。
+
 建议范围：
 
 - 新增 safe trace endpoint 时必须对齐 route response helper、server contracts 或局部 JSDoc typedef。
