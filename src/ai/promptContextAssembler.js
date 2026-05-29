@@ -54,7 +54,13 @@ const {
 } = require("../game/worldThreads");
 const { summarizeActorMemoryForPrompt } = require("../game/actorMemoryLedger");
 const { summarizeRecentPlayerHistory } = require("../game/sessionSummary");
+const { redactAiProviderText } = require("./providerSafety");
 const { getPromptRetrievalSource } = require("./promptContextSource");
+const {
+  EVIDENCE_REF_SCHEMA_VERSION,
+  buildEvidenceRefsFromRetrievalContext,
+  isAllowedEvidenceVisibility
+} = require("./retrieval/evidenceRefResolver");
 
 const RETRIEVAL_CONTEXT_SCHEMA_VERSION = 1;
 const RETRIEVAL_STRATEGY_SCHEMA_VERSION = 1;
@@ -159,10 +165,17 @@ const UNSAFE_RETRIEVAL_TEXT_PATTERNS = Object.freeze([
   /S60_PRIVATE_/i,
   /SEALED_[A-Z0-9_]+/i,
   /hiddenNotes|hidden_notes|hiddenIntent|hidden_intent/i,
-  /event_log|ai_change_proposals|prompt_retrieval_index|event_archive_index|world_state_json/i,
+  /hiddenDossier|hidden_dossier|privateSignalTags|private_signal_tags/i,
+  /raw[_ -]?(?:provider|audit|table|ledger|prompt|proposal|sql)|providerPayload|provider_payload|rawProviderPayload|rawPrompt|fullPrompt/i,
+  /(?:provider|prompt)\s+(?:payload|proposal|response|request|body)|prompt\s+provider|provider\s+proposal/i,
+  /\b(?:statePatch|worldState|rawSql|SQL|sqlite)\b|server\.[A-Za-z0-9_.:-]+/i,
+  /base(?:URL|Url|_url)?\s*[:=]\s*[^\s"'<>]+/i,
+  /(?:headers?|authorization)\b[^;\n。；]{0,80}\bBearer\s+[A-Za-z0-9._-]{8,}/i,
+  /event_log|ai_change_proposals|prompt_retrieval_index|event_archive_index|safe_search_index|safe_search_fts|world_sessions|world_state_json/i,
   /OPENAI_API_KEY|DEEPSEEK_API_KEY|MIMO_API_KEY|ANTHROPIC_API_KEY/i,
-  /sk-[a-z0-9_-]{6,}/i,
-  /data\/sessions|data_sessions|\/mnt\/|[A-Z]:\\/i
+  /\[redacted-(?:key|path|url|sensitive-assignment|provider-body|provider-detail)\]/i,
+  /\b(?:sk|tp)-[a-z0-9_-]{6,}/i,
+  /data\/sessions|data_sessions|\/mnt\/|\b(?:\/Users|\/home|\/tmp|\/var|\/opt|\/workspace)\/|[A-Z]:\\/i
 ]);
 
 const SOURCE_TYPE_COLLECTION_PATHS = Object.freeze({
@@ -483,12 +496,17 @@ function compactFrontier(frontier) {
 function safeRetrievalCollection(source, domain, collection) {
   const rows = source?.[domain]?.[collection];
   if (!Array.isArray(rows)) return null;
-  return rows.filter((row) => !hasUnsafeRetrievalText(row));
+  return rows.filter((row) => {
+    const visibility = row?.visibility;
+    return (visibility === undefined || visibility === null || isAllowedEvidenceVisibility(visibility)) &&
+      !hasUnsafeRetrievalText(row);
+  });
 }
 
 function hasUnsafeRetrievalText(value) {
   const text = JSON.stringify(value || {});
-  return UNSAFE_RETRIEVAL_TEXT_PATTERNS.some((pattern) => pattern.test(text));
+  const redacted = redactAiProviderText(text, { maxLength: 12000 });
+  return UNSAFE_RETRIEVAL_TEXT_PATTERNS.some((pattern) => pattern.test(text) || pattern.test(redacted));
 }
 
 function callRetrievalSource(source, worldState, options) {
@@ -1419,6 +1437,34 @@ function applyPromptBudget(context, options = {}) {
   return next;
 }
 
+function attachEvidenceRefs(context, options = {}) {
+  const next = {
+    ...context,
+    strategy: { ...(context.strategy || {}) }
+  };
+  next.evidenceRefs = buildEvidenceRefsFromRetrievalContext(next, {
+    maxRefs: options.maxEvidenceRefs || options.evidenceRefLimit
+  });
+  next.strategy.evidenceRefSchemaVersion = EVIDENCE_REF_SCHEMA_VERSION;
+  next.strategy.evidenceRefCount = next.evidenceRefs.length;
+
+  const shouldFitEvidenceRefsToBudget = Boolean(
+    options.promptBudgetProfile ||
+    options.retrievalBudgetProfile ||
+    options.retrievalBudget ||
+    next.strategy.profile === "ordinary"
+  );
+  const maxChars = Number(next.strategy.maxChars);
+  if (shouldFitEvidenceRefsToBudget && Number.isFinite(maxChars) && maxChars > 0) {
+    while (next.evidenceRefs.length > 0 && serializedRetrievalChars(next) > maxChars) {
+      next.evidenceRefs = next.evidenceRefs.slice(0, -1);
+    }
+    next.strategy.evidenceRefCount = next.evidenceRefs.length;
+  }
+  next.strategy.serializedChars = serializedRetrievalChars(next);
+  return next;
+}
+
 function buildRankedRetrievalContext(worldState = {}, options = {}) {
   const query = buildQuery(worldState, options);
   const player = worldState.player || {};
@@ -1475,7 +1521,7 @@ function buildRankedRetrievalContext(worldState = {}, options = {}) {
     }
   };
 
-  return applyPromptBudget(context, options);
+  return attachEvidenceRefs(applyPromptBudget(context, options), options);
 }
 
 function assemblePromptContext(worldState = {}, options = {}) {

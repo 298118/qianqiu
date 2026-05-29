@@ -8,6 +8,9 @@ const {
   buildRankedRetrievalContext
 } = require("../src/ai/promptContextAssembler");
 const {
+  EVIDENCE_REF_SCHEMA_VERSION
+} = require("../src/ai/retrieval/evidenceRefResolver");
+const {
   applyActorMemoryUpdate,
   proposeActorMemoryUpdate
 } = require("../src/game/actorMemoryLedger");
@@ -22,6 +25,14 @@ test("prompt context assembler centralizes visible summaries and ranked retrieva
 
   assert.equal(context.retrievalContext.schemaVersion, RETRIEVAL_CONTEXT_SCHEMA_VERSION);
   assert.equal(context.retrievalContext.retrievalMode, "server_visible_ranked_projection");
+  assert.equal(context.retrievalContext.strategy.evidenceRefSchemaVersion, EVIDENCE_REF_SCHEMA_VERSION);
+  assert.equal(context.retrievalContext.strategy.evidenceRefCount, context.retrievalContext.evidenceRefs.length);
+  assert.ok(context.retrievalContext.evidenceRefs.length > 0);
+  assert.ok(context.retrievalContext.evidenceRefs.every((ref) =>
+    ref.schemaVersion === EVIDENCE_REF_SCHEMA_VERSION &&
+    ref.refId.startsWith("eref:") &&
+    ["public", "player_visible", "actor_visible"].includes(ref.visibility)
+  ));
   assert.match(JSON.stringify(context.relationshipLedger), /赵给事|士大夫/);
   assert.match(JSON.stringify(context.worldGeography), /北京|山海关|country-ming/);
   assert.match(JSON.stringify(context.officialPostings), /户部|吏部|任免/);
@@ -646,14 +657,29 @@ test("ranked retrieval context records S66 strategy and rejects unsafe explicit 
           {
             id: "city-safe-s66",
             name: "北京",
+            visibility: "public",
             pressure: 88,
             publicSummary: "公开京师钱粮与官署线索。"
+          },
+          {
+            id: "city-private-s92-7",
+            name: "私档京师线索",
+            visibility: "private",
+            pressure: 99,
+            publicSummary: "文字干净但 visibility 不在 prompt evidence allowlist。"
           },
           {
             id: "city-unsafe-s66",
             name: "SEALED_S66_SOURCE",
             pressure: 100,
             publicSummary: "prompt_retrieval_index event_log sk-s66-source-secret"
+          },
+          {
+            id: "city-provider-leak-s92-7",
+            name: "京师头信息污染",
+            visibility: "public",
+            pressure: 98,
+            publicSummary: "baseURL=https://api.example.test/v1 key=plainsecret token=plain-token headers Authorization Bearer abcdefghijkl /home/user/.env /Users/me/secret /tmp/private-file"
           }
         ]
       },
@@ -676,6 +702,11 @@ test("ranked retrieval context records S66 strategy and rejects unsafe explicit 
   assert.equal(context.strategy.serializedChars <= context.strategy.maxChars, true);
   assert.equal(context.roleVisibility.roleId, "official");
   assert.equal(context.geography.cities.some((city) => city.id === "city-safe-s66"), true);
+  assert.equal(context.geography.cities.some((city) => city.id === "city-private-s92-7"), false);
   assert.equal(context.geography.cities.some((city) => city.id === "city-unsafe-s66"), false);
+  assert.equal(context.geography.cities.some((city) => city.id === "city-provider-leak-s92-7"), false);
+  assert.ok(context.evidenceRefs.some((ref) => ref.stableId === "city-safe-s66"));
+  assert.ok(context.evidenceRefs.every((ref) => ref.stableId !== "city-private-s92-7"));
   assert.doesNotMatch(serialized, /SEALED_S66|prompt_retrieval_index|event_log|sk-s66-source-secret|hiddenNotes/);
+  assert.doesNotMatch(serialized, /baseURL|plainsecret|plain-token|Authorization Bearer|\/home\/user|\/Users\/me|\/tmp\/private-file/);
 });

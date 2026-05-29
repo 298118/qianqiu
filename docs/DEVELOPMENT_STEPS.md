@@ -141,10 +141,13 @@
 | S92.4 | DONE | Mock-first Agentic Tool Loop v2 | 已新增旁路 `src/ai/tools/` 工具循环、tool call normalizer、guardrails 与 provider-visible result projector；先在 Mock/test-only 路径跑通 read/proposal/request_adjudication、预算、顺序、public result projection、provider-visible tool list 和红线，不接管默认普通回合、真实 provider、route/API、存档、SQLite、浏览器 UI 或服务器裁决。 |
 | S92.5 | DONE | AI Eval v2 场景回放 | 已新增 Mock-only scenario runner、metrics、`npm run eval:ai:v2` 和首批 JSON 场景 fixture；覆盖 runtime task、Mock provider turn、tool loop、summary-only artifact、hidden leak/server bypass、historical anchor、tool budget、pending-not-fact、latency 与 fallback 指标，不替代旧 `npm run eval:ai`。 |
 | S92.6 | DONE | Prompt Registry v2 | 已新增旁路 prompt registry、world_turn/topic_draft 元数据、quality rubric/forbidden boundary fragments、`npm run ai:prompt-doctor` 和聚焦测试；registry 包装旧 prompt pack 并保持 `buildPromptInstructions()` 字节兼容，不切默认 prompt 构建、provider、普通 turn、route/API、存档、SQLite、浏览器 UI 或服务器裁决。 |
+| S92.7 | DONE | EvidenceRef 与安全检索升级 | 已新增 stable EvidenceRef resolver/ranker，并把 `retrievalContext.evidenceRefs` 渐进接入 prompt context；只从最终安全 rows 生成 public/player_visible/actor_visible 引用，拒绝未知 sourceView、private/hidden projection 和 raw/provider/prompt/path/key/hidden/SQLite/server.* 污染，不切默认 provider/runtime/tool loop 或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
+- 当前步骤 S92.7：EvidenceRef 与安全检索升级已完成。新增 `src/ai/retrieval/evidenceRefResolver.js`、`src/ai/retrieval/retrievalRanker.js` 与 `test/evidenceRefResolver.test.js`；`buildRankedRetrievalContext()` 在既有 ranked rows 完成并套用 prompt budget 后生成 `retrievalContext.evidenceRefs`，`strategy` 记录 `evidenceRefSchemaVersion`、`evidenceRefCount` 与最终 `serializedChars`。EvidenceRef 使用稳定 `eref:` id、allowlisted `sourceView`、domain/collection、stableId、visibility、label、summary、priority、generatedAtTurn 与 rank；summary 只来自 bounded safe text，不复制 raw row、raw SQLite、raw audit、provider payload、完整 prompt、本地路径、key、hidden notes 或内部 `server.*`。
+- S92.7 同步加固 explicit `promptRetrievalSource`：只有缺省可见性或 `public` / `player_visible` / `actor_visible` rows 可入候选，`private` / `hidden` / 未允许 visibility 直接丢弃；污染扫描补 `providerPayload`、`rawPrompt`、`statePatch`、`worldState`、`rawSql`、base URL、header/Bearer、普通 key/token 赋值、POSIX/Windows 路径、`safe_search_index`、`world_sessions`、`tp-` token 和 `server.*`。本步不新增依赖，不改 SQLite schema，不接管普通 `/api/game/turn`、真实 provider、tool loop、topic draft route、route/API、存档、浏览器 UI、素材或服务器裁决；EvidenceRef 只是 prompt/tool proposal 的只读引用锚点，不写 canonical state 或审计成案。
 - 当前步骤 S92.6：Prompt Registry v2 已完成。新增 `src/ai/prompts/registry.js`、`src/ai/prompts/fragments/qualityRubrics.js`、`src/ai/prompts/fragments/forbiddenBoundaries.js`、`src/ai/prompts/packs/worldTurn.js`、`src/ai/prompts/packs/topicDraft.js`、`scripts/aiPromptPackDoctor.js` 与 `test/aiPromptRegistry.test.js`，并增加 `npm run ai:prompt-doctor`；先登记 `world_turn` 与 `topic_draft` 的 `promptId`、`promptVersion`、`sceneType`、`actorTypes`、`taskType`、`schemaName`、summary-only fixtures、`supportsTools`、quality rubrics 和 forbidden fields。
 - S92.6 保持旧 prompt API 兼容：registry 通过 `legacyPackName` 包装 `src/ai/promptPacks.js`，`buildRegistryPromptInstructions()` 与旧 `buildPromptInstructions()` 字节一致；当前登记的 `supportsTools=false`，避免暗示默认 provider tool loop 已接管。Doctor 只输出 summary metadata，检查必填字段、schema/taskType/legacy pack 对齐、promptId 唯一性、rubric 权重和 fixture 安全扫描，不打印 raw prompt、provider payload、fixture raw text、`worldState`、`statePatch`、key、base URL、本地路径或内部 `server.*`。
 - 当前步骤 S92.5：AI Eval v2 场景回放已完成。新增 `src/ai/eval/aiMetrics.js`、`src/ai/eval/aiScenarioRunner.js`、`scripts/aiEvalV2.js`、`testdata/aiScenarios/s92-5-core.json` 与 `test/aiScenarioRunner.test.js`，并增加 `npm run eval:ai:v2`；默认只读取 JSON fixture、只跑 Mock/runtime/tool-loop 旁路，不调用真实 provider，不接管旧 `eval:ai`、普通 turn、route/API、prompt、存档、SQLite、浏览器 UI 或服务器裁决。
@@ -161,6 +164,20 @@
 - S92.1 聚焦验证已通过 `node --check scripts/aiBaselineSnapshot.js`、`node --check scripts/aiEvaluationRunner.js`、`npm run ai:baseline`、`npm run eval:ai`、`npm run typecheck:server`、`npm run check:docs-governance`、`git diff --check`、`node --test test/aiBaselineSnapshot.test.js` 和 `node --test test/aiEvaluationRunner.test.js test/aiBaselineSnapshot.test.js`；全量 Node 测试已按 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4` 跑完，合计 1238 tests。单条 `npm test` 在 124s/304s 外层超时截断且无断言失败输出，等价分片全量已通过；提交前只读复审代理 `019e6f0d-53c6-7a61-8924-dd7706cdd2a6` 未发现阻塞问题，非阻塞建议已采纳，补充复审确认 follow-up 无新增风险。
 
 ## 6. 最近完整验证口径
+
+S92.7 当前验证锚点：
+
+- `node --check src/ai/retrieval/evidenceRefResolver.js`
+- `node --check src/ai/retrieval/retrievalRanker.js`
+- `node --check src/ai/promptContextAssembler.js`
+- `node --check test/evidenceRefResolver.test.js`
+- `node --test test/evidenceRefResolver.test.js test/promptContextAssembler.test.js`（18 tests）
+- `node --test test/sqlitePromptRetrieval.test.js test/sqliteSafeSearch.test.js`（20 tests）
+- `npm run eval:ai`
+- `npm run eval:ai:v2`
+- `npm run typecheck:server`
+- `npm run check:docs-governance`
+- `git diff --check`
 
 S92.6 当前验证锚点：
 
@@ -288,6 +305,15 @@ S91.18 运行态完整验证锚点：
 - `npm test`（1233 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-29：S92.7 EvidenceRef 与安全检索升级完成
+
+- 范围：新增 `src/ai/retrieval/evidenceRefResolver.js`、`src/ai/retrieval/retrievalRanker.js` 和 `test/evidenceRefResolver.test.js`；`src/ai/promptContextAssembler.js` 在最终 ranked retrieval rows 套用预算后挂载 `retrievalContext.evidenceRefs`，并把 evidenceRef schema/count 与最终 serialized chars 写入 `strategy`。`test/promptContextAssembler.test.js` 补 EvidenceRef schema、visibility allowlist、explicit private source 丢弃和 safe row ref 生成守门。
+- 边界：EvidenceRef 只从 `retrievalContext` 最终保留的安全 projection rows 派生，输出只允许 `public`、`player_visible`、`actor_visible`，sourceView 必须命中 allowlist；resolver/ranker 不读取 `worldState`、SQLite raw table、audit table、provider payload 或完整 prompt，不写 canonical state、SQLite、audit、session、浏览器 UI 或服务器裁决结果。
+- 安全修正：explicit `promptRetrievalSource` 增补 visibility gate，并扩展 raw/provider/prompt/base URL/header/path/key/hidden/SQLite/server.* 污染扫描；曾短暂把普通 fixture id 中的 `prompt` 字样误判为污染，SQLite prompt retrieval 回归暴露后已收窄为 `rawPrompt`、`fullPrompt`、`prompt_retrieval_index`、`providerPayload` 等真实泄漏形态。提交前复审又指出 baseURL/key/token/POSIX path 与 header/Bearer 缺口，已补 scanner 与 canary。
+- 验证：已通过新增 resolver/ranker/prompt assembler/test 的 `node --check`、`node --test test/evidenceRefResolver.test.js test/promptContextAssembler.test.js`（18 tests）、`node --test test/sqlitePromptRetrieval.test.js test/sqliteSafeSearch.test.js`（20 tests）、`npm run eval:ai`、`npm run eval:ai:v2`、`npm run typecheck:server`、`npm run check:docs-governance` 和 `git diff --check`。
+- 子代理：只读探查代理 `019e71d4-7cd5-7f91-8ccb-f146a7379f44` 建议在 `applyPromptBudget()` 后接入 EvidenceRef、保留旧 retrieval shape、对 sourceView 做 allowlist、加厚 providerPayload/statePatch/worldState/server.* 扫描，并提醒直接复用 resolver input scanner 会误伤 `evidenceRefs` 字段；已采纳 sourceView allowlist、预算后生成、专用 scanner 与污染扫描建议。提交前只读复审首次发现 baseURL/key/token/POSIX path 与 header/Bearer 扫描缺口，已补修复与 canary；补充复审确认 P1 已解决且无新增阻塞。代理确认未编辑文件、未运行任何 Git 命令、未创建 PR。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-29：S92.6 Prompt Registry v2 完成
 

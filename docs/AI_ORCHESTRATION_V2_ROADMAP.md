@@ -254,6 +254,13 @@ npm run eval:ai
 
 目标：让 prompt/context/tool proposal 统一引用 stable evidenceRef。
 
+S92.7 已落地范围（2026-05-29）：
+
+- 新增 `src/ai/retrieval/evidenceRefResolver.js` 与 `src/ai/retrieval/retrievalRanker.js`，把最终 `retrievalContext` 中已入选的安全 rows 映射为 `schemaVersion: s92.7-evidence-ref.v1` 的 stable `eref:` 引用；ref 只包含 `sourceView`、domain/collection、stableId、visibility、label、summary、priority、turn 和 rank 等 bounded 字段。
+- `src/ai/promptContextAssembler.js` 在 `applyPromptBudget()` 之后挂载 `retrievalContext.evidenceRefs`，并在 `strategy` 中记录 evidenceRef schema/count/serializedChars；显式 ordinary/预算 profile 会裁掉 evidenceRefs 以守住字符上限，默认 high profile 只保持既有上下文语义。
+- explicit `promptRetrievalSource` 现在先拒绝 private/hidden/非 public/player_visible/actor_visible visibility，并扩展 raw/provider/prompt/path/key/hidden/SQLite/server.* 污染扫描；EvidenceRef resolver 还拒绝未知 `sourceView`，避免 raw table、audit 或 SQLite 伪装来源进入 prompt/tool proposal 引用。
+- 本步不切默认 provider、普通回合 runtime、tool loop、topic draft route、route/API、存档、SQLite schema、浏览器 UI、素材或服务器裁决；EvidenceRef 只是只读引用锚点，不能成为状态事实或 resolver 成案。
+
 建议范围：
 
 - 新增 `src/ai/retrieval/evidenceRefResolver.js` 与 retrieval ranker。
