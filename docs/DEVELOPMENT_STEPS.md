@@ -138,10 +138,13 @@
 | S92.1 | DONE | AI 编排 v2 路线图与 baseline | 已新增 `docs/AI_ORCHESTRATION_V2_ROADMAP.md`、`docs/AI_V2_BASELINE_REPORT.md`、`scripts/aiBaselineSnapshot.js`、`npm run ai:baseline` 和 baseline/eval artifact 测试；只生成 hidden-safe 结构摘要与 ignored artifact，不改变运行时 AI 行为、provider facade、prompt、tool 权限、API/schema、存档、SQLite、浏览器 UI 或服务器裁决。 |
 | S92.2 | DONE | AI Task Runtime 骨架 | 已新增旁路 `src/ai/runtime/` 骨架、ProviderAdapter 合约、预算/trace/fallback 与 Mock-only 结构化任务单测；先覆盖 `opening`、`quick_action`、`topic_draft`，默认 provider facade、现有 route/API、prompt、存档、SQLite、浏览器 UI 和服务器裁决保持不接管。 |
 | S92.3 | DONE | OpenAI ProviderAdapter strict structured output 兼容层 | 已新增旁路 OpenAI adapter 与 provider response normalizer：支持 route opt-in `allowStrictSchema` 的 strict JSON schema 请求、strict 不支持时降级重试、Responses/Chat 输出归一化、usage 摘要、fake client 测试和 Ajv/runtime fallback 兜底；不替换旧 `createOpenAiProvider` / `getProvider` 路径，不新增默认真实 provider 触发面或服务器裁决权。 |
+| S92.4 | DONE | Mock-first Agentic Tool Loop v2 | 已新增旁路 `src/ai/tools/` 工具循环、tool call normalizer、guardrails 与 provider-visible result projector；先在 Mock/test-only 路径跑通 read/proposal/request_adjudication、预算、顺序、public result projection、provider-visible tool list 和红线，不接管默认普通回合、真实 provider、route/API、存档、SQLite、浏览器 UI 或服务器裁决。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
+- 当前步骤 S92.4：Mock-first Agentic Tool Loop v2 已完成。新增旁路 `src/ai/tools/gameToolLoop.js`、`toolCallNormalizer.js`、`toolGuardrails.js` 与 `toolResultProjector.js`，并从 `src/ai/index.js` 导出 `runGameToolLoop()` / `listProviderVisibleToolsForActor()`；它复用既有 `gameAiToolRunner` 的 schema/权限/冷却/resolver/audit 边界，只在本地 Mock/test-only 工具循环中回填 provider-visible public result，不接管旧 provider facade、普通 turn、streaming、route/API、prompt、存档、SQLite、浏览器 UI 或服务器裁决。
+- S92.4 支持 provider step / static modelSteps 两种 Mock-first 输入：可按预算顺序执行 read、proposal、request_adjudication；`mayRequestAdjudication=false` 时会在 guardrail 层拒绝裁决请求；预算耗尽、tool shape mismatch 或超大 tool batch 只返回 bounded model-safe rejected tool result。模型可见 tool result 只含 `status`、`publicResult`、`rejectionReasons`、`auditRef` 和 `modelFollowUpHint`，不回填 `privateResultRefs`、`appliedEventIds`、`counterCosts`、`followUpHooks`、`toolName`、`actorRef`、resolver/audit/cooldown/mockFallback、raw provider payload、prompt、key、base URL、本地路径、`worldState`、`statePatch` 或内部 `server.*` 引用。
 - 当前步骤 S92.3：OpenAI ProviderAdapter strict structured output 兼容层已完成。新增 `src/ai/providers/providerResponseNormalizer.js` 与 `src/ai/providers/openaiAdapter.js`，先作为旁路 adapter 暴露，不接管旧 `createOpenAiProvider`、`getProvider`、streaming、route/API、prompt、存档、SQLite、浏览器 UI 或服务器裁决。
 - S92.3 支持 route opt-in `allowStrictSchema` 时向 OpenAI Responses / Chat-compatible fake client 发送 `json_schema strict:true`；未 opt-in 或 provider/capability 不支持 strict 时保持 `strict:false`，strict 请求被 provider 拒绝时会以非 strict schema 请求重试。无论 strict 与否，返回都必须经 `normalizeModelPayload()` 与 `validatePayload()`，失败交给 runtime fallback，adapter 返回值不携带 raw request/response/prompt/provider payload/key/base URL。
 - 当前步骤 S92.2：AI Task Runtime 骨架已完成。新增旁路 `AiTaskRuntime`、ProviderAdapter 合约、runtime budget、public-safe trace 和 fallback policy；先覆盖 Mock-only/test-only 的 `opening`、`quick_action`、`topic_draft` 三类低风险结构化任务，默认 `getProvider` / route/API / provider facade 不切换。
@@ -152,6 +155,29 @@
 - S92.1 聚焦验证已通过 `node --check scripts/aiBaselineSnapshot.js`、`node --check scripts/aiEvaluationRunner.js`、`npm run ai:baseline`、`npm run eval:ai`、`npm run typecheck:server`、`npm run check:docs-governance`、`git diff --check`、`node --test test/aiBaselineSnapshot.test.js` 和 `node --test test/aiEvaluationRunner.test.js test/aiBaselineSnapshot.test.js`；全量 Node 测试已按 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4` 跑完，合计 1238 tests。单条 `npm test` 在 124s/304s 外层超时截断且无断言失败输出，等价分片全量已通过；提交前只读复审代理 `019e6f0d-53c6-7a61-8924-dd7706cdd2a6` 未发现阻塞问题，非阻塞建议已采纳，补充复审确认 follow-up 无新增风险。
 
 ## 6. 最近完整验证口径
+
+S92.4 当前验证锚点：
+
+- `node --check src/ai/tools/toolCallNormalizer.js`
+- `node --check src/ai/tools/toolGuardrails.js`
+- `node --check src/ai/tools/toolResultProjector.js`
+- `node --check src/ai/tools/gameToolLoop.js`
+- `node --check test/aiToolLoop.test.js`
+- `node --check test/aiToolLoopRedaction.test.js`
+- `node --test test/aiToolLoop.test.js test/aiToolLoopRedaction.test.js test/aiToolProtocolContract.test.js`（17 tests）
+- `node --test test/gameAiToolRunner.test.js test/gameAiTools.test.js test/gameAiToolAudit.test.js test/domainToolDefinitions.test.js test/aiActorToolPermissions.test.js`（19 tests）
+- `node --test test/aiTaskRuntime.test.js test/aiTaskTrace.test.js test/aiFallbackPolicy.test.js test/providerResponseNormalizer.test.js test/openaiAdapter.test.js`（26 tests）
+- `npm run eval:ai`
+- `npm run typecheck:server`
+- `npm run smoke:provider:tools`
+- `npm run check:docs-governance`
+- `git diff --check`
+- `node --test --test-shard=1/4 test/*.test.js`（270 tests）
+- `node --test --test-shard=2/4 test/*.test.js`（326 tests）
+- `node --test --test-shard=3/4 test/*.test.js`（405 tests）
+- `node --test --test-shard=4/4 test/*.test.js`（272 tests）
+
+说明：四片全量 Node 测试合计 1273 tests 已全部通过；本轮未运行单条 `npm test`，以同一 Node test runner 的四片全量替代，避免旧全量并发下偶发 SSE `ECONNRESET` 干扰。
 
 S92.3 当前验证锚点：
 
@@ -227,6 +253,16 @@ S91.18 运行态完整验证锚点：
 - `npm test`（1233 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-29：S92.4 Mock-first Agentic Tool Loop v2 完成
+
+- 范围：新增 `src/ai/tools/toolCallNormalizer.js`、`toolGuardrails.js`、`toolResultProjector.js`、`gameToolLoop.js` 与 `test/aiToolLoop.test.js`、`test/aiToolLoopRedaction.test.js`；`src/ai/index.js` 导出旁路 `runGameToolLoop()` 和 `listProviderVisibleToolsForActor()`，便于后续 runtime v2 接入前先做本地 Mock-first 验证。
+- Tool loop：支持 static `modelSteps` 和 fake/mock provider `generateOrRequestTools()` 两种输入；`toolCallNormalizer` 兼容 OpenAI-style `function.arguments`、direct shape、Responses/Anthropic-ish tool_use 形状并用 actor 可见 provider name map 反查内部工具名。循环按预算顺序执行 read、proposal、request_adjudication；预算耗尽、invalid JSON/tool shape、unknown/internal tool、越权 actor、schema 失败或 `mayRequestAdjudication=false` 都返回 rejected tool result，不调用领域 resolver；超出 `maxCalls` 的大批量 tool call 会折叠成一条安全 overflow 拒绝，避免模型输出放大审计或回填压力。
+- 投影与边界：`toolResultProjector` 只把 `status`、`publicResult`、`rejectionReasons`、`auditRef`、`modelFollowUpHint` 回填给模型；`privateResultRefs`、`appliedEventIds`、`counterCosts`、`followUpHooks`、`toolName`、`actorRef`、`normalizedProposal`、resolver/audit/cooldown/mockFallback、raw provider payload、prompt、key、base URL、本地路径、`worldState`、`statePatch` 和内部 `server.*` 都不会进入 provider-visible result。provider-visible tool list 也只含 function name、description 和 input schema，不包含服务器侧权限、resolver、audit、cooldown 或 fallback metadata。
+- 旧路径：不修改既有 `gameAiToolRunner` 语义，不切换 `getProvider()`、普通 `/api/game/turn`、streaming、真实 provider tool calling、prompt/schema/tool 权限、存档、SQLite、浏览器 UI、素材或服务器裁决；本步不新增 npm 依赖。proposal/request_adjudication 仍只能得到 pending/rejected mock/server-owned result，不写 canonical state、session、SQLite、事件档案、官职、榜单、判决、军令、战和、赏罚或审计成案结果。
+- 子代理：只读探查代理 `019e71d4-7cd5-7f91-8ccb-f146a7379f44` 梳理了现有 tool schema、registry、runner、resolver、权限和 audit 测试约束，建议复用 `gameAiToolRunner`、严格隔离 full result/audit/server resolver 与 provider-visible projection；提交前同一只读复审代理复审最终 diff 与验证证据，未发现阻塞问题。非阻塞 P2 建议的超大 tool call/budget rejection 上限已采纳；残余 P3 建议为未来接真实 provider 前补 Responses-style `output` 早停、`assertModelToolProjectionSafe()` content JSON 解析检查和污染 publicResult fail-closed 用例。代理确认未编辑文件、未运行任何 Git 命令、未创建 PR。
+- 验证：已通过新增 tools/test `node --check`、S92.4 聚焦测试（17 tests）、旧 tool runner/registry/audit/domain/actor 权限回归（19 tests）、S92.2/S92.3 runtime/provider adapter 回归（26 tests）、`npm run eval:ai`、`npm run typecheck:server`、`npm run smoke:provider:tools`、`npm run check:docs-governance`、`git diff --check` 和四片 `node --test --test-shard=1/4 test/*.test.js` 至 `4/4`（270 + 326 + 405 + 272 = 1273 tests）。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-28：S92.3 OpenAI ProviderAdapter strict structured output 兼容层完成
 

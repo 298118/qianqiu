@@ -16,6 +16,10 @@ const {
   createAiTaskRuntime,
   runAiTask
 } = require("./runtime/aiTaskRuntime");
+const {
+  listProviderVisibleToolsForActor,
+  runGameToolLoop
+} = require("./tools/gameToolLoop");
 
 const PROVIDERS = {
   openai: createOpenAiProvider,
@@ -211,5 +215,7 @@ module.exports = {
   createRoutedProvider,
   getProvider,
   getProviderForTask,
+  listProviderVisibleToolsForActor,
+  runGameToolLoop,
   runAiTask
 };

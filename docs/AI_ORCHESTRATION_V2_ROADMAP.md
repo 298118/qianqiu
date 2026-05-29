@@ -184,6 +184,12 @@ ANTHROPIC_REQUIRED=1 AI_PROVIDER=anthropic AI_PROVIDER_TIMEOUT_MS=90000 npm run 
 - 强制 tool budget，proposal/request_adjudication 顺序执行。
 - tool result 回填模型时只包含 `publicResult`、公开拒绝原因、必要 `auditRef` 和 `modelFollowUpHint`。
 
+S92.4 落地状态（2026-05-29）：
+
+- 已新增 `src/ai/tools/gameToolLoop.js`、`toolCallNormalizer.js`、`toolGuardrails.js`、`toolResultProjector.js` 和 `test/aiToolLoop.test.js`、`test/aiToolLoopRedaction.test.js`。
+- 当前为旁路 Mock/test-only 工具循环：支持 static `modelSteps` 与 fake/mock provider `generateOrRequestTools()`，可以跑 read -> proposal/request_adjudication -> final payload 的本地闭环；默认普通 turn、真实 provider tool calling、streaming 和 runtime v2 输出仍未切换。
+- provider-visible tool list 只输出 function name、description、input schema；tool result projector 只输出 `status`、`publicResult`、`rejectionReasons`、`auditRef`、`modelFollowUpHint`。full server result、developer audit、resolver label、permission/cooldown/mockFallback、private refs、raw provider payload、prompt、key、base URL、本地路径、`worldState`、`statePatch` 和内部 `server.*` 不进入模型回填。
+
 验收：
 
 ```bash
