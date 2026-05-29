@@ -485,6 +485,16 @@ function compactEventChain(chain = {}) {
   };
 }
 
+function promptEvidenceVisibility(value) {
+  const visibility = text(value).trim().toLowerCase().replace(/[-\s]+/g, "_");
+  if (!visibility) return "public";
+  if (visibility === "public" || visibility === "player_visible") return visibility;
+  if (visibility === "role_visible" || visibility === "office_visible" || visibility === "actor_visible") {
+    return "actor_visible";
+  }
+  return "private";
+}
+
 function compactRumor(rumor = {}) {
   return {
     id: rumor.id,
@@ -492,7 +502,7 @@ function compactRumor(rumor = {}) {
     kindLabel: rumor.kindLabel,
     channel: rumor.channel,
     title: rumor.title,
-    visibility: rumor.visibility,
+    visibility: promptEvidenceVisibility(rumor.visibility),
     credibilityScore: rumor.credibilityScore,
     credibilityTier: rumor.credibilityTier,
     credibilityLabel: rumor.credibilityLabel,

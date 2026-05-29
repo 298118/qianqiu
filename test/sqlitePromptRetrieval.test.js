@@ -560,6 +560,24 @@ test("SQLite prompt retrieval indexes and repairs S65.2 intelligence rumor rows"
 
   assert.match(rumorRowId, /^intel\.rumors:/);
 
+  const indexedRumorPayloads = withSqliteDatabase(dbPath, (db) =>
+    db
+      .prepare(`
+        SELECT payload_json
+        FROM prompt_retrieval_index
+        WHERE session_id = ?
+          AND domain = 'intel'
+          AND collection = 'rumors'
+        ORDER BY row_id
+      `)
+      .all(worldState.sessionId)
+      .map((row) => JSON.parse(row.payload_json))
+  );
+  assert.ok(indexedRumorPayloads.some((payload) => payload.visibility === "actor_visible"));
+  assert.ok(indexedRumorPayloads.every((payload) =>
+    ["public", "player_visible", "actor_visible"].includes(payload.visibility)
+  ));
+
   withSqliteDatabase(dbPath, (db) => {
     db
       .prepare(`

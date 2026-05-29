@@ -144,10 +144,13 @@
 | S92.7 | DONE | EvidenceRef 与安全检索升级 | 已新增 stable EvidenceRef resolver/ranker，并把 `retrievalContext.evidenceRefs` 渐进接入 prompt context；只从最终安全 rows 生成 public/player_visible/actor_visible 引用，拒绝未知 sourceView、private/hidden projection 和 raw/provider/prompt/path/key/hidden/SQLite/server.* 污染，不切默认 provider/runtime/tool loop 或服务器裁决。 |
 | S92.8 | DONE | Trace 与 provider health | 已收束 `aiTaskTrace` public summary 固定字段，新增 `providerHealthManager` 统一 provider 失败分类、bounded health snapshot、连续失败和本地 circuit breaker 状态；runtime fallbackReason 对外改用分类值，不切默认 provider/runtime/tool loop、route/API、存档、SQLite、浏览器 UI 或服务器裁决。 |
 | S92.9 | DONE | 前端 AI Debug 面板与反馈入口 | 已新增 hidden-safe public trace endpoint 与玩家侧“推演回声”反馈入口；只展示 S92.8 public summary 的任务、来源/卷式、耗时、状态、降级、取材/辅佐/校验计数，并只写 bounded 枚举反馈到 session AI observability，不展示 raw prompt、provider payload、worldState、statePatch、key、base URL、本地路径、SQLite row 或 hidden/private refs。 |
+| S92.10 | DONE | SQLite prompt retrieval 可见性 parity 修复 | 已把 SQLite prompt retrieval 中服务器已裁定可见的 `role_visible` / `office_visible` 情报传闻投影为 EvidenceRef allowlist 内的 `actor_visible`，修复 JSON/SQLite prompt retrieval intel rows 与预算裁剪 parity；不改变情报 view 业务可见性、不新增 route/API/schema/SQLite schema、provider、tool loop 或服务器裁决能力。 |
 
 ## 5. 最新状态
 
 - S89.1-S89.68 已完成并迁出活动台账。压缩归档见 [ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md](ACTIVITY_LEDGER_COMPLETED_ARCHIVE.md)。
+- 当前步骤 S92.10：SQLite prompt retrieval 可见性 parity 修复已完成。`src/storage/sqlitePromptRetrievalTables.js` 只在 prompt retrieval 派生表 payload 层把已由服务器安全 view 生成的 `role_visible` / `office_visible` 情报传闻归一为 `actor_visible`，让 S92.7 EvidenceRef / explicit retrieval allowlist 能保留这些当前角色可读的 intel rows；`public` 与 `player_visible` 保持原值，hidden/private 不会由本路径生成或放行。
+- S92.10 修复了 S92.9 后记录的全量测试唯一失败：`test/dualModeAcceptanceScript.test.js` 的 JSON/SQLite visible route and prompt payload parity。根因是 SQLite 侧 intel rows 被 visibility gate 丢弃，后续全局 prompt budget 又让 entities rows 数量偏移。新增 `test/sqlitePromptRetrieval.test.js` 守住 indexed rumor payload 只能使用 `public` / `player_visible` / `actor_visible`，并确认 full `npm test` 重新转绿。本步不改变 `intelligenceRumorView` 玩家/角色可见性、不新增依赖、route/API/schema、SQLite schema、浏览器 UI、真实 provider 默认、tool loop、prompt 权限或服务器裁决。
 - 当前步骤 S92.9：前端 AI Debug 面板与反馈入口已完成。新增 `src/game/aiTraceDebug.js`、`GET /api/ai/public-traces/:sessionId` 和 `POST /api/ai/public-traces/:sessionId/feedback`，响应经 route response helper 与 `src/contracts/serverContracts.ts` 对齐，只返回 `s92.9-ai-trace-debug-view.v1`、S92.8 public trace summary、反馈枚举和最近反馈摘要；反馈只接受有用、出戏、忘记前情、太短、太长、不符合身份六类，不改 canonical game state、AI 路由、provider 默认、tool loop、SQLite schema 或服务器裁决。提交前只读复审提出的 route helper allowlist、request allowlist 和赋值型污染文本缺口均已补齐并加测。
 - S92.9 浏览器入口落在右上角印匣“推演设置”的“推演回声”，需要玩家主动刷新；前端安全 API allowlist 只新增 public trace 两个 endpoint，面板以玩家口径显示来源/卷式、耗时、状态、取材、辅佐、校验与降级原因，并用源码 canary / Vitest 守住不出现 raw prompt、provider payload、debug、本地路径、密钥、schema/manifest/resolver 等玩家侧污染词。
 - 当前步骤 S92.8：Trace 与 provider health 已完成。`src/ai/runtime/aiTaskTrace.js` 的 public summary 固定为 `traceId`、`taskKind`、`taskType`、`promptPackId`、`promptVersion`、`provider`、`model`、`latencyMs`、`status`、`fallbackReason`、`retrievalCounts`、`toolCounts` 与 `validationFlags`；断言层拒绝额外 public 字段和 raw/provider/prompt/worldState/statePatch/key/base URL/path/SQLite/server.* 污染。内部 `route`、`budget`、`usage`、`events`、`taskId`、`schemaName` 可供 runtime 内部收尾，但不进入 public summary。
@@ -171,6 +174,18 @@
 
 ## 6. 最近完整验证口径
 
+S92.10 当前验证锚点：
+
+- `node --check src/storage/sqlitePromptRetrievalTables.js`
+- `node --test test/sqlitePromptRetrieval.test.js`（10 tests）
+- `node --test test/dualModeAcceptanceScript.test.js`（8 tests）
+- `npm run eval:ai`
+- `npm run eval:ai:v2`
+- `npm run typecheck:server`
+- `npm run check:docs-governance`
+- `npm test`（1294 tests）
+- `git diff --check`
+
 S92.9 当前验证锚点：
 
 - `node --check src/game/aiTraceDebug.js`
@@ -189,7 +204,7 @@ S92.9 当前验证锚点：
 - `npm run budget:client`
 - `npm run check:docs-governance`
 - `git diff --check`
-- 补充全量：`npm test` 当前 1292/1293 pass，失败项为既有 `test/dualModeAcceptanceScript.test.js` 的 JSON/SQLite visible route and prompt payload parity；聚焦复跑同一测试仍失败，差异在 prompt retrieval context entities/intel rows，未触及 S92.9 文件，后续需单独修复。
+- 补充全量：S92.10 已修复先前记录的 JSON/SQLite visible route and prompt payload parity 失败，最新 `npm test` 为 1294/1294 pass。
 
 S92.8 当前验证锚点：
 
@@ -352,6 +367,15 @@ S91.18 运行态完整验证锚点：
 - `npm test`（1233 tests）
 
 ## 7. 近期进度记录
+
+### 2026-05-29：S92.10 SQLite prompt retrieval 可见性 parity 修复
+
+- 范围：`src/storage/sqlitePromptRetrievalTables.js` 新增 prompt retrieval payload 可见性归一，只在 SQLite prompt retrieval 派生表中把已由服务器安全 view 生成的 `role_visible` / `office_visible` 情报传闻折算为 EvidenceRef allowlist 允许的 `actor_visible`；`public` / `player_visible` 原样保留。`test/sqlitePromptRetrieval.test.js` 补 indexed rumor payload 守门，要求 intel retrieval payload visibility 只能是 `public` / `player_visible` / `actor_visible`。
+- 根因：S92.7 explicit retrieval safety gate 只允许 `public` / `player_visible` / `actor_visible`，但 SQLite prompt retrieval compact 后的 intelligence rumor payload 仍携带业务 view 层的 `role_visible` / `office_visible`。SQLite 读路径因此丢掉 intel rows，进而让 prompt budget 从 entities 末尾少裁/多保留，触发 S92.9 后记录的 JSON/SQLite visible route and prompt payload parity 失败。
+- 边界：本步不改变 `intelligenceRumorView` 和 live JSON prompt path 的业务可见性，不新增 route/API/schema、SQLite schema、依赖、浏览器 UI、真实 provider 默认、tool loop、prompt 权限或服务器裁决能力；SQLite 派生表仍只从服务器整理后的安全 projection 单向生成，不读取 raw audit、raw SQLite row、provider payload、完整 prompt、本地路径、key、hidden notes 或内部 `server.*`。
+- 验证：已通过 `node --check src/storage/sqlitePromptRetrievalTables.js`、`node --test test/sqlitePromptRetrieval.test.js`（10 tests）、`node --test test/dualModeAcceptanceScript.test.js`（8 tests）、`npm run eval:ai`、`npm run eval:ai:v2`、`npm run typecheck:server`、`npm run check:docs-governance` 和 `npm test`（1294 tests）。
+- 子代理：只读探查代理 `019e72be-c02d-7fd3-af67-83b8deaff850` 受托调查 parity 根因，主代理本地确认并实施修复；提交前只读复审另行执行，代理不得编辑文件、不得运行 Git 命令、不得创建 PR。
+- 提交：随本次 coherent change 统一提交，最终哈希见 Git history 和本轮回复。
 
 ### 2026-05-29：S92.8 Trace 与 provider health 完成
 
